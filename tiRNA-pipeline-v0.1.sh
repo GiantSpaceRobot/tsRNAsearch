@@ -5,14 +5,10 @@
 # Email: pauldonovan@rcsi.com
 # 19-Oct-2018
 
-usage() { echo "Usage: $0 [-s <45|90>] [-p <string>]" 1>&2; exit 1; }
+usage() { echo "Usage: $0 -p seq_1.fq seq_2.fq " 1>&2; exit 1; }
 
-while getopts ":s:p:" o; do
+while getopts ":p:" o; do
     case "${o}" in
-        s)
-            s=${OPTARG}
-            ((s == 45 || s == 90)) || usage
-            ;;
         p)
             p=${OPTARG}
             ;;
@@ -23,7 +19,7 @@ while getopts ":s:p:" o; do
 done
 shift $((OPTIND-1))
 
-if [ -z "${s}" ] || [ -z "${p}" ]; then
+if [ -z "${p}" ]; then   #if the string is empty, print usage
     usage
 fi
 
