@@ -6,10 +6,15 @@
 # 19-Oct-2018
 
 usage() { echo "Usage: $0 -p seq_1.fq seq_2.fq " 1>&2; exit 1; }
+#Usage could also print out a manual on how the pipeline functions (link to manual file inside print statement)
 
-while getopts ":p:" o; do
+while getopts ":hp:" o; do
     case "${o}" in
-        p)
+		h)
+			echo "$usage"
+			exit
+			;;
+		p)
             p=${OPTARG}
             ;;
         *)
