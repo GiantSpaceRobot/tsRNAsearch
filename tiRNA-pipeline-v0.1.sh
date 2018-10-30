@@ -34,7 +34,7 @@ while getopts ":hf:o:" o; do
 			files=${OPTARG}
             set -f # disable glob
             IFS=',' # split on space characters
-            array=$OPTARG
+			array=($OPTARG)
 			;;
 		o)
 			outDir="$OPTARG"
@@ -51,8 +51,6 @@ shift $((OPTIND-1))
 pairedEnd="True"   # The default for the pipeline is to assume 2 paired-end read-files are supplied
 
 ##################
-echo ${#array[@]}
-echo ${#files[@]}
 if [ ${#array[@]} -gt 2 ]; then # Determine if wrong number of read-files have been supplied
 	echo "Error, ${#array[@]} files supplied. Only 1 (single-end) or 2 (paired-end data) files accepted."
 	usage
@@ -76,10 +74,8 @@ fi
 file1=${array[1]}
 file2=${array[2]}
 
-echo $pairedEnd
 if [[ $pairedEnd = "True" ]]; then 
-	echo "Yes"
-	#trim_galore -o trim_galore_output/ --paired $file1 $file2  
+	trim_galore -o trim_galore_output/ --paired $file1 $file2  
 fi
 
 
