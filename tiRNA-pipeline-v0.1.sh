@@ -34,10 +34,10 @@ while getopts ":hf:o:" o; do
 			files=${OPTARG}
             set -f # disable glob
             IFS=',' # split on space characters
-            array=($OPTARG)
+            array=$OPTARG
 			;;
 		o)
-			outDir={OPTARG}
+			outDir="$OPTARG"
 			;;
 		*)
             echo "Error in input parameters!"
@@ -48,9 +48,12 @@ while getopts ":hf:o:" o; do
 done
 shift $((OPTIND-1))
 
-pairedEnd = True
+pairedEnd="True"   # The default for the pipeline is to assume 2 paired-end read-files are supplied
 
-if [ ${#array[@]} -gt 2 ]; then
+##################
+echo ${#array[@]}
+echo ${#files[@]}
+if [ ${#array[@]} -gt 2 ]; then # Determine if wrong number of read-files have been supplied
 	echo "Error, ${#array[@]} files supplied. Only 1 (single-end) or 2 (paired-end data) files accepted."
 	usage
 	exit
@@ -59,10 +62,24 @@ elif [ ${#array[@]} -lt 1 ]; then
 	usage
 	exit
 elif [ ${#array[@]} -eq 1 ]; then
-	pairedEnd = False
+	pairedEnd="False"
+fi
+##################
+
+echo "Started at $(date)" # Print pipeline start-time
+
+if [ ! -d $outDir ]; then # Check if the output directory exists. If not, create it
+	mkdir $outDir
+	mkdir $outDir/trim_galore_output
 fi
 
-echo "Started at $(date)"
-#StartTime="Pipeline initiated at $(date)"
+file1=${array[1]}
+file2=${array[2]}
 
-#trim_galore -o trim_galore_output/ --paired Reads/SRR5788497_1_10000-reads.fq Reads/SRR5788497_2_10000-reads.fq
+echo $pairedEnd
+if [[ $pairedEnd = "True" ]]; then 
+	echo "Yes"
+	#trim_galore -o trim_galore_output/ --paired $file1 $file2  
+fi
+
+
