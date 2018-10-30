@@ -5,26 +5,36 @@
 # Email: pauldonovan@rcsi.com
 # 19-Oct-2018
 
-usage() { echo "Usage: $0 -p seq_1.fq seq_2.fq " 1>&2; exit 1; }
+usage() { echo "Usage: $0 -p seq_1.fq,seq_2.fq" 1>&2; exit 1; }
 #Usage could also print out a manual on how the pipeline functions (link to manual file inside print statement)
 
-while getopts ":hp:" o; do
+#info() { echo "" 1>&2; exit 1; }
+
+while getopts ":hf:o:" o; do
     case "${o}" in
 		h)
 			echo "$usage"
 			exit
 			;;
-		p)
-            p=${OPTARG}
-            ;;
-        *)
-            usage
+		f)
+			files=${OPTARG}
+            set -f # disable glob
+            IFS=',' # split on space characters
+            array=($OPTARG)
+			;;
+		o)
+			outDir={OPTARG}
+			;;
+		*)
+            echo "Error in input parameters!"
+			usage
+			exit 1
             ;;
     esac
 done
 shift $((OPTIND-1))
 
-if [ -z "${p}" ]; then   #if the string is empty, print usage
+if [ -z "${f}" ]; then   #if the string is empty, print usage
     usage
 fi
 
