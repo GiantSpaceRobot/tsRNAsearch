@@ -48,19 +48,21 @@ while getopts ":hf:o:" o; do
 done
 shift $((OPTIND-1))
 
+pairedEnd = True
+
 if [ ${#array[@]} -gt 2 ]; then
 	echo "Error, ${#array[@]} files supplied. Only 1 (single-end) or 2 (paired-end data) files accepted."
 	usage
 	exit
-fi
-
-if [ -z "${f}" ]; then   #if the string is empty, print usage
+elif [ ${#array[@]} -lt 1 ]; then  
     echo "Error, no files supplied"
 	usage
 	exit
+elif [ ${#array[@]} -eq 1 ]; then
+	pairedEnd = False
 fi
 
-#echo "Started at $(date)"
+echo "Started at $(date)"
 #StartTime="Pipeline initiated at $(date)"
 
 #trim_galore -o trim_galore_output/ --paired Reads/SRR5788497_1_10000-reads.fq Reads/SRR5788497_2_10000-reads.fq
