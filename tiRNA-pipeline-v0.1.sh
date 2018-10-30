@@ -5,15 +5,29 @@
 # Email: pauldonovan@rcsi.com
 # 19-Oct-2018
 
-usage() { echo "Usage: $0 -p seq_1.fq,seq_2.fq" 1>&2; exit 1; }
-#Usage could also print out a manual on how the pipeline functions (link to manual file inside print statement)
-
-#info() { echo "" 1>&2; exit 1; }
+asciiArt() { echo "
+  __  .____________  _______      _____    __________.__              .__  .__               
+_/  |_|__\______   \ \      \    /  _  \   \______   \__|_____   ____ |  | |__| ____   ____  
+\   __\  ||       _/ /   |   \  /  /_\  \   |     ___/  \____ \_/ __ \|  | |  |/    \_/ __ \ 
+ |  | |  ||    |   \/    |    \/    |    \  |    |   |  |  |_> >  ___/|  |_|  |   |  \  ___/ 
+ |__| |__||____|_  /\____|__  /\____|__  /  |____|   |__|   __/ \___  >____/__|___|  /\___  >
+                 \/         \/         \/               |__|        \/             \/     \/ 
+" 1>&1; }
+usage() { echo "Usage: $0 -f seq_1.fq,seq_2.fq -o OutputDirectory" 1>&2; }
+info() { echo "
+Options
+	
+	-h	Print the usage and options information
+	-f	File(s) for analysis. Please use comma-delimited format for paired-end files
+	-o	Output directory for the results and log files
+	" 1>&2; }
 
 while getopts ":hf:o:" o; do
     case "${o}" in
 		h)
-			echo "$usage"
+			asciiArt
+			usage
+			info
 			exit
 			;;
 		f)
@@ -34,8 +48,16 @@ while getopts ":hf:o:" o; do
 done
 shift $((OPTIND-1))
 
+if [ ${#array[@]} -gt 2 ]; then
+	echo "Error, ${#array[@]} files supplied. Only 1 (single-end) or 2 (paired-end data) files accepted."
+	usage
+	exit
+fi
+
 if [ -z "${f}" ]; then   #if the string is empty, print usage
-    usage
+    echo "Error, no files supplied"
+	usage
+	exit
 fi
 
 #echo "Started at $(date)"
