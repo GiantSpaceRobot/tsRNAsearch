@@ -79,7 +79,7 @@ if [[ $pairedEnd = "True" ]]; then
 	file2_base=${file2##*/}    # Remove pathname
 	basename2="$( cut -d '.' -f 1 <<< "$file2_base" )" # Get filename before first occurence of .	
 	suffix2="$( cut -d '.' -f 2- <<< "$file2_base" )" # Get full file suffix/entension
-	#trim_galore -o $outDir/trim_galore_output/ --paired $file1 $file2  
+	trim_galore -o $outDir/trim_galore_output/ --paired $file1 $file2  
 	printf -v trimmedFile1 "%s_val_1.%s" "$basename1" "$suffix1"
 	printf -v trimmedFile2 "%s_val_2.%s" "$basename2" "$suffix2"
 	fastqc -o $outDir/FastQC/ -f fastq $outDir/trim_galore_output/$trimmedFile1 $outDir/trim_galore_output/$trimmedFile2 
