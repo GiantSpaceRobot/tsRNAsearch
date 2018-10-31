@@ -22,7 +22,7 @@ Options
 	-o	Output directory for the results and log files
 	" 1>&2; }
 
-while getopts ":hf:o:" o; do
+while getopts ":hs:1:2:o:" o; do
     case "${o}" in
 		h)
 			asciiArt
@@ -30,12 +30,21 @@ while getopts ":hf:o:" o; do
 			info
 			exit
 			;;
-		f)
-			files=${OPTARG}
-            set -f # disable glob
-            IFS=',' # split on space characters
-			array=($OPTARG)
+		s)
+			singleFile="$OPTARG"
 			;;
+		1)
+			file1="$OPTARG"
+			;;
+		2)
+			file2="$OPTARG"
+			;;
+		#f)
+		#	#files=${OPTARG}
+        #    set -f # disable glob
+        #    IFS=',' # split on space characters
+		#	array=($OPTARG)
+		#	;;
 		o)
 			outDir="$OPTARG"
 			;;
@@ -51,17 +60,17 @@ shift $((OPTIND-1))
 pairedEnd="True"   # The default for the pipeline is to assume 2 paired-end read-files are supplied
 
 ##################
-if [ ${#array[@]} -gt 2 ]; then # Determine if wrong number of read-files have been supplied
-	echo "Error, ${#array[@]} files supplied. Only 1 (single-end) or 2 (paired-end data) files accepted."
-	usage
-	exit
-elif [ ${#array[@]} -lt 1 ]; then  
-    echo "Error, no files supplied"
-	usage
-	exit
-elif [ ${#array[@]} -eq 1 ]; then
-	pairedEnd="False"
-fi
+#if [ ${#array[@]} -gt 2 ]; then # Determine if wrong number of read-files have been supplied
+#	echo "Error, ${#array[@]} files supplied. Only 1 (single-end) or 2 (paired-end data) files accepted."
+#	usage
+#	exit
+#elif [ ${#array[@]} -lt 1 ]; then  
+#    echo "Error, no files supplied"
+#	usage
+#	exit
+#elif [ ${#array[@]} -eq 1 ]; then
+#	pairedEnd="False"
+#fi
 ##################
 
 echo "Started at $(date)" # Print pipeline start-time
@@ -71,8 +80,8 @@ if [ ! -d $outDir ]; then # Check if the output directory exists. If not, create
 	mkdir $outDir/trim_galore_output
 fi
 
-file1=${array[1]}
-file2=${array[2]}
+#file1=${array[1]}
+#file2=${array[2]}
 
 if [[ $pairedEnd = "True" ]]; then 
 	trim_galore -o trim_galore_output/ --paired $file1 $file2  
