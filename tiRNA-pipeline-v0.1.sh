@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Usage:
+# Usage: ./tiRNA-pipeline.sh -h
 # Author: Paul Donovan 
 # Email: pauldonovan@rcsi.com
 # 19-Oct-2018
@@ -68,13 +68,36 @@ fi
 if [ ! -d $outDir ]; then 
 	mkdir $outDir
 	mkdir $outDir/trim_galore_output
+	mkdir $outDir/FastQC
 fi
 
 # Run Trim_Galore (paired-end or single-end)
 if [[ $pairedEnd = "True" ]]; then 
-	trim_galore -o $outDir/trim_galore_output/ --paired $file1 $file2  
+	file1_base=${file1##*/}    # Remove pathname
+	basename1="$( cut -d '.' -f 1 <<< "$file1_base" )" # Get filename before first occurence of .	
+	suffix1="$( cut -d '.' -f 2- <<< "$file1_base" )" # Get full file suffix/entension
+	file2_base=${file2##*/}    # Remove pathname
+	basename2="$( cut -d '.' -f 1 <<< "$file2_base" )" # Get filename before first occurence of .	
+	suffix2="$( cut -d '.' -f 2- <<< "$file2_base" )" # Get full file suffix/entension
+	#trim_galore -o $outDir/trim_galore_output/ --paired $file1 $file2  
+	printf -v trimmedFile1 "%s_val_1.%s" "$basename1" "$suffix1"
+	printf -v trimmedFile2 "%s_val_2.%s" "$basename2" "$suffix2"
+	fastqc -o $outDir/FastQC/ -f fastq $outDir/trim_galore_output/$trimmedFile1 $outDir/trim_galore_output/$trimmedFile2 
 elif [[ $pairedEnd = "False" ]]; then
-	trim_galore -o $outDir/trim_galore_output/ $singleFile
+	singleFile_base=${singleFile##*/}    # Remove pathname
+	singleFile_basename="$( cut -d '.' -f 1 <<< "$singleFile_base" )" # Get filename before first occurence of .	
+	suffix="$( cut -d '.' -f 2- <<< "$singleFile_base" )" # Get full file suffix/entension
+	trim_galore -o $outDir/FastQC/ $singleFile
+	printf -v trimmedFile "%s_trimmed.%s" "$singleFile_basename" "$suffix"
+	fastqc -o $outDir/FastQC/ -f fastq $outDir/trim_galore_output/$trimmedFile
 fi
+
+# Create a log file with the date, time and name of the input file in it's name
+# Run FastQC on files
+
+
+
+
+
 
 
