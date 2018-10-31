@@ -55,23 +55,13 @@ while getopts ":hs:1:2:o:" o; do
             ;;
     esac
 done
-shift $((OPTIND-1))
+#shift $((OPTIND-1))
 
-pairedEnd="True"   # The default for the pipeline is to assume 2 paired-end read-files are supplied
-
-##################
-#if [ ${#array[@]} -gt 2 ]; then # Determine if wrong number of read-files have been supplied
-#	echo "Error, ${#array[@]} files supplied. Only 1 (single-end) or 2 (paired-end data) files accepted."
-#	usage
-#	exit
-#elif [ ${#array[@]} -lt 1 ]; then  
-#    echo "Error, no files supplied"
-#	usage
-#	exit
-#elif [ ${#array[@]} -eq 1 ]; then
-#	pairedEnd="False"
-#fi
-##################
+if [ -z "$singleFile" ]; then # If the singleEnd variable is empty
+	pairedEnd="True"
+else
+	pairedEnd="False"
+fi
 
 echo "Started at $(date)" # Print pipeline start-time
 
@@ -80,11 +70,11 @@ if [ ! -d $outDir ]; then # Check if the output directory exists. If not, create
 	mkdir $outDir/trim_galore_output
 fi
 
-#file1=${array[1]}
-#file2=${array[2]}
-
+# Run Trim_Galore
 if [[ $pairedEnd = "True" ]]; then 
-	trim_galore -o trim_galore_output/ --paired $file1 $file2  
+	trim_galore -o $outDir/trim_galore_output/ --paired $file1 $file2  
+elif [[ $pairedEnd = "False" ]]; then
+	trim_galore -o $outDir/trim_galore_output/ $singleFile
 fi
 
 
