@@ -19,9 +19,9 @@ info() { echo "
 Options
 	
 	-h	Print the usage and options information
-	-s	Single-end file for analysis. 
-	-1	First paired-end file. 
-	-2	Second paired-end file.
+	-s	Single-end file for analysis 
+	-1	First paired-end file
+	-2	Second paired-end file
 	-o	Output directory for the results and log files
 	
 	Input file format should be FASTQ (.fq/.fastq) or gzipped FASTQ (.gz)
@@ -57,6 +57,17 @@ done
 
 echo "Started at $(date)" # Print pipeline start-time
 
+# Determine number of CPUs available
+maxCPUs=$(grep -c ^processor /proc/cpuinfo)
+
+# If the variable "CPUs" is not an integer, default to use a value of 1 
+re='^[0-9]+$'
+if ! [[ $maxCPUs =~ $re ]] ; then
+	echo "Error: Variable 'maxCPUs' is not an integer" >&2
+	maxCPUs=1
+fi
+CPUs=$(echo "$maxCPUs * 0.75" | bc | awk '{print int($1+0.5)}') # Use 75% of max CPU number
+
 # Determine if paired-end or single-end files were provided as input
 if [ -z "$singleFile" ]; then # If the singleEnd variable is empty
 	pairedEnd="True"
@@ -83,6 +94,8 @@ if [[ $pairedEnd = "True" ]]; then
 	printf -v trimmedFile1 "%s_val_1.%s" "$basename1" "$suffix1"
 	printf -v trimmedFile2 "%s_val_2.%s" "$basename2" "$suffix2"
 	fastqc -o $outDir/FastQC/ -f fastq $outDir/trim_galore_output/$trimmedFile1 $outDir/trim_galore_output/$trimmedFile2 
+	hisat2 -p $cpus -x /home/paul/Documents/Pipelines/tiRNA/DBs/hisat2_index/hg38-tRNAs_CCA -1 $file1 -2 $file2 -S tRNA-alignment/aligned_tRNAdb.sam
+	tophat2 -p $cpus -x 1 -o tRNA-alignment/ $file1 $file2
 elif [[ $pairedEnd = "False" ]]; then
 	singleFile_base=${singleFile##*/}    # Remove pathname
 	singleFile_basename="$( cut -d '.' -f 1 <<< "$singleFile_base" )" # Get filename before first occurence of .	
