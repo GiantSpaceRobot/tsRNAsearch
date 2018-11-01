@@ -23,11 +23,12 @@ Options
 	-1	First paired-end file
 	-2	Second paired-end file
 	-o	Output directory for the results and log files
-	
+	-T	Use Tophat2 to carry out alignment steps (default: HISAT2)
+
 	Input file format should be FASTQ (.fq/.fastq) or gzipped FASTQ (.gz)
 	" 1>&2; }
 
-while getopts ":hs:1:2:o:" o; do
+while getopts ":hTs:1:2:o:" o; do
     case "${o}" in
 		h)
 			asciiArt
@@ -46,6 +47,9 @@ while getopts ":hs:1:2:o:" o; do
 			;;
 		o)
 			outDir="$OPTARG"
+			;;
+		T)
+			oldAligner="yes"
 			;;
 		*)
             echo "Error in input parameters!"
@@ -84,25 +88,48 @@ fi
 
 # Run Trim_Galore (paired-end or single-end)
 if [[ $pairedEnd = "True" ]]; then 
+
 	file1_base=${file1##*/}    # Remove pathname
 	basename1="$( cut -d '.' -f 1 <<< "$file1_base" )" # Get filename before first occurence of .	
 	suffix1="$( cut -d '.' -f 2- <<< "$file1_base" )" # Get full file suffix/entension
 	file2_base=${file2##*/}    # Remove pathname
 	basename2="$( cut -d '.' -f 1 <<< "$file2_base" )" # Get filename before first occurence of .	
 	suffix2="$( cut -d '.' -f 2- <<< "$file2_base" )" # Get full file suffix/entension
-	trim_galore -o $outDir/trim_galore_output/ --paired $file1 $file2  
+	
+	# Run Trim_Galore on paired-end read files
+####trim_galore -o $outDir/trim_galore_output/ --paired $file1 $file2  
 	printf -v trimmedFile1 "%s_val_1.%s" "$basename1" "$suffix1"
 	printf -v trimmedFile2 "%s_val_2.%s" "$basename2" "$suffix2"
-	fastqc -o $outDir/FastQC/ -f fastq $outDir/trim_galore_output/$trimmedFile1 $outDir/trim_galore_output/$trimmedFile2 
-	hisat2 -p $cpus -x /home/paul/Documents/Pipelines/tiRNA/DBs/hisat2_index/hg38-tRNAs_CCA -1 $file1 -2 $file2 -S tRNA-alignment/aligned_tRNAdb.sam
-	tophat2 -p $cpus -x 1 -o tRNA-alignment/ $file1 $file2
+	
+	# Run FastQC on newly trimmed files
+####fastqc -o $outDir/FastQC/ -f fastq $outDir/trim_galore_output/$trimmedFile1 $outDir/trim_galore_output/$trimmedFile2 
+	
+	# Align trimmed reads to tRNA database using HISAT2/Tophat2
+	if [[ $oldAligner = "yes" ]]; then
+		tophat2 -p $CPUs -x 1 -o $outDir/tRNA-alignment/ $trimmedFile1 $trimmedFile2
+	else
+		hisat2 -p $CPUs -x /home/paul/Documents/Pipelines/tiRNA/DBs/hisat2_index/hg38-tRNAs_CCA -1 $trimmedFile1 -2 $trimmedFile2 -S $outDir/tRNA-alignment/aligned_tRNAdb.sam
+	fi
+
 elif [[ $pairedEnd = "False" ]]; then
+
 	singleFile_base=${singleFile##*/}    # Remove pathname
 	singleFile_basename="$( cut -d '.' -f 1 <<< "$singleFile_base" )" # Get filename before first occurence of .	
 	suffix="$( cut -d '.' -f 2- <<< "$singleFile_base" )" # Get full file suffix/entension
+
+	# Run Trim_Galore on single read file
 	trim_galore -o $outDir/FastQC/ $singleFile
 	printf -v trimmedFile "%s_trimmed.%s" "$singleFile_basename" "$suffix"
+
+	# Run FastQC on newly trimmed file
 	fastqc -o $outDir/FastQC/ -f fastq $outDir/trim_galore_output/$trimmedFile
+
+	# Align trimmed reads to tRNA database using HISAT2/Tophat2
+	if [[ $oldAligner = "yes" ]]; then
+		tophat2 -p $CPUs -x 1 -o $outDir/tRNA-alignment/ $trimmedFile
+	else
+		hisat2 -p $CPUs -x /home/paul/Documents/Pipelines/tiRNA/DBs/hisat2_index/hg38-tRNAs_CCA -U $trimmedFile -S $outDir/tRNA-alignment/aligned_tRNAdb.sam
+	fi
 fi
 
 # Create a log file with the date, time and name of the input file in it's name
