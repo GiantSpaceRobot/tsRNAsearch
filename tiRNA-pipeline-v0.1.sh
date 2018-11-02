@@ -98,7 +98,7 @@ if [[ $pairedEnd = "True" ]]; then
 	suffix2="$( cut -d '.' -f 2- <<< "$file2_base" )" # Get full file suffix/entension
 	
 	# Run Trim_Galore on paired-end read files
-	trim_galore -o $outDir/trim_galore_output/ --paired $file1 $file2  
+	trim_galore -s 10 --length 15 -o $outDir/trim_galore_output/ --paired $file1 $file2  
 	printf -v trimmedFile1 "%s_val_1.%s" "$basename1" "$suffix1"
 	printf -v trimmedFile2 "%s_val_2.%s" "$basename2" "$suffix2"
 	
@@ -120,7 +120,7 @@ elif [[ $pairedEnd = "False" ]]; then
 	suffix="$( cut -d '.' -f 2- <<< "$singleFile_base" )" # Get full file suffix/entension
 
 	# Run Trim_Galore on single read file
-	trim_galore -o $outDir/FastQC/ $singleFile
+	trim_galore -s 10 --length 15 -o $outDir/FastQC/ $singleFile
 	printf -v trimmedFile "%s_trimmed.%s" "$singleFile_basename" "$suffix"
 
 	# Run FastQC on newly trimmed file
