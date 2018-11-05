@@ -97,7 +97,14 @@ if [ ! -d $outDir ]; then
 fi
 
 # Run Trim_Galore (paired-end or single-end)
+echo "
+Trimming reads using Trim Galore
+"
 if [[ $pairedEnd = "True" ]]; then 
+
+	echo "
+	Paired-end read files
+	"
 
 	file1_base=${file1##*/}    # Remove pathname
 	basename1="$( cut -d '.' -f 1 <<< "$file1_base" )" # Get filename before first occurence of .	
@@ -111,12 +118,21 @@ if [[ $pairedEnd = "True" ]]; then
 	printf -v trimmedFile1 "%s_val_1.%s" "$basename1" "$suffix1"
 	printf -v trimmedFile2 "%s_val_2.%s" "$basename2" "$suffix2"
 	
+	echo "
+	Trimming complete. Moving on to FastQC analysis
+	
+	"
+
 	# Run FastQC on newly trimmed files
 	fastqc -o $outDir/FastQC/ -f fastq $outDir/trim_galore_output/$trimmedFile1 $outDir/trim_galore_output/$trimmedFile2 
 	
+	echo "
+	Finished running FastQC. Moving onto alignment to tRNA database
+	"
+	
 	# Align trimmed reads to tRNA database using HISAT2/Tophat2
 	if [[ $oldAligner = "yes" ]]; then
-		tophat2 -p $CPUs -x 1 -o $outDir/tRNA-alignment/ DBs/bowtie2_index_index/hg38-tRNAs_CCA $outDir/trim_galore_output/$trimmedFile1 $outDir/trim_galore_output/$trimmedFile2 
+		tophat2 -p $CPUs -x 1 -o $outDir/tRNA-alignment/ DBs/bowtie2_index/hg38-tRNAs_CCA $outDir/trim_galore_output/$trimmedFile1 $outDir/trim_galore_output/$trimmedFile2 
 	else
 		echo $trimmedFile1
 		hisat2 -p $CPUs -x DBs/hisat2_index/hg38-tRNAs_CCA -1 $outDir/trim_galore_output/$trimmedFile1 -2 $outDir/trim_galore_output/$trimmedFile2 -S $outDir/tRNA-alignment/aligned_tRNAdb.sam
@@ -124,22 +140,35 @@ if [[ $pairedEnd = "True" ]]; then
 
 elif [[ $pairedEnd = "False" ]]; then
 
+	echo "
+	Single-end read file
+	"
+	
 	singleFile_base=${singleFile##*/}    # Remove pathname
 	singleFile_basename="$( cut -d '.' -f 1 <<< "$singleFile_base" )" # Get filename before first occurence of .	
 	suffix="$( cut -d '.' -f 2- <<< "$singleFile_base" )" # Get full file suffix/entension
 
 	# Run Trim_Galore on single read file
-	trim_galore --stringency 10 --length 15 -o $outDir/FastQC/ $singleFile
+	trim_galore --stringency 10 --length 15 -o $outDir/trim_galore_output/ $singleFile
 	printf -v trimmedFile "%s_trimmed.%s" "$singleFile_basename" "$suffix"
+	
+	echo "
+	Trimming complete. Moving on to FastQC analysis
+	
+	"
 
 	# Run FastQC on newly trimmed file
 	fastqc -o $outDir/FastQC/ -f fastq $outDir/trim_galore_output/$trimmedFile
-
+	
+	echo "
+	Finished running FastQC. Moving onto alignment to tRNA database
+	"
+	
 	# Align trimmed reads to tRNA database using HISAT2/Tophat2
 	if [[ $oldAligner = "yes" ]]; then
-		tophat2 -p $CPUs -x 1 -o $outDir/tRNA-alignment/ DBs/bowtie2_index_index/hg38-tRNAs_CCA $trimmedFile
+		tophat2 -p $CPUs -x 1 -o $outDir/tRNA-alignment/ DBs/bowtie2_index/hg38-tRNAs_CCA $outDir/trim_galore_output/$trimmedFile
 	else
-		hisat2 -p $CPUs -x /home/paul/Documents/Pipelines/tiRNA/DBs/hisat2_index/hg38-tRNAs_CCA -U $trimmedFile -S $outDir/tRNA-alignment/aligned_tRNAdb.sam
+		hisat2 -p $CPUs -x DBs/hisat2_index/hg38-tRNAs_CCA -U $outDir/trim_galore_output/$trimmedFile -S $outDir/tRNA-alignment/aligned_tRNAdb.sam
 	fi
 fi
 
