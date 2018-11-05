@@ -50,6 +50,13 @@ while getopts ":hTs:1:2:o:" o; do
 			;;
 		T)
 			oldAligner="yes"
+			echo "
+
+			===========================================
+			Alignment will be carried out using Tophat2
+			===========================================
+			
+			"
 			;;
 		*)
             echo "Error in input parameters!"
@@ -60,6 +67,8 @@ while getopts ":hTs:1:2:o:" o; do
 done
 
 echo "Started at $(date)" # Print pipeline start-time
+
+# If I want to use Naser's tRNA DB, I can change the value of a variable to mine or his without adding more code 
 
 # Determine number of CPUs available
 maxCPUs=$(grep -c ^processor /proc/cpuinfo)
@@ -98,7 +107,7 @@ if [[ $pairedEnd = "True" ]]; then
 	suffix2="$( cut -d '.' -f 2- <<< "$file2_base" )" # Get full file suffix/entension
 	
 	# Run Trim_Galore on paired-end read files
-	trim_galore -s 10 --length 15 -o $outDir/trim_galore_output/ --paired $file1 $file2  
+	trim_galore --stringency 10 --length 15 -o $outDir/trim_galore_output/ --paired $file1 $file2  
 	printf -v trimmedFile1 "%s_val_1.%s" "$basename1" "$suffix1"
 	printf -v trimmedFile2 "%s_val_2.%s" "$basename2" "$suffix2"
 	
@@ -107,10 +116,10 @@ if [[ $pairedEnd = "True" ]]; then
 	
 	# Align trimmed reads to tRNA database using HISAT2/Tophat2
 	if [[ $oldAligner = "yes" ]]; then
-		tophat2 -p $CPUs -x 1 -o $outDir/tRNA-alignment/ $outDir/trim_galore_output/$trimmedFile1 $outDir/trim_galore_output/$trimmedFile2
+		tophat2 -p $CPUs -x 1 -o $outDir/tRNA-alignment/ DBs/bowtie2_index_index/hg38-tRNAs_CCA $outDir/trim_galore_output/$trimmedFile1 $outDir/trim_galore_output/$trimmedFile2 
 	else
 		echo $trimmedFile1
-		hisat2 -p $CPUs -x /home/paul/Documents/Pipelines/tiRNA/DBs/hisat2_index/hg38-tRNAs_CCA -1 $outDir/trim_galore_output/$trimmedFile1 -2 $outDir/trim_galore_output/$trimmedFile2 -S $outDir/tRNA-alignment/aligned_tRNAdb.sam
+		hisat2 -p $CPUs -x DBs/hisat2_index/hg38-tRNAs_CCA -1 $outDir/trim_galore_output/$trimmedFile1 -2 $outDir/trim_galore_output/$trimmedFile2 -S $outDir/tRNA-alignment/aligned_tRNAdb.sam
 	fi
 
 elif [[ $pairedEnd = "False" ]]; then
@@ -120,7 +129,7 @@ elif [[ $pairedEnd = "False" ]]; then
 	suffix="$( cut -d '.' -f 2- <<< "$singleFile_base" )" # Get full file suffix/entension
 
 	# Run Trim_Galore on single read file
-	trim_galore -s 10 --length 15 -o $outDir/FastQC/ $singleFile
+	trim_galore --stringency 10 --length 15 -o $outDir/FastQC/ $singleFile
 	printf -v trimmedFile "%s_trimmed.%s" "$singleFile_basename" "$suffix"
 
 	# Run FastQC on newly trimmed file
@@ -128,7 +137,7 @@ elif [[ $pairedEnd = "False" ]]; then
 
 	# Align trimmed reads to tRNA database using HISAT2/Tophat2
 	if [[ $oldAligner = "yes" ]]; then
-		tophat2 -p $CPUs -x 1 -o $outDir/tRNA-alignment/ $trimmedFile
+		tophat2 -p $CPUs -x 1 -o $outDir/tRNA-alignment/ DBs/bowtie2_index_index/hg38-tRNAs_CCA $trimmedFile
 	else
 		hisat2 -p $CPUs -x /home/paul/Documents/Pipelines/tiRNA/DBs/hisat2_index/hg38-tRNAs_CCA -U $trimmedFile -S $outDir/tRNA-alignment/aligned_tRNAdb.sam
 	fi
