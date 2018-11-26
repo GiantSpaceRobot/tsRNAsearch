@@ -50,13 +50,6 @@ while getopts ":hTs:1:2:o:" o; do
 			;;
 		T)
 			oldAligner="yes"
-			echo "
-
-			===========================================
-			Alignment will be carried out using Tophat2
-			===========================================
-			
-			"
 			;;
 		*)
             echo "Error in input parameters!"
@@ -69,6 +62,21 @@ done
 echo "Started at $(date)" # Print pipeline start-time
 
 # If I want to use Naser's tRNA DB, I can change the value of a variable to mine or his without adding more code 
+
+# Function to pad text with characters to make sentences stand out more
+function string_padder () {
+	string=$1
+	count=${#string}
+	v=$(printf "%-${count}s" "=")
+	padding="${v// /=}"
+	echo "
+
+	$padding
+	$string
+	$padding
+
+	"
+}
 
 # Determine number of CPUs available
 maxCPUs=$(grep -c ^processor /proc/cpuinfo)
@@ -89,6 +97,8 @@ else
 fi
 
 # Check if the output directory exists. If not, create it
+message="Creating directory structure"
+string_padder "$message"
 if [ ! -d $outDir ]; then 
 	mkdir $outDir
 	mkdir $outDir/trim_galore_output
@@ -98,9 +108,8 @@ if [ ! -d $outDir ]; then
 fi
 
 # Run Trim_Galore (paired-end or single-end)
-echo "
-Trimming reads using Trim Galore
-"
+message="Trimming reads using Trim Galore"
+string_padder "$message"
 if [[ $pairedEnd = "True" ]]; then 
 
 	echo "
@@ -119,17 +128,15 @@ if [[ $pairedEnd = "True" ]]; then
 	printf -v trimmedFile1 "%s_val_1.%s" "$basename1" "$suffix1"
 	printf -v trimmedFile2 "%s_val_2.%s" "$basename2" "$suffix2"
 	
-	echo "
-	Trimming complete. Moving on to FastQC analysis
-	
-	"
+	message="Trimming complete. Moving on to FastQC analysis"
+	string_padder "$message"
 
 	# Run FastQC on newly trimmed files
 	fastqc -o $outDir/FastQC/ -f fastq $outDir/trim_galore_output/$trimmedFile1 $outDir/trim_galore_output/$trimmedFile2 
 	
-	echo "
-	Finished running FastQC. Moving onto alignment to tRNA database
-	"
+
+	message="Finished running FastQC. Moving onto alignment to tRNA database"
+	string_padder "$message"
 	
 	# Align trimmed reads to tRNA database using HISAT2/Tophat2
 	if [[ $oldAligner = "yes" ]]; then
@@ -145,7 +152,9 @@ if [[ $pairedEnd = "True" ]]; then
 elif [[ $pairedEnd = "False" ]]; then
 
 	echo "
+	
 	Single-end read file
+	
 	"
 	
 	singleFile_base=${singleFile##*/}    # Remove pathname
@@ -156,25 +165,22 @@ elif [[ $pairedEnd = "False" ]]; then
 	trim_galore --stringency 10 --length 15 -o $outDir/trim_galore_output/ $singleFile
 	printf -v trimmedFile "%s_trimmed.%s" "$singleFile_basename" "$suffix"
 	
-	echo "
-	Trimming complete. Moving on to FastQC analysis
-	
-	"
+	message="Trimming complete. Moving on to FastQC analysis"
+	string_padder "$message"
 
 	# Run FastQC on newly trimmed file
 	fastqc -o $outDir/FastQC/ -f fastq $outDir/trim_galore_output/$trimmedFile
 	
-	echo "
-	Finished running FastQC. Moving onto alignment to tRNA database
-	"
-	
+	message="Finished running FastQC. Moving onto alignment to tRNA database"
+	string_padder "$message"
+
 	# Align trimmed reads to tRNA database using HISAT2/Tophat2
 	if [[ $oldAligner = "yes" ]]; then
 		tophat2 -p $CPUs -x 1 -o $outDir/tRNA-alignment/ DBs/bowtie2_index/hg19-wholetRNA-CCA.fa $outDir/trim_galore_output/$trimmedFile
 		# Tophat2 using HG38 genome below
 		#tophat2 -p $CPUs -x 1 -o $outDir/tRNA-alignment/ DBs/bowtie2_index/hg38-tRNAs_CCA $outDir/trim_galore_output/$trimmedFile
 		bedtools bamtofastq -i $outDir/tRNA-alignment/unmapped.bam -fq $outDir/tRNA-alignment/unmapped.fastq
-		tophat2 -p $CPUs -x 1 -o $outDir/snomiRNA-alignment/ DBs/bowtie2_index/hg19-snomiRNAs.fa $outDir/tRNA-alignment/unmapped.fastq
+		tophat2 -p $CPUs -x 1 -o $outDir/snomiRNA-alignment/ DBs/bowtie2_index/hg19-snomiRNA.fa $outDir/tRNA-alignment/unmapped.fastq
 	else
 		hisat2 -p $CPUs -x DBs/hisat2_index/hg38-tRNAs_CCA -U $outDir/trim_galore_output/$trimmedFile -S $outDir/tRNA-alignment/aligned_tRNAdb.sam
 	fi
