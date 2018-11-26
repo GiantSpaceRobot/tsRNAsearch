@@ -113,7 +113,9 @@ string_padder "$message"
 if [[ $pairedEnd = "True" ]]; then 
 
 	echo "
+
 	Paired-end read files
+	
 	"
 
 	file1_base=${file1##*/}    # Remove pathname
@@ -133,8 +135,6 @@ if [[ $pairedEnd = "True" ]]; then
 
 	# Run FastQC on newly trimmed files
 	fastqc -o $outDir/FastQC/ -f fastq $outDir/trim_galore_output/$trimmedFile1 $outDir/trim_galore_output/$trimmedFile2 
-	
-
 	message="Finished running FastQC. Moving onto alignment to tRNA database"
 	string_padder "$message"
 	
@@ -156,7 +156,6 @@ elif [[ $pairedEnd = "False" ]]; then
 	Single-end read file
 	
 	"
-	
 	singleFile_base=${singleFile##*/}    # Remove pathname
 	singleFile_basename="$( cut -d '.' -f 1 <<< "$singleFile_base" )" # Get filename before first occurence of .	
 	suffix="$( cut -d '.' -f 2- <<< "$singleFile_base" )" # Get full file suffix/entension
@@ -164,23 +163,21 @@ elif [[ $pairedEnd = "False" ]]; then
 	# Run Trim_Galore on single read file
 	trim_galore --stringency 10 --length 15 -o $outDir/trim_galore_output/ $singleFile
 	printf -v trimmedFile "%s_trimmed.%s" "$singleFile_basename" "$suffix"
-	
 	message="Trimming complete. Moving on to FastQC analysis"
 	string_padder "$message"
 
 	# Run FastQC on newly trimmed file
 	fastqc -o $outDir/FastQC/ -f fastq $outDir/trim_galore_output/$trimmedFile
-	
 	message="Finished running FastQC. Moving onto alignment to tRNA database"
 	string_padder "$message"
 
 	# Align trimmed reads to tRNA database using HISAT2/Tophat2
 	if [[ $oldAligner = "yes" ]]; then
-		tophat2 -p $CPUs -x 1 -o $outDir/tRNA-alignment/ DBs/bowtie2_index/hg19-wholetRNA-CCA.fa $outDir/trim_galore_output/$trimmedFile
+		tophat2 -p $CPUs -x 1 -o $outDir/tRNA-alignment/ DBs/bowtie2_index/hg19-wholetRNA-CCA $outDir/trim_galore_output/$trimmedFile
 		# Tophat2 using HG38 genome below
 		#tophat2 -p $CPUs -x 1 -o $outDir/tRNA-alignment/ DBs/bowtie2_index/hg38-tRNAs_CCA $outDir/trim_galore_output/$trimmedFile
 		bedtools bamtofastq -i $outDir/tRNA-alignment/unmapped.bam -fq $outDir/tRNA-alignment/unmapped.fastq
-		tophat2 -p $CPUs -x 1 -o $outDir/snomiRNA-alignment/ DBs/bowtie2_index/hg19-snomiRNA.fa $outDir/tRNA-alignment/unmapped.fastq
+		tophat2 -p $CPUs -x 1 -o $outDir/snomiRNA-alignment/ DBs/bowtie2_index/hg19-snomiRNA $outDir/tRNA-alignment/unmapped.fastq
 	else
 		hisat2 -p $CPUs -x DBs/hisat2_index/hg38-tRNAs_CCA -U $outDir/trim_galore_output/$trimmedFile -S $outDir/tRNA-alignment/aligned_tRNAdb.sam
 	fi
