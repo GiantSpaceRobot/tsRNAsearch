@@ -113,9 +113,7 @@ string_padder "$message"
 if [[ $pairedEnd = "True" ]]; then 
 
 	echo "
-
-	Paired-end read files
-	
+	Input: paired-end read files
 	"
 
 	file1_base=${file1##*/}    # Remove pathname
@@ -152,9 +150,7 @@ if [[ $pairedEnd = "True" ]]; then
 elif [[ $pairedEnd = "False" ]]; then
 
 	echo "
-	
-	Single-end read file
-	
+	Input: single-end read file
 	"
 	singleFile_base=${singleFile##*/}    # Remove pathname
 	singleFile_basename="$( cut -d '.' -f 1 <<< "$singleFile_base" )" # Get filename before first occurence of .	
@@ -178,6 +174,16 @@ elif [[ $pairedEnd = "False" ]]; then
 		#tophat2 -p $CPUs -x 1 -o $outDir/tRNA-alignment/ DBs/bowtie2_index/hg38-tRNAs_CCA $outDir/trim_galore_output/$trimmedFile
 		bedtools bamtofastq -i $outDir/tRNA-alignment/unmapped.bam -fq $outDir/tRNA-alignment/unmapped.fastq
 		tophat2 -p $CPUs -x 1 -o $outDir/snomiRNA-alignment/ DBs/bowtie2_index/hg19-snomiRNA $outDir/tRNA-alignment/unmapped.fastq
+		# tophat2 has a bug that causes it to crash if none of the reads map (I think). If it crashes (and no results are generated), use the unmapped.fastq from the tRNA alignment step
+		if [ ! -f $outDir/snomiRNA-alignment/accepted_hits.bam ]; then
+			echo "snomiRNA accepted_hits.bam file not found! Using unmapped.fastq file from tRNA alignment output"
+			unmappedReads="$outDir/tRNA-alignment/unmapped.fastq"
+		else
+			bedtools bamtofastq -i $outDir/snomiRNA-alignment/unmapped.bam -fq $outDir/snomiRNA-alignment/unmapped.fastq
+			unmappedReads="$outDir/snomiRNA-alignment/unmapped.fastq"
+		fi
+		tophat2 -p $CPUs -o $outDir/ncRNA-mRNA-alignment/ DBs/bowtie2_index/### $unmappedReads
+
 	else
 		hisat2 -p $CPUs -x DBs/hisat2_index/hg38-tRNAs_CCA -U $outDir/trim_galore_output/$trimmedFile -S $outDir/tRNA-alignment/aligned_tRNAdb.sam
 	fi
