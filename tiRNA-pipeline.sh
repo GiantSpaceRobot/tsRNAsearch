@@ -94,6 +94,7 @@ if [ ! -d $outDir ]; then
 	mkdir $outDir/trim_galore_output
 	mkdir $outDir/FastQC
 	mkdir $outDir/tRNA-alignment
+	mkdir $outdir/snomiRNA-alignment
 fi
 
 # Run Trim_Galore (paired-end or single-end)
@@ -173,6 +174,7 @@ elif [[ $pairedEnd = "False" ]]; then
 		# Tophat2 using HG38 genome below
 		#tophat2 -p $CPUs -x 1 -o $outDir/tRNA-alignment/ DBs/bowtie2_index/hg38-tRNAs_CCA $outDir/trim_galore_output/$trimmedFile
 		bedtools bamtofastq -i $outDir/tRNA-alignment/unmapped.bam -fq $outDir/tRNA-alignment/unmapped.fastq
+		tophat2 -p $CPUs -x 1 -o $outDir/snomiRNA-alignment/ DBs/bowtie2_index/hg19-snomiRNAs.fa $outDir/tRNA-alignment/unmapped.fastq
 	else
 		hisat2 -p $CPUs -x DBs/hisat2_index/hg38-tRNAs_CCA -U $outDir/trim_galore_output/$trimmedFile -S $outDir/tRNA-alignment/aligned_tRNAdb.sam
 	fi
