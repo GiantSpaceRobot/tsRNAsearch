@@ -105,7 +105,8 @@ if [ ! -d $outDir ]; then
 	mkdir $outDir/trim_galore_output
 	mkdir $outDir/FastQC
 	mkdir $outDir/tRNA-alignment
-	mkdir $outdir/snomiRNA-alignment
+	mkdir $outDir/snomiRNA-alignment
+	mkdir $outDir/HTSeq-count-output
 fi
 
 # Run Trim_Galore (paired-end or single-end)
