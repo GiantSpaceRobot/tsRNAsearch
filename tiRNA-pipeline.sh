@@ -5,6 +5,8 @@
 # Email: pauldonovan@rcsi.com
 # 19-Oct-2018
 
+# I tried to stick to Naser Monsei's original pipeline where possible. I used GTF files that I recovered from his work, and recreated FASTA files using these GTFs. The Tophat2 version (-T) of the pipeline is the version based on Naser's pipeline. 
+
 asciiArt() { echo "
   __  .____________  _______      _____    __________.__              .__  .__
 _/  |_|__\______   \ \      \    /  _  \   \______   \__|_____   ____ |  | |__| ____   ____
@@ -106,6 +108,7 @@ if [ ! -d $outDir ]; then
 	mkdir $outDir/FastQC
 	mkdir $outDir/tRNA-alignment
 	mkdir $outDir/snomiRNA-alignment
+	mkdir $outDir/mRNA-ncRNA-alignment
 	mkdir $outDir/HTSeq-count-output
 fi
 
@@ -205,11 +208,43 @@ elif [[ $pairedEnd = "False" ]]; then
 			unmappedReads="$outDir/snomiRNA-alignment/unmapped.fastq"
 		fi
 		
+
+		# mRNA-ncRNA alignment step goes here!
+
 		#tophat2 -p $CPUs -o $outDir/ncRNA-mRNA-alignment/ DBs/bowtie2_index/Homo_sapiens.GRCh37.dna.primary_assembly.fa $unmappedReads	
 	else
 		hisat2 -p $CPUs -x DBs/hisat2_index/hg38-tRNAs_CCA -U $outDir/trim_galore_output/$trimmedFile -S $outDir/tRNA-alignment/aligned_tRNAdb.sam
 		string_padder "This version of the pipeline is not finished yet. Please use the '-T' parameter to use the Tophat2 version"
 	fi
 fi
+
+
+# Produce read counts for the three alignment steps. If one of the alignment steps failed, use an empty htseq-count output file.
+string_padder "Alignment steps complete. Moving on to read counting using HTSeq-count"
+# Count for alignment step 1
+if [ ! -f $outDir/tRNA-alignment/accepted_hits.bam ]; then
+	cp $outDir/additional-files/empty.count $outDir/HTSeq-count-output/tRNA-alignment.count
+else
+	htseq-count -f bam $outDir/tRNA-alignment/accepted_hits.bam DBs/hg19-wholetRNA-CCA.gtf > $outDir/HTSeq-count-output/tRNA-alignment.count
+fi
+
+# Count for alignment step 2
+if [ ! -f $outDir/snomiRNA-alignment/accepted_hits.bam ]; then
+	cp $outDir/additional-files/empty.count $outDir/HTSeq-count-output/snomiRNA-alignment.count
+else
+	htseq-count -f bam $outDir/snomiRNA-alignment/accepted_hits.bam DBs/hg19-snomiRNA.gtf > $outDir/HTSeq-count-output/snomiRNA-alignment.count
+fi
+
+# Count for alignment step 3
+if [ ! -f $outDir/mRNA-ncRNA-alignment/accepted_hits.bam ]; then
+	cp $outDir/additional-files/empty.count $outDir/HTSeq-count-output/mRNA-ncRNA-alignment.count
+else
+	htseq-count -f bam $outDir/tRNA-alignment/accepted_hits.bam DBs/hg19-mRNA-ncRNA.gtf > $outDir/HTSeq-count-output/mRNA-ncRNA-alignment.count
+fi
+
+
+
+
+
 
 # Create a log file with the date, time and name of the input file in it's name
