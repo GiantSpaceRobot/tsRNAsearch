@@ -30,7 +30,7 @@ Options
 	Input file format should be FASTQ (.fq/.fastq) or gzipped FASTQ (.gz)
 	" 1>&2; }
 
-while getopts ":hTs:1:2:o:" o; do
+while getopts ":hTp:s:1:2:o:" o; do
     case "${o}" in
 		h)
 			asciiArt
@@ -49,6 +49,9 @@ while getopts ":hTs:1:2:o:" o; do
 			;;
 		o)
 			outDir="$OPTARG"
+			;;
+		p)
+			CPUs="$OPTARG"
 			;;
 		T)
 			oldAligner="yes"
@@ -82,16 +85,18 @@ function string_padder () {
 	"
 }
 
-# Determine number of CPUs available
-maxCPUs=$(grep -c ^processor /proc/cpuinfo)
-
-# If the variable "CPUs" is not an integer, default to use a value of 1
-re='^[0-9]+$'
-if ! [[ $maxCPUs =~ $re ]] ; then
-	echo "Error: Variable 'maxCPUs' is not an integer" >&2
-	maxCPUs=1
+# Estimate CPUs to use if a number has no been provided
+if [ -z "$CPUs" ]; then 
+	# Determine max number of CPUs available
+	maxCPUs=$(grep -c ^processor /proc/cpuinfo)
+	# If the variable "CPUs" is not an integer, default to use a value of 1
+	re='^[0-9]+$'
+	if ! [[ $maxCPUs =~ $re ]] ; then
+		echo "Error: Variable 'maxCPUs' is not an integer" >&2
+		maxCPUs=1
+	fi
+	CPUs=$(echo "$maxCPUs * 0.75" | bc | awk '{print int($1+0.5)}') # Use 75% of max CPU number
 fi
-CPUs=$(echo "$maxCPUs * 0.75" | bc | awk '{print int($1+0.5)}') # Use 75% of max CPU number
 
 # Determine if paired-end or single-end files were provided as input
 if [ -z "$singleFile" ]; then # If the singleEnd variable is empty
@@ -104,6 +109,7 @@ fi
 string_padder "Creating directory structure"
 if [ ! -d $outDir ]; then
 	mkdir $outDir
+	#mkdir $outDir/checkpoints
 	mkdir $outDir/trim_galore_output
 	mkdir $outDir/FastQC
 	mkdir $outDir/tRNA-alignment
@@ -111,6 +117,8 @@ if [ ! -d $outDir ]; then
 	mkdir $outDir/mRNA-ncRNA-alignment
 	mkdir $outDir/HTSeq-count-output
 fi
+
+#touch $outDir/checkpoints/checkpoint-1.flag
 
 # Run Trim_Galore (paired-end or single-end)
 string_padder "Trimming reads using Trim Galore"
@@ -157,7 +165,13 @@ elif [[ $pairedEnd = "False" ]]; then
 	
 	singleFile_base=${singleFile##*/}    # Remove pathname
 	singleFile_basename="$( cut -d '.' -f 1 <<< "$singleFile_base" )" # Get filename before first occurence of .
-	suffix="$( cut -d '.' -f 2- <<< "$singleFile_base" )" # Get full file suffix/entension
+	#suffix="$( cut -d '.' -f 2- <<< "$singleFile_base" )" # Get full file suffix/entension
+	if [[ $singleFile == *".gz"* ]]; then
+  		suffix="fq.gz"
+	else
+		suffix="fq"
+	fi
+	#suffix="fq"
 	printf -v trimmedFile "%s_trimmed.%s" "$singleFile_basename" "$suffix"
 	printf -v fastqcFile "%s_trimmed_fastqc.html" "$singleFile_basename"
 	
@@ -178,18 +192,23 @@ elif [[ $pairedEnd = "False" ]]; then
 		string_padder "Found FastQC file. Skipping this step."
 	fi
 
+	#touch $outDir/checkpoints/checkpoint-2.flag
+
 	# Align trimmed reads to tRNA database using HISAT2/Tophat2
 	if [[ $oldAligner = "yes" ]]; then
+
+		# Tophat2 using HG38 genome below
+		#tophat2 -p $CPUs -x 1 -o $outDir/tRNA-alignment/ DBs/bowtie2_index/hg38-tRNAs_CCA $outDir/trim_galore_output/$trimmedFile
+
 		if [ ! -f $outDir/tRNA-alignment/align_summary.txt ]; then
 			string_padder "Running tRNA alignment step..."
-			tophat2 -p $CPUs -x 1 -o $outDir/tRNA-alignment/ DBs/bowtie2_index/hg19-wholetRNA-CCA $outDir/trim_galore_output/$trimmedFile
+			/home/paul/Documents/Applications/tophat/tophat-2.0.14.Linux_x86_64/tophat -p $CPUs -x 1 -o $outDir/tRNA-alignment/ DBs/bowtie2_index/hg19-wholetRNA-CCA $outDir/trim_galore_output/$trimmedFile
 			bedtools bamtofastq -i $outDir/tRNA-alignment/unmapped.bam -fq $outDir/tRNA-alignment/unmapped.fastq	
 		else
 	        string_padder "Found tRNA alignment file. Skipping this step."
 		fi
 		
-		# Tophat2 using HG38 genome below
-		#tophat2 -p $CPUs -x 1 -o $outDir/tRNA-alignment/ DBs/bowtie2_index/hg38-tRNAs_CCA $outDir/trim_galore_output/$trimmedFile
+		exit
 		
 		# tophat2 has a bug that causes it to crash if none of the reads map (I think). If it crashes (and no results are generated), use the unmapped.fastq from the tRNA alignment step
 		if [ ! -f $outDir/snomiRNA-alignment/unmapped.fastq ]; then # If this file was not generated, try and align the unmapped reads from the tRNA alignment	
@@ -206,7 +225,8 @@ elif [[ $pairedEnd = "False" ]]; then
 			bedtools bamtofastq -i $outDir/snomiRNA-alignment/unmapped.bam -fq $outDir/snomiRNA-alignment/unmapped.fastq
 			unmappedReads="$outDir/snomiRNA-alignment/unmapped.fastq"
 		fi
-		if [ ! -f $outDir/mRNA-ncRNA-alignment/unmapped.fastq ]; then # If this file was not generated, try and align the unmapped reads from the tRNA alignment	
+		#touch $outDir/checkpoints/checkpoint-3.flag
+		if [ ! -f $outDir/mRNA-ncRNA-alignment/unmapped.bam ]; then # If this file was not generated, try and align the unmapped reads from the tRNA alignment	
 			string_padder "Running mRNA/ncRNA alignment step..."
 			tophat2 -p $CPUs -o $outDir/mRNA-ncRNA-alignment/ DBs/bowtie2_index/Homo_sapiens.GRCh37.dna.primary_assembly $unmappedReads		
 		fi		
@@ -217,15 +237,17 @@ elif [[ $pairedEnd = "False" ]]; then
 	fi
 fi
 
+#touch $outDir/checkpoints/checkpoint-4.flag
 
 # Produce read counts for the three alignment steps. If one of the alignment steps failed, use an empty htseq-count output file.
 string_padder "Alignment steps complete. Moving on to read-counting using HTSeq-count"
+
 # Count for alignment step 1
 if [ ! -f $outDir/tRNA-alignment/accepted_hits.bam ]; then
 	echo "
 No alignment file found for tRNA alignment. Using blank count file instead
 "
-	cp additional-files/empty.count $outDir/HTSeq-count-output/tRNA-alignment.count
+	cp additional-files/empty_tRNA.count $outDir/HTSeq-count-output/tRNA-alignment.count
 else
 	echo "
 Counting tRNA alignment reads
@@ -238,7 +260,7 @@ if [ ! -f $outDir/snomiRNA-alignment/accepted_hits.bam ]; then
 	echo "
 No alignment file found for sno/miRNA alignment. Using blank count file instead
 "
-	cp additional-files/empty.count $outDir/HTSeq-count-output/snomiRNA-alignment.count
+	cp additional-files/empty_snomiRNA.count $outDir/HTSeq-count-output/snomiRNA-alignment.count
 else
 	echo "
 Counting sno/miRNA alignment reads
@@ -246,12 +268,13 @@ Counting sno/miRNA alignment reads
 	htseq-count -f bam $outDir/snomiRNA-alignment/accepted_hits.bam DBs/hg19-snomiRNA.gtf > $outDir/HTSeq-count-output/snomiRNA-alignment.count
 fi
 
+#touch $outDir/checkpoints/checkpoint-5.flag
 # Count for alignment step 3
 if [ ! -f $outDir/mRNA-ncRNA-alignment/accepted_hits.bam ]; then
 	echo "
 No alignment file found for mRNA/ncRNA alignment. Using blank count file instead
 "
-	cp additional-files/empty.count $outDir/HTSeq-count-output/mRNA-ncRNA-alignment.count
+	cp additional-files/empty_mRNA-ncRNA.count $outDir/HTSeq-count-output/mRNA-ncRNA-alignment.count
 else
 	echo "
 Counting mRNA/ncRNA alignment reads
@@ -259,9 +282,9 @@ Counting mRNA/ncRNA alignment reads
 	htseq-count -f bam $outDir/tRNA-alignment/accepted_hits.bam DBs/hg19-mRNA-ncRNA.gtf > $outDir/HTSeq-count-output/mRNA-ncRNA-alignment.count
 fi
 
-
-
-
+#touch $outDir/checkpoints/checkpoint-6.flag
 
 
 # Create a log file with the date, time and name of the input file in it's name
+
+
