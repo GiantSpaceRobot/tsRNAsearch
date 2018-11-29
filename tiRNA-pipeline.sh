@@ -202,33 +202,52 @@ elif [[ $pairedEnd = "False" ]]; then
 
 		if [ ! -f $outDir/tRNA-alignment/align_summary.txt ]; then
 			string_padder "Running tRNA alignment step..."
-			/home/paul/Documents/Applications/tophat/tophat-2.0.14.Linux_x86_64/tophat -p $CPUs -x 1 -o $outDir/tRNA-alignment/ DBs/bowtie2_index/hg19-wholetRNA-CCA $outDir/trim_galore_output/$trimmedFile
-			bedtools bamtofastq -i $outDir/tRNA-alignment/unmapped.bam -fq $outDir/tRNA-alignment/unmapped.fastq	
+			tophat2 -p $CPUs -x 1 -o $outDir/tRNA-alignment DBs/bowtie2_index/hg19-wholetRNA-CCA $outDir/trim_galore_output/$trimmedFile
+			if [ -f $outDir/tRNA-alignment/unmapped.bam ]; then  #If tophat2 successfully mapped reads, convert the unmapped to FASTQ
+				bedtools bamtofastq -i $outDir/tRNA-alignment/unmapped.bam -fq $outDir/tRNA-alignment/$trimmedFile	
+			else
+				echo "
+			tRNA alignment output not found. Reads likely did not map to tRNA reference. 
+			Using trimmed reads from Trim_Galore output.
+			"
+				mv $outDir/trim_galore_output/$trimmedFile $outDir/tRNA-alignment/$trimmedFile
+			fi
 		else
 	        string_padder "Found tRNA alignment file. Skipping this step."
 		fi
-		
-		exit
-		
+
 		# tophat2 has a bug that causes it to crash if none of the reads map (I think). If it crashes (and no results are generated), use the unmapped.fastq from the tRNA alignment step
-		if [ ! -f $outDir/snomiRNA-alignment/unmapped.fastq ]; then # If this file was not generated, try and align the unmapped reads from the tRNA alignment	
+		if [ ! -f $outDir/snomiRNA-alignment/$trimmedFile ]; then # If this file was not generated, try and align the unmapped reads from the tRNA alignment	
 			string_padder "Runnng sno/miRNA alignment step..."
-			tophat2 -p $CPUs -x 1 -o $outDir/snomiRNA-alignment/ DBs/bowtie2_index/hg19-snomiRNA $outDir/tRNA-alignment/unmapped.fastq		
+			tophat2 -p $CPUs -x 1 -o $outDir/snomiRNA-alignment/ DBs/bowtie2_index/hg19-snomiRNA $outDir/tRNA-alignment/$trimmedFile		
 		fi
 		if [ ! -f $outDir/snomiRNA-alignment/align_summary.txt ]; then # If this file was still not generated, use the unmapped FASTQ from the first alignment output
 			echo "
 			snomiRNA alignment output not found. Reads likely did not map to sno/miRNA reference. 
 			Using unmapped.fastq file from tRNA alignment output.
 			"
-			unmappedReads="$outDir/tRNA-alignment/unmapped.fastq"
+			mv $outDir/tRNA-alignment/$trimmedFile $outDir/snomiRNA-alignment/$trimmedFile
+			#unmappedReads="$outDir/tRNA-alignment/$trimmedFile"
 		else
-			bedtools bamtofastq -i $outDir/snomiRNA-alignment/unmapped.bam -fq $outDir/snomiRNA-alignment/unmapped.fastq
-			unmappedReads="$outDir/snomiRNA-alignment/unmapped.fastq"
+			bedtools bamtofastq -i $outDir/snomiRNA-alignment/unmapped.bam -fq $outDir/snomiRNA-alignment/$trimmedFile
+			#unmappedReads="$outDir/snomiRNA-alignment/$trimmedFile"
 		fi
 		#touch $outDir/checkpoints/checkpoint-3.flag
-		if [ ! -f $outDir/mRNA-ncRNA-alignment/unmapped.bam ]; then # If this file was not generated, try and align the unmapped reads from the tRNA alignment	
+		if [ ! -f $outDir/mRNA-ncRNA-alignment/align_summary.txt ]; then # If this file was not generated, try and align the unmapped reads from the tRNA alignment	
 			string_padder "Running mRNA/ncRNA alignment step..."
-			tophat2 -p $CPUs -o $outDir/mRNA-ncRNA-alignment/ DBs/bowtie2_index/Homo_sapiens.GRCh37.dna.primary_assembly $unmappedReads		
+			tophat2 -p $CPUs -o $outDir/mRNA-ncRNA-alignment/ DBs/bowtie2_index/Homo_sapiens.GRCh37.dna.primary_assembly $outDir/snomiRNA-alignment/$trimmedFile		
+			if [ -f $outDir/mRNA-ncRNA-alignment/unmapped.bam ]; then  #If tophat2 successfully mapped reads, convert the unmapped to FASTQ
+				bedtools bamtofastq -i $outDir/mRNA-ncRNA-alignment/unmapped.bam -fq $outDir/mRNA-ncRNA-alignment/$trimmedFile
+			else
+				echo "
+			mRNA/ncRNA alignment output not found. Reads likely did not map to mRNA/ncRNA reference. 
+			"
+				mv $outDir/snomiRNA-alignment/$trimmedFile $outDir/mRNA-ncRNA-alignment/$trimmedFile
+				unmappedReadCount="$(zcat $outDir/mRNA-ncRNA-alignment/$trimmedFile|wc -l)/4|bc"
+				string_padder "$unmappedReadCount"
+        	fi
+		else
+			string_padder "Found mRNA/ncRNA alignment file. Skipping this step"
 		fi		
 
 	else
@@ -279,7 +298,7 @@ else
 	echo "
 Counting mRNA/ncRNA alignment reads
 "
-	htseq-count -f bam $outDir/tRNA-alignment/accepted_hits.bam DBs/hg19-mRNA-ncRNA.gtf > $outDir/HTSeq-count-output/mRNA-ncRNA-alignment.count
+	htseq-count -f bam $outDir/mRNA-ncRNA-alignment/accepted_hits.bam DBs/hg19-mRNA-ncRNA.gtf > $outDir/HTSeq-count-output/mRNA-ncRNA-alignment.count
 fi
 
 #touch $outDir/checkpoints/checkpoint-6.flag
