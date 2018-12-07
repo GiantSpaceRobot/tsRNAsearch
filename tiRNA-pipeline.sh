@@ -202,7 +202,7 @@ elif [[ $pairedEnd = "False" ]]; then
 
 		if [ ! -f $outDir/tRNA-alignment/align_summary.txt ]; then
 			if [ ! -d DBs/tRNA_DB ]; then
-				echo "Creating one-time tRNA transcriptome"
+				string_padder "Creating one-time tRNA transcriptome"
 				tophat2 -p $CPUs -G DBs/hg19-wholetRNA-CCA.gtf --transcriptome-index=DBs/tRNA_DB/known DBs/bowtie2_index/hg19-wholetRNA-CCA
 			fi
 			string_padder "Running tRNA alignment step..."
@@ -221,13 +221,9 @@ elif [[ $pairedEnd = "False" ]]; then
 	        string_padder "Found tRNA alignment file. Skipping this step."
 		fi
 
-		
-		### This section has problems that I can't figure out. Tophat2 will not build the transcriptome as I want it to. 
-		### My options are to skip this step completely, or use tophat2 mapping to the bowtie2 build of the FASTA sequence.
-		# tophat2 has a bug that causes it to crash if none of the reads map (I think). If it crashes (and no results are generated), use the unmapped.fastq from the tRNA alignment step
 		if [ ! -f $outDir/snomiRNA-alignment/$trimmedFile ]; then # If this file was not generated, try and align the unmapped reads from the tRNA alignment
 			if [ ! -d DBs/snomiRNA_DB ]; then
-				echo "Creating one-time sno/miRNA transcriptome"
+				string_padder "Creating one-time sno/miRNA transcriptome"
 				tophat2 -p $CPUs -G DBs/hg19-snomiRNA.gtf --transcriptome-index=DBs/snomiRNA_DB/known DBs/bowtie2_index/Homo_sapiens.GRCh37.dna.primary_assembly
 			fi
 			string_padder "Runnng sno/miRNA alignment step..."
@@ -239,19 +235,15 @@ elif [[ $pairedEnd = "False" ]]; then
 				Using unmapped.fastq file from tRNA alignment output.
 				"
 			mv $outDir/tRNA-alignment/$trimmedFile $outDir/snomiRNA-alignment/$trimmedFile
-			#unmappedReads="$outDir/tRNA-alignment/$trimmedFile"
 		else
 			samtools index $outDir/snomiRNA-alignment/accepted_hits.bam
 			bedtools bamtofastq -i $outDir/snomiRNA-alignment/unmapped.bam -fq $outDir/snomiRNA-alignment/$trimmedFile
-			#unmappedReads="$outDir/snomiRNA-alignment/$trimmedFile"
 		fi
-		
-		
 		
 		#touch $outDir/checkpoints/checkpoint-3.flag
 		if [ ! -f $outDir/mRNA-ncRNA-alignment/align_summary.txt ]; then # If this file was not generated, try and align the unmapped reads from the tRNA alignment	
 			if [ ! -d DBs/mRNA-ncRNA_DB ]; then
-				echo "Creating one-time sno/miRNA transcriptome"
+				string_padder "Creating one-time sno/miRNA transcriptome"
 				tophat2 -p $CPUs -G DBs/hg19-mRNA-ncRNA.gtf --transcriptome-index=DBs/mRNA-ncRNA_DB/known DBs/bowtie2_index/Homo_sapiens.GRCh37.dna.primary_assembly
 			fi
 			string_padder "Running mRNA/ncRNA alignment step..."
@@ -266,7 +258,8 @@ elif [[ $pairedEnd = "False" ]]; then
 				mv $outDir/snomiRNA-alignment/$trimmedFile $outDir/mRNA-ncRNA-alignment/$trimmedFile
 				
 				## What works here:
-				$(zcat $outDir/mRNA-ncRNA-alignment/$trimmedFile | wc -l)/4 | bc
+				string_padder "Look at this:"
+				echo $(zcat $outDir/mRNA-ncRNA-alignment/$trimmedFile | wc -l)/4 | bc
 				unmappedReadCount="$(zcat $outDir/mRNA-ncRNA-alignment/$trimmedFile | wc -l)/4|bc"
 				##
 				
