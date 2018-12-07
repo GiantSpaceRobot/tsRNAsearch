@@ -1,8 +1,8 @@
 #!/bin/sh
-# Usage: ./FindFungi-0.23.sh /path/to/FASTA-file.fastq File-name
+# Usage: ./Master.sh /path/to/directory/with/files/
 # Author: Paul Donovan 
-# Email: pauldonovandonegal@gmail.com
-# 11-Jul-2018
+# Email: pauldonovan@rcsi.com
+# 7-12-2018
 
 echo "Started at $(date)"
 StartTime="Pipeline initiated at $(date)" 
@@ -14,10 +14,10 @@ if [ $# -eq 0 ]; then
 fi
 
 for f in $1/*; do
-    singleFile_base=${$1##*/}    # Remove pathname
-	singleFile_basename="$( cut -d '.' -f 1 <<< '$singleFile_base' )" # Get filename before first occurence of .	
-	File=$(basename $f)
-    ./tiRNA-pipeline.sh -s $1 -o Results/$File -T
+	file_base=$(basename $f)
+	filename=${file_base%.*}
+	echo $filename
+	./tiRNA-pipeline.sh -s $f -o Results/$filename -T
     wait
 done
 
