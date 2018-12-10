@@ -258,9 +258,9 @@ elif [[ $pairedEnd = "False" ]]; then
 				mv $outDir/snomiRNA-alignment/$trimmedFile $outDir/mRNA-ncRNA-alignment/$trimmedFile
 				
 				## What works here:
-				string_padder "Look at this:"
-				echo $(zcat $outDir/mRNA-ncRNA-alignment/$trimmedFile | wc -l)/4 | bc
-				unmappedReadCount="$(zcat $outDir/mRNA-ncRNA-alignment/$trimmedFile | wc -l)/4|bc"
+				#string_padder "Look at this:"
+				#echo $(zcat $outDir/mRNA-ncRNA-alignment/$trimmedFile | wc -l)/4 | bc
+				#unmappedReadCount="$(zcat $outDir/mRNA-ncRNA-alignment/$trimmedFile | wc -l)/4|bc"
 				##
 				
 				string_padder "$unmappedReadCount"
