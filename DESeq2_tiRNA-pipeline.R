@@ -1,4 +1,6 @@
 #!/usr/bin/env Rscript
+# version 6
+# Last update 13-12-18
 
 args = commandArgs(trailingOnly=TRUE)
 
@@ -11,7 +13,7 @@ if (length(args)==0) {
   myPath <- args[1]
   if (dir.exists(myPath)) {
     message("The directory provided exists. Carrying out hierarchical clustering of filenames to classify files into groups.")
-    ### A weird idea of clustering the filenames based on string similarity 
+    ### Clustering the filenames based on string similarity 
     ### (so I don't need to ask the user which samples belong to the same group)
     file.names <- dir(myPath, pattern =".count")
     d <- adist(file.names)
