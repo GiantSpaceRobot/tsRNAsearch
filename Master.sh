@@ -1,20 +1,14 @@
-#!/bin/sh
-# Usage: ./Master.sh /path/to/directory/with/files/
+#!/bin/bash
 # Author: Paul Donovan 
 # Email: pauldonovan@rcsi.com
-# 7-12-2018
+# 12-12-2018
 
 echo "Started at $(date)"
 StartTime="Pipeline initiated at $(date)" 
 
-### Precautionary measures before running analysis
-if [ $# -eq 0 ]; then
-	echo "No arguments provided"
-	exit 1
-fi
-
-# Stolen from tiRNA-pipeline script, needs updating.
-usage() { echo "Usage (single-end): $0 -p -d Path/To/Input/Files -o OutputDirectory/ -e ExperimentLayout.csv" 1>&2; }
+usage() { echo "
+	Usage: $0 -p -d Path/To/Input/Files -o OutputDirectory/ -e ExperimentLayout.csv
+	" 1>&2; }
 info() { echo "
 Options
 
@@ -40,15 +34,19 @@ while getopts ":hpt:d:e:o:" o; do
 			;;
 		d)
 			inDir="$OPTARG"
+			echo "$inDir"
 			;;
 		e)
 			expFile="$OPTARG"
+			echo "$expFile"
 			;;
 		o)
 			outDir="$OPTARG"
+			echo "$outDir"
 			;;
 		t)
 			CPUs="$OPTARG"
+			echo "$CPUs"
 			;;
 		*)
             echo "Error in input parameters!"
@@ -58,7 +56,12 @@ while getopts ":hpt:d:e:o:" o; do
     esac
 done
 
-echo "Started at $(date)" # Print pipeline start-time
+### If no command line arguments provided, quit
+if [ -z "$*" ] ; then
+    echo "No command line parameters provided!"
+	usage
+    exit 0
+fi
 
 for f in $inDir/*; do
 	mkdir -p $outDir
@@ -66,9 +69,9 @@ for f in $inDir/*; do
 	mkdir -p $outDir/Results/temp_files
 	file_base=$(basename $f)
 	filename=${file_base%.*}
-	./tiRNA-pipeline.sh -s $f -o $outDir/Results/$filename -p $CPUs -T
-    wait
-	cat Results/$filename/HTSeq-count-output/*.count | grep -v ^__ | sort -k1,1 > $outDir/Results/temp_files/$filename.all_features.count
+	./tiRNA-pipeline.sh -s "$f" -o "$outDir/Results/$filename" -p "$CPUs" -T
+	wait
+	cat $outDir/Results/$filename/HTSeq-count-output/*.count | grep -v ^__ | sort -k1,1 > $outDir/Results/temp_files/$filename.all_features.count
 	sed -i '1s/^/Features\t'"$filename"'\n/' $outDir/Results/temp_files/$filename.all_features.count
 	readsMapped=$(awk '{sum+=$2} END{print sum;}' $outDir/Results/temp_files/$filename.all_features.count)
 	echo $readsMapped >> $outDir/Results/$filename/Stats.log
@@ -77,7 +80,6 @@ done
 ### Gather count files
 awk '{print $1}' $outDir/Results/temp_files/$filename.all_features.count > $outDir/Results/temp_files/HTSeq.all_features
 for f in $outDir/Results/temp_files/*count; do
-	head $f
 	awk '{print $2}' $f | paste $outDir/Results/temp_files/HTSeq.all_features - >> $outDir/Results/temp_files/HTSeq.temp
 	mv $outDir/Results/temp_files/HTSeq.temp $outDir/Results/temp_files/HTSeq.all_features
 done
