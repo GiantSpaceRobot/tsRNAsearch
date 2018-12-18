@@ -85,6 +85,17 @@ function string_padder () {
 	"
 }
 
+function bam_to_plots () {
+	### Steps for plotting regions with high variation in coverage
+	bedtools genomecov -d -split -ibam $1/accepted_hits.bam > $1/accepted_hits.genomecov
+	python scripts/Bedgraph_collapse-tRNAs.py $1/accepted_hits.genomecov $1/accepted_hits_collapsed.genomecov
+	sort -k1,1 -k2,2n $1/accepted_hits_collapsed.genomecov > $1/accepted_hits_collapsed_sorted.genomecov
+	python scripts/Bedgraph-analyser.py $1/accepted_hits_collapsed_sorted.genomecov $1/accepted_hits_collapsed_sorted.tsv
+	awk '$2>10' $1/accepted_hits_collapsed_sorted.tsv > $1/accepted_hits_collapsed_sorted_mean-std.tsv
+	sort -k4,4nr $1/accepted_hits_collapsed_sorted_mean-std.tsv > $1/accepted_hits_collapsed_sorted_mean-std_sorted.tsv
+}
+
+
 # Estimate CPUs to use if a number has no been provided
 if [ -z "$CPUs" ]; then 
 	# Determine max number of CPUs available
@@ -107,16 +118,14 @@ fi
 
 # Check if the output directory exists. If not, create it
 string_padder "Creating directory structure"
-if [ ! -d $outDir ]; then
-	mkdir $outDir
-	#mkdir $outDir/checkpoints
-	mkdir $outDir/trim_galore_output
-	mkdir $outDir/FastQC
-	mkdir $outDir/tRNA-alignment
-	mkdir $outDir/snomiRNA-alignment
-	mkdir $outDir/mRNA-ncRNA-alignment
-	mkdir $outDir/HTSeq-count-output
-fi
+mkdir -p $outDir
+#mkdir $outDir/checkpoints
+mkdir -p $outDir/trim_galore_output
+mkdir -p $outDir/FastQC
+mkdir -p $outDir/tRNA-alignment
+mkdir -p $outDir/snomiRNA-alignment
+mkdir -p $outDir/mRNA-ncRNA-alignment
+mkdir -p $outDir/HTSeq-count-output
 
 #touch $outDir/checkpoints/checkpoint-1.flag
 
@@ -195,6 +204,7 @@ elif [[ $pairedEnd = "False" ]]; then
 	#touch $outDir/checkpoints/checkpoint-2.flag
 
 	# Align trimmed reads to tRNA database using HISAT2/Tophat2
+	
 	if [[ $oldAligner = "yes" ]]; then
 
 		# Tophat2 using HG38 genome below
@@ -270,8 +280,9 @@ elif [[ $pairedEnd = "False" ]]; then
 		fi		
 
 	else
-		hisat2 -p $CPUs -x DBs/hisat2_index/hg38-tRNAs_CCA -U $outDir/trim_galore_output/$trimmedFile -S $outDir/tRNA-alignment/aligned_tRNAdb.sam
+		#hisat2 -p $CPUs -x DBs/hisat2_index/hg38-tRNAs_CCA -U $outDir/trim_galore_output/$trimmedFile -S $outDir/tRNA-alignment/aligned_tRNAdb.sam
 		string_padder "This version of the pipeline is not finished yet. Please use the '-T' parameter to use the Tophat2 version"
+		exit 1
 	fi
 fi
 
@@ -291,6 +302,7 @@ else
 Counting tRNA alignment reads
 "
 	htseq-count -f bam $outDir/tRNA-alignment/accepted_hits.bam DBs/hg19-wholetRNA-CCA.gtf > $outDir/HTSeq-count-output/tRNA-alignment.count
+	bam_to_plots $outDir/tRNA-alignment
 fi
 
 # Count for alignment step 2
@@ -304,6 +316,7 @@ else
 Counting sno/miRNA alignment reads
 "
 	htseq-count -f bam $outDir/snomiRNA-alignment/accepted_hits.bam DBs/hg19-snomiRNA.gtf > $outDir/HTSeq-count-output/snomiRNA-alignment.count
+    bam_to_plots $outDir/snomiRNA-alignment
 fi
 
 #touch $outDir/checkpoints/checkpoint-5.flag
@@ -318,6 +331,7 @@ else
 Counting mRNA/ncRNA alignment reads
 "
 	htseq-count -f bam $outDir/mRNA-ncRNA-alignment/accepted_hits.bam DBs/Homo_sapiens.GRCh37.87.gtf > $outDir/HTSeq-count-output/mRNA-ncRNA-alignment.count
+    bam_to_plots $outDir/mRNA-ncRNA-alignment
 fi
 
 #touch $outDir/checkpoints/checkpoint-6.flag
