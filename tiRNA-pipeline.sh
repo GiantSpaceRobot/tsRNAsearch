@@ -85,14 +85,27 @@ function string_padder () {
 	"
 }
 
-function bam_to_plots () {
-	### Steps for plotting regions with high variation in coverage
+function bam_to_plots () {  ### Steps for plotting regions with high variation in coverage
+
+	### Output coverage of all features we are interested in (e.g. tRNAs)
 	bedtools genomecov -d -split -ibam $1/accepted_hits.bam > $1/accepted_hits.genomecov
-	python scripts/Bedgraph_collapse-tRNAs.py $1/accepted_hits.genomecov $1/accepted_hits_collapsed.genomecov
-	sort -k1,1 -k2,2n $1/accepted_hits_collapsed.genomecov > $1/accepted_hits_collapsed_sorted.genomecov
-	python scripts/Bedgraph-analyser.py $1/accepted_hits_collapsed_sorted.genomecov $1/accepted_hits_collapsed_sorted.tsv
-	awk '$2>10' $1/accepted_hits_collapsed_sorted.tsv > $1/accepted_hits_collapsed_sorted_mean-std.tsv
-	sort -k4,4nr $1/accepted_hits_collapsed_sorted_mean-std.tsv > $1/accepted_hits_collapsed_sorted_mean-std_sorted.tsv
+	### If we are working with tRNAs, collapse all tRNAs based on same isoacceptor
+	if [ -z "$2" ]; then
+		python scripts/Bedgraph_collapse-tRNAs.py $1/accepted_hits.genomecov $1/accepted_hits_collapsed.genomecov
+		mv $1/accepted_hits.genomecov $1/accepted_hits_original.genomecov 
+		mv $1/accepted_hits_collapsed.genomecov $1/accepted_hits.genomecov	
+	fi
+	### Sort by tRNA isoacceptor and nucleotide position
+	sort -k1,1 -k2,2n $1/accepted_hits.genomecov > $1/accepted_hits_sorted.genomecov
+	### Plot the coverage of all tRNA isoacceptors
+	Rscript scripts/Bedgraph_plotter-v3.R $1/accepted_hits_sorted.genomecov $1/accepted_hits_sorted.pdf
+	### Output the mean, standard deviation and coefficient of variance of each isoacceptor
+	python scripts/Bedgraph-analyser.py $1/accepted_hits_sorted.genomecov $1/accepted_hits_sorted.tsv
+	### Gather all tRNA isoacceptors with at least a mean coverage of 10
+	awk '$2>10' $1/accepted_hits_sorted.tsv > $1/accepted_hits_sorted_mean-std.tsv
+	### Sort the remaining tRNA isoacceptors by coef. of variance
+	sort -k4,4nr $1/accepted_hits_sorted_mean-std.tsv > $1/accepted_hits_sorted_mean-std_sorted.tsv
+		 
 }
 
 
@@ -302,7 +315,7 @@ else
 Counting tRNA alignment reads
 "
 	htseq-count -f bam $outDir/tRNA-alignment/accepted_hits.bam DBs/hg19-wholetRNA-CCA.gtf > $outDir/HTSeq-count-output/tRNA-alignment.count
-	bam_to_plots $outDir/tRNA-alignment
+	bam_to_plots $outDir/tRNA-alignment tRNA
 fi
 
 # Count for alignment step 2
@@ -331,7 +344,7 @@ else
 Counting mRNA/ncRNA alignment reads
 "
 	htseq-count -f bam $outDir/mRNA-ncRNA-alignment/accepted_hits.bam DBs/Homo_sapiens.GRCh37.87.gtf > $outDir/HTSeq-count-output/mRNA-ncRNA-alignment.count
-    bam_to_plots $outDir/mRNA-ncRNA-alignment
+    #bam_to_plots $outDir/mRNA-ncRNA-alignment
 fi
 
 #touch $outDir/checkpoints/checkpoint-6.flag
