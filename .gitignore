@@ -6,4 +6,6 @@ temp_files/
 nohup.out
 DE_Results/
 exp_layout.csv
-scripts/
+Subset1/
+Subset2/
+nohup*
