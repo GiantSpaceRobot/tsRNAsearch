@@ -72,12 +72,17 @@ if (length(args)==0) {
   message("A .csv file was provided, and the directory provided exists.")
 }
 
-### Make sure path name ends in slash
+### Make sure path name starts and ends in slash (need full path name)
+if (startsWith(myPath, "/") == TRUE) {
+} else {
+  stop("Directory path must be full path and must begin with '/'")
+}
+### Must end in slash
 if (substring(myPath, nchar(myPath)) == "/") {
-  # Do nothing
 } else {
   myPath <- paste0(myPath, "/")
 }
+
 ### A variable that will act as a prefix to all output files
 ResultsFile <- paste0(Condition1,"-vs-",Condition2)
 
@@ -103,36 +108,37 @@ library(ggplot2)
 ### Function to carry out DESeq2 analysis on provided files
 DESeq2.function <- function(path.to.files){
   
-  ### Read files
+  ### Create checkpoints (for simple degbugging) 
   count <- 0
-  ###
   count <- count + 1
   print(paste0("Checkpoint ", count))
-  ###
-  file.names <- dir(pattern =".count")
+  
+  ### Read files
+  file.names <- dir(path.to.files, pattern =".count")
   cDataAll <- NULL
   for (i in 1:length(file.names)){
-    full.path <- file.names[i]
-    file <- read.table(full.path)
+    full.path <- paste0(path.to.files, file.names[i])
+    file <- read.table(full.path, header = TRUE)
     cDataAll <- cbind(cDataAll, file[,2])
   }
-  cDataAll[is.na(d)] <- 0   # Replace NAs with 0
+  colnames(cDataAll) <- (file.names)
   rownames(cDataAll) <- file[,1]
-  colnames(cDataAll) <- file.names
+  
   ###
   count <- count + 1
   print(paste0("Checkpoint ", count))
+  
   ###
   groups <- factor(x=c(rep(Condition1, ReplicateNumber1), rep(Condition2, ReplicateNumber2)), levels=c(Condition1, Condition2))
   tpm <- t(t(cDataAll)/colSums(cDataAll))*1e6
   inlog <- log(tpm)
   colLabel <- c(rep("#E41A1C", ReplicateNumber1), rep("#377EB8", ReplicateNumber2))
   colTy <- c(rep(1:ReplicateNumber1, ReplicateNumber1), rep(1:ReplicateNumber2, ReplicateNumber2))
+  
   ###
   count <- count + 1
   print(paste0("Checkpoint ", count))
-  ###
-  
+
   ### Create a density plot
   pdf(paste0("DE_Results/", ResultsFile, "_Density-Plot.pdf"),
       width=12,height=12)
@@ -152,7 +158,7 @@ DESeq2.function <- function(path.to.files){
   ###
   count <- count + 1
   print(paste0("Checkpoint ", count))
-  ###
+
   ### Differential Expression Analysis
   colData <- DataFrame(condition=groups) 
   dds <- DESeqDataSetFromMatrix(cDataAll, colData, formula(~condition))
@@ -163,7 +169,7 @@ DESeq2.function <- function(path.to.files){
   ###
   count <- count + 1
   print(paste0("Checkpoint ", count))
-  ###
+
   ### Carry out a log transformation of the DESeq2 data set
   rld <- rlogTransformation(dds)
 
@@ -176,7 +182,7 @@ DESeq2.function <- function(path.to.files){
   ###
   count <- count + 1
   print(paste0("Checkpoint ", count))
-  ###
+
   ### Convert the rld transformation into a matrix
   rld.matrx <- assay(rld)   
   rld.df <- data.frame(rld.matrx)
@@ -196,10 +202,10 @@ DESeq2.function <- function(path.to.files){
             srtCol=45,
             main="Sample Distance Matrix")
   dev.off()
+  
   ###
   count <- count + 1
   print(paste0("Checkpoint ", count))
-  ###
   
   ### Principal component analysis
   #Tpm PCA plot (not DESeq2)
@@ -231,7 +237,7 @@ DESeq2.function <- function(path.to.files){
   ###
   count <- count + 1
   print(paste0("Checkpoint ", count))
-  ###
+
   # PCA plot that won't print to PDF
   #pdf(paste0("DE_Results/", ResultsFile, "_PCA.pdf"),
   #    width=12,height=12)
@@ -250,10 +256,11 @@ DESeq2.function <- function(path.to.files){
   } else {
     dir.create("DE_Results/DESeq2")
   }
+  
   ###
   count <- count + 1
   print(paste0("Checkpoint ", count))
-  ###
+
   write.csv(as.data.frame(res), file=paste0("DE_Results/DESeq2/", ResultsFile, "_DESeq2-output.csv"))
   
   up <- (res[!is.na(res$padj) & res$padj <= 0.1 &
@@ -274,52 +281,17 @@ DESeq2.function <- function(path.to.files){
               col.names=NA,
               row.names=TRUE, 
               quote = FALSE)
+  
   ###
   count <- count + 1
   print(paste0("Checkpoint ", count))
-  ###
+
   }
 
-#print(myPath)
-#print(lvls.df)
-#print("\n\n\n")
-path.to.files <- "/home/paul/Documents/Pipelines/tirna-pipeline/Subset2/Results/temp_files/"
-ReplicateNumber1 <- 3
-Condition1 <- "Condition1"
-ReplicateNumber2 <- 3
-Condition2 <- "Condition2"
+
+#--------------------#
+#    Run analysis    #
+#--------------------#
 
 DESeq2.function(myPath)
-
-
-quit()
-file.names <- dir(path.to.files, pattern =".count")
-cDataAll <- NULL
-for (i in 1:length(file.names)){
-  full.path <- paste0(path.to.files, file.names[i])
-  file <- read.table(full.path)
-  cDataAll <- cbind(cDataAll, file[,2])
-}
-cDataAll[is.na(cDataAll)] <- 0   # Replace NAs with 0
-rownames(cDataAll) <- file[,1]
-colnames(cDataAll) <- file.names
-groups <- factor(x=c(rep(Condition1, ReplicateNumber1), rep(Condition2, ReplicateNumber2)), levels=c(Condition1, Condition2))
-tpm <- t(t(cDataAll)/colSums(cDataAll))*1e6
-inlog <- log(tpm)
-colLabel <- c(rep("#E41A1C", ReplicateNumber1), rep("#377EB8", ReplicateNumber2))
-colTy <- c(rep(1:ReplicateNumber1, ReplicateNumber1), rep(1:ReplicateNumber2, ReplicateNumber2))
-
-
-### Differential Expression Analysis
-colData <- DataFrame(condition=groups) 
-print(colData)
-dds <- DESeqDataSetFromMatrix(cDataAll, colData, formula(~condition))
-dds <- DESeq(dds)
-res <- results(dds, cooksCutoff=FALSE)
-res <- res[order(res$log2FoldChange, decreasing=TRUE),]
-
-### Carry out a log transformation of the DESeq2 data set
-rld <- rlogTransformation(dds)
-
-
 
