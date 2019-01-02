@@ -66,47 +66,50 @@ fi
 for f in $inDir/*; do
 	mkdir -p $outDir
 	mkdir -p $outDir/Results
-	mkdir -p $outDir/Results/raw_results
-	mkdir -p $outDir/Results/Data_and_Plots
+	mkdir -p $outDir/Results/Data
+	mkdir -p $outDir/Results/Plots
 	file_base=$(basename $f)
 	#filename=${file_base%.*}
 	#singleFile_base=${singleFile##*/}    # Remove pathname
 	filename="$( cut -d '.' -f 1 <<< "$file_base" )" 
 	./tiRNA-pipeline.sh -s "$f" -o "$outDir/Results/$filename" -p "$CPUs" -T
-	cp $outDir/Results/$filename/Data_and_Plots/* $outDir/Results/Data_and_Plots/
+	cp $outDir/Results/$filename/Plots/* $outDir/Results/Plots/
 	wait
-	cat $outDir/Results/$filename/HTSeq-count-output/*.count | grep -v ^__ | sort -k1,1 > $outDir/Results/raw_results/$filename.all_features.count
-	sed -i '1s/^/Features\t'"$filename"'\n/' $outDir/Results/raw_results/$filename.all_features.count # Add column headers
-	readsMapped=$(awk '{sum+=$2} END{print sum;}' $outDir/Results/raw_results/$filename.all_features.count)
+	cat $outDir/Results/$filename/HTSeq-count-output/*.count | grep -v ^__ | sort -k1,1 > $outDir/Results/Data/$filename.all_features.count
+	sed -i '1s/^/Features\t'"$filename"'\n/' $outDir/Results/Data/$filename.all_features.count # Add column headers
+	readsMapped=$(awk '{sum+=$2} END{print sum;}' $outDir/Results/Data/$filename.all_features.count)
 	echo "Reads mapped: $readsMapped" >> $outDir/Results/$filename/Stats.log
 	#if [ ! "$expFile" ];
-	#	echo -e "$filename" >> $outDir/Results/Data_and_Plots/FilenamesForR.txt
+	#	echo -e "$filename" >> $outDir/Results/Plots/FilenamesForR.txt
 	#
 	#fi
 done
 
 ### Gather count files
-awk '{print $1}' $outDir/Results/raw_results/$filename.all_features.count > $outDir/Results/raw_results/HTSeq.all_features
-for f in $outDir/Results/raw_results/*count; do
-	awk '{print $2}' $f | paste $outDir/Results/raw_results/HTSeq.all_features - >> $outDir/Results/raw_results/HTSeq.temp
-	mv $outDir/Results/raw_results/HTSeq.temp $outDir/Results/raw_results/HTSeq.all_features
+awk '{print $1}' $outDir/Results/Data/$filename.all_features.count > $outDir/Results/Data/HTSeq.all_features
+for f in $outDir/Results/Data/*count; do
+	awk '{print $2}' $f | paste $outDir/Results/Data/HTSeq.all_features - >> $outDir/Results/Data/HTSeq.temp
+	mv $outDir/Results/Data/HTSeq.temp $outDir/Results/Data/HTSeq.all_features
 done
 
-mv $outDir/Results/raw_results/HTSeq.all_features $outDir/Results/Data_and_Plots/HTSeq.all_features.count
+mv $outDir/Results/Data/HTSeq.all_features $outDir/Results/Plots/HTSeq.all_features.count
 
-
-### Determine if experiment layout file was provided or not. If not, ry and figure out which files group together using R. 
+### Determine if experiment layout file was provided or not. If not, ry and figure out which files group together using R.
+myPath=$(pwd) #Get working dir to recreate full path for R script execution
 if [ ! "$expFile" ]; then
-	Rscript --vanilla scripts/DESeq2_tiRNA-pipeline-v6.R "$outDir/Results/raw_results/"
+    echo "No experiment layout plan provided. This will now be created prior to the formal DESeq2 analysis."
+    Rscript --vanilla scripts/DESeq2_tiRNA-pipeline.R "$myPath/$outDir/Results/Data/"
 else
-	Rscript --vanilla scripts/DESeq2_tiRNA-pipeline-v6.R "$expFile" "$outDir/Results/raw_results/"
+    echo "An experiment layout plan was provided. Carrying out DESeq2 analysis now."
+    Rscript --vanilla scripts/DESeq2_tiRNA-pipeline.R "$expFile" "$myPath/$outDir/Results/Data/"
 fi
 
 
 
 
 
-#rm -rf raw_results
+
+#rm -rf Data
 
 echo "Finished at $(date)"
 

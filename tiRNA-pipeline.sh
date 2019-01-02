@@ -90,9 +90,7 @@ function bam_to_plots () {  ### Steps for plotting regions with high variation i
 	### Output coverage of all features we are interested in (e.g. tRNAs)
 	bedtools genomecov -d -split -ibam $1/accepted_hits.bam > $1/accepted_hits.genomecov
 	### If we are working with tRNAs, collapse all tRNAs based on same isoacceptor
-	echo "This is the the shtuff: $2 $3 "
 	if [ $3 = "tiRNA" ]; then
-		echo "Success hooray"
 		python scripts/Bedgraph_collapse-tRNAs.py $1/accepted_hits.genomecov $1/accepted_hits_collapsed.genomecov
 		mv $1/accepted_hits.genomecov $1/accepted_hits_original.genomecov 
 		cp $1/accepted_hits_collapsed.genomecov $1/accepted_hits.genomecov	

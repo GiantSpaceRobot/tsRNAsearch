@@ -1,5 +1,19 @@
 #!/usr/bin/env Rscript
 
+## Script name: DESeq2_tiRNA-pipeline.R
+##
+## Purpose of script: Carry out differential gene expression analysis of sncRNAs/tiRNAs from small RNA-seq data
+##
+## Author: Dr. Paul Donovan
+##
+## Date Created: 2-1-2018 (2nd of Jan 2018)
+##
+## Version: 10
+##
+## Copyright: MIT license
+##
+## Email: pauldonovan@rcsi.com
+
 args = commandArgs(trailingOnly=TRUE)
 
 ### Check if the correct number of command line arguments were provide. If not, return an error.
@@ -11,7 +25,7 @@ if (length(args)==0) {
   myPath <- args[1]
   if (dir.exists(myPath)) {
     setwd(myPath)
-    message("The directory provided exists. Carrying out hierarchical clustering of filenames to classify files into groups.")
+    message("Carrying out hierarchical clustering of filenames to classify files into groups.")
     ### A weird idea of clustering the filenames based on string similarity 
     ### (so I don't need to ask the user which samples belong to the same group)
     file.names.long <- dir(pattern=".all_features.count")
@@ -92,7 +106,6 @@ ResultsFile <- paste0(Condition1,"-vs-",Condition2)
 #-----------------#
 
 # If libraries not installed, install them
-
 #source("http://bioconductor.org/biocLite.R")
 #biocLite(DESeq2)
 
@@ -124,7 +137,7 @@ DESeq2.function <- function(path.to.files){
   colnames(cDataAll) <- (file.names)
   rownames(cDataAll) <- file[,1]
   
-  ###
+  ### checkpoint
   count <- count + 1
   print(paste0("Checkpoint ", count))
   
@@ -135,7 +148,7 @@ DESeq2.function <- function(path.to.files){
   colLabel <- c(rep("#E41A1C", ReplicateNumber1), rep("#377EB8", ReplicateNumber2))
   colTy <- c(rep(1:ReplicateNumber1, ReplicateNumber1), rep(1:ReplicateNumber2, ReplicateNumber2))
   
-  ###
+  ### checkpoint
   count <- count + 1
   print(paste0("Checkpoint ", count))
 
@@ -155,7 +168,7 @@ DESeq2.function <- function(path.to.files){
   legend("topright", legend=colnames(tpm), lty=colTy, col=colLabel)
   dev.off()
   
-  ###
+  ### checkpoint
   count <- count + 1
   print(paste0("Checkpoint ", count))
 
@@ -166,7 +179,7 @@ DESeq2.function <- function(path.to.files){
   res <- results(dds, cooksCutoff=FALSE)
   res <- res[order(res$log2FoldChange, decreasing=TRUE),]
   
-  ###
+  ### checkpoint
   count <- count + 1
   print(paste0("Checkpoint ", count))
 
@@ -179,7 +192,7 @@ DESeq2.function <- function(path.to.files){
   hist(assay(rld))
   dev.off()
   
-  ###
+  ### checkpoint
   count <- count + 1
   print(paste0("Checkpoint ", count))
 
@@ -203,7 +216,7 @@ DESeq2.function <- function(path.to.files){
             main="Sample Distance Matrix")
   dev.off()
   
-  ###
+  ### checkpoint
   count <- count + 1
   print(paste0("Checkpoint ", count))
   
@@ -234,7 +247,7 @@ DESeq2.function <- function(path.to.files){
   dev.off()
   #par(mar=c(5, 4, 4, 2) + 0.1)
   
-  ###
+  ### checkpoint
   count <- count + 1
   print(paste0("Checkpoint ", count))
 
@@ -257,7 +270,7 @@ DESeq2.function <- function(path.to.files){
     dir.create("DE_Results/DESeq2")
   }
   
-  ###
+  ### checkpoint
   count <- count + 1
   print(paste0("Checkpoint ", count))
 
@@ -282,7 +295,7 @@ DESeq2.function <- function(path.to.files){
               row.names=TRUE, 
               quote = FALSE)
   
-  ###
+  ### checkpoint
   count <- count + 1
   print(paste0("Checkpoint ", count))
 

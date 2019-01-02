@@ -1,11 +1,8 @@
 DBs/
 Results/
 to-do.txt
-tophat_out/
 temp_files/
-nohup.out
-DE_Results/
-exp_layout.csv
-Subset1/
-Subset2/
+New*
+nohup*
+Subset*
 nohup*
