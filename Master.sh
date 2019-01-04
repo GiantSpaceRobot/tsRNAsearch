@@ -60,7 +60,8 @@ done
 if [ -z "$*" ] ; then
     echo "No command line parameters provided!"
 	usage
-    exit 0
+    info
+	exit 0
 fi
 
 for f in $inDir/*; do

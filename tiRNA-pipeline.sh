@@ -5,8 +5,6 @@
 # Email: pauldonovan@rcsi.com
 # 19-Oct-2018
 
-# I tried to stick to Naser Monsei's original pipeline where possible. I used GTF files that I recovered from his work, and recreated FASTA files using these GTFs. The Tophat2 version (-T) of the pipeline is the version based on Naser's pipeline. 
-
 asciiArt() { echo "
   __  .____________  _______      _____    __________.__              .__  .__
 _/  |_|__\______   \ \      \    /  _  \   \______   \__|_____   ____ |  | |__| ____   ____
@@ -29,6 +27,13 @@ Options
 
 	Input file format should be FASTQ (.fq/.fastq) or gzipped FASTQ (.gz)
 	" 1>&2; }
+
+if [ $# -eq 0 ]; then
+    echo "No arguments provided"
+    usage
+	info
+	exit 1
+fi
 
 while getopts ":hTp:s:1:2:o:" o; do
     case "${o}" in
@@ -154,6 +159,9 @@ if [[ $pairedEnd = "True" ]]; then
 	Input: paired-end read files
 	"
 	
+	string_padder "This version of the pipeline is under construction. Please treat your paired-end files as single-end for now."
+	exit 1
+
 	file1_base=${file1##*/}    # Remove pathname
 	basename1="$( cut -d '.' -f 1 <<< "$file1_base" )" # Get filename before first occurence of .
 	suffix1="$( cut -d '.' -f 2- <<< "$file1_base" )" # Get full file suffix/entension

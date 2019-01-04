@@ -1,0 +1,6 @@
+Condition1_file1.fastq.gz,Treated
+Condition1_file2.fastq.gz,Treated
+Condition1_file3.fastq.gz,Treated
+Condition2_file1.fastq.gz,Control
+Condition2_file2.fastq.gz,Control
+Condition2_file3.fastq.gz,Control
