@@ -69,11 +69,9 @@ for f in $inDir/*; do
 	mkdir -p $outDir/Results/Data
 	mkdir -p $outDir/Results/Plots
 	file_base=$(basename $f)
-	#filename=${file_base%.*}
-	#singleFile_base=${singleFile##*/}    # Remove pathname
 	filename="$( cut -d '.' -f 1 <<< "$file_base" )" 
 	./tiRNA-pipeline.sh -s "$f" -o "$outDir/Results/$filename" -p "$CPUs" -T
-	cp $outDir/Results/$filename/Plots/* $outDir/Results/Plots/
+	cp $outDir/Results/$filename/Data_and_Plots/* $outDir/Results/Plots/
 	wait
 	cat $outDir/Results/$filename/HTSeq-count-output/*.count | grep -v ^__ | sort -k1,1 > $outDir/Results/Data/$filename.all_features.count
 	sed -i '1s/^/Features\t'"$filename"'\n/' $outDir/Results/Data/$filename.all_features.count # Add column headers
@@ -94,19 +92,71 @@ done
 
 mv $outDir/Results/Data/HTSeq.all_features $outDir/Results/Plots/HTSeq.all_features.count
 
+
 ### Determine if experiment layout file was provided or not. If not, ry and figure out which files group together using R.
 myPath=$(pwd) #Get working dir to recreate full path for R script execution
 if [ ! "$expFile" ]; then
     echo "No experiment layout plan provided. This will now be created prior to the formal DESeq2 analysis."
     Rscript --vanilla scripts/DESeq2_tiRNA-pipeline.R "$myPath/$outDir/Results/Data/"
+    condition1=$( awk -F ',' 'NR == 1 {print $2}' $myPath/$outDir/Results/Data/predicted_exp_layout.csv ) # Get element in first row second column (condition)
+    grep $condition1 $myPath/$outDir/Results/Data/predicted_exp_layout.csv > $myPath/$outDir/Results/Data/predicted_exp_layout_cond1.csv
+    condition2=$( grep -v $condition1 $myPath/$outDir/Results/Data/predicted_exp_layout.csv | awk -F ',' 'NR == 1 {print $2}') # Get the second condition using the inverse of the first one
+    grep $condition2 $myPath/$outDir/Results/Data/predicted_exp_layout.csv > $myPath/$outDir/Results/Data/predicted_exp_layout_cond2.csv
+    ### Concatenate the genomecov files for the replicates of condition 1
+    count=0
+    for fname in $(cat $myPath/$outDir/Results/Data/predicted_exp_layout_cond1.csv); do
+        count=$((count + 1))
+        cond1="$(cut -d ',' -f1 <<< $fname)"
+        cond1base="$(cut -d '.' -f1 <<< $cond1)"
+        find $myPath/$outDir/ -type f -name "$cond1base*tiRNA.genomecov" -exec cp {} $myPath/$outDir/Results/Data/condition1_file$count.genomecov \;
+    done
+    paste $myPath/$outDir/Results/Data/condition1_file*.genomecov > $myPath/$outDir/Results/Data/condition1_concatenated.genomecov
+    ### Concatenate the genomecov files for the replicates of condition 2 
+    count=0
+    for fname in $(cat $myPath/$outDir/Results/Data/predicted_exp_layout_cond2.csv); do
+        count=$((count + 1))
+        cond2="$(cut -d ',' -f1 <<< $fname)"
+        cond2base="$(cut -d '.' -f1 <<< $cond2)"
+        find $myPath/$outDir/ -type f -name "$cond2base*tiRNA.genomecov" -exec cp {} $myPath/$outDir/Results/Data/condition2_file$count.genomecov \;
+    done
+    paste $myPath/$outDir/Results/Data/condition2_file*.genomecov > $myPath/$outDir/Results/Data/condition2_concatenated.genomecov
+    ### Get mean and standard deviation for both files
+    Rscript scripts/Mean_Stdev.R $myPath/$outDir/Results/Data/condition1_concatenated.genomecov $myPath/$outDir/Results/Data/condition1_concatenated_mean_stdev.genomecov
+    Rscript scripts/Mean_Stdev.R $myPath/$outDir/Results/Data/condition2_concatenated.genomecov $myPath/$outDir/Results/Data/condition2_concatenated_mean_stdev.genomecov
+    ### Plot DEGs arg1 and 2 are inputs, arg 3 is output pdf, arg 4 is mean coverage cutoff (plot features with coverage above this)
+    Rscript scripts/Bedgraph_plotter_DEGs.R $myPath/$outDir/Results/Data/condition1_concatenated_mean_stdev.genomecov $myPath/$outDir/Results/Data/condition2_concatenated_mean_stdev.genomecov $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_DEGs.pdf 20
+
 else
     echo "An experiment layout plan was provided. Carrying out DESeq2 analysis now."
     Rscript --vanilla scripts/DESeq2_tiRNA-pipeline.R "$expFile" "$myPath/$outDir/Results/Data/"
+    condition1=$( awk -F ',' 'NR == 1 {print $2}' "$expFile" ) # Get element in first row second column (condition)
+    grep $condition1 "$expFile" > $myPath/$outDir/Results/Data/predicted_exp_layout_cond1.csv
+    condition2=$( grep -v $condition1 "$expFile" | awk -F ',' 'NR == 1 {print $2}') # Get the second condition using the inverse of the first one
+    grep $condition2 "$expFile" > $myPath/$outDir/Results/Data/predicted_exp_layout_cond2.csv
+    ### Concatenate the genomecov files for the replicates of condition 1
+    count=0
+    for fname in $(cat $myPath/$outDir/Results/Data/predicted_exp_layout_cond1.csv); do
+        count=$((count + 1))
+        cond1="$(cut -d ',' -f1 <<< $fname)"
+        cond1base="$(cut -d '.' -f1 <<< $cond1)"
+        find $myPath/$outDir/ -type f -name "$cond1base*tiRNA.genomecov" -exec cp {} $myPath/$outDir/Results/Data/condition1_file$count.genomecov \;
+    done
+    paste $myPath/$outDir/Results/Data/condition1_file*.genomecov > $myPath/$outDir/Results/Data/condition1_concatenated.genomecov
+    ### Concatenate the genomecov files for the replicates of condition 2 
+    count=0
+    for fname in $(cat $myPath/$outDir/Results/Data/predicted_exp_layout_cond2.csv); do
+        count=$((count + 1))
+        cond2="$(cut -d ',' -f1 <<< $fname)"
+        cond2base="$(cut -d '.' -f1 <<< $cond2)"
+        find $myPath/$outDir/ -type f -name "$cond2base*tiRNA.genomecov" -exec cp {} $myPath/$outDir/Results/Data/condition2_file$count.genomecov \;
+    done
+    paste $myPath/$outDir/Results/Data/condition2_file*.genomecov > $myPath/$outDir/Results/Data/condition2_concatenated.genomecov
+    ### Get mean and standard deviation for both files
+    Rscript scripts/Mean_Stdev.R $myPath/$outDir/Results/Data/condition1_concatenated.genomecov $myPath/$outDir/Results/Data/condition1_concatenated_mean_stdev.genomecov
+    Rscript scripts/Mean_Stdev.R $myPath/$outDir/Results/Data/condition2_concatenated.genomecov $myPath/$outDir/Results/Data/condition2_concatenated_mean_stdev.genomecov
+    ### Plot DEGs arg1 and 2 are inputs, arg 3 is output pdf, arg 4 is mean coverage cutoff (plot features with coverage above this)
+    Rscript scripts/Bedgraph_plotter_DEGs.R $myPath/$outDir/Results/Data/condition1_concatenated_mean_stdev.genomecov $myPath/$outDir/Results/Data/condition2_concatenated_mean_stdev.genomecov $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_DEGs.pdf 20
 fi
-
-
-
-
 
 
 #rm -rf Data
