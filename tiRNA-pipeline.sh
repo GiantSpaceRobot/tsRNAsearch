@@ -6,17 +6,19 @@
 # 19-Oct-2018
 
 asciiArt() { echo "
-  __  .____________  _______      _____    __________.__              .__  .__
-_/  |_|__\______   \ \      \    /  _  \   \______   \__|_____   ____ |  | |__| ____   ____
-\   __\  ||       _/ /   |   \  /  /_\  \   |     ___/  \____ \_/ __ \|  | |  |/    \_/ __ \
- |  | |  ||    |   \/    |    \/    |    \  |    |   |  |  |_> >  ___/|  |_|  |   |  \  ___/
- |__| |__||____|_  /\____|__  /\____|__  /  |____|   |__|   __/ \___  >____/__|___|  /\___  >
-                 \/         \/         \/               |__|        \/             \/     \/
-" 1>&1; }
+
+	  __  .____________  _______      _____    __________.__              .__  .__               
+	_/  |_|__\______   \ \      \    /  _  \   \______   \__|_____   ____ |  | |__| ____   ____  
+	\   __\  ||       _/ /   |   \  /  /_\  \   |     ___/  \____ \_/ __ \|  | |  |/    \_/ __ \ 
+	 |  | |  ||    |   \/    |    \/    |    \  |    |   |  |  |_> >  ___/|  |_|  |   |  \  ___/ 
+	 |__| |__||____|_  /\____|__  /\____|__  /  |____|   |__|   __/ \___  >____/__|___|  /\___  >
+			 \/         \/         \/               |__|        \/             \/     \/ 
+	
+	" 1>&1; }
 usage() { echo "Usage (single-end): $0 -o OutputDirectory/ -s SeqFile.fastq.gz
 Usage (paired-end): $0 -o OutputDirectory/ -1 SeqFile_1.fastq.gz -2 SeqFile_2.fastq.gz" 1>&2; }
 info() { echo "
-Options
+Options:
 
 	-h	Print the usage and options information
 	-s	Single-end file for analysis
@@ -24,13 +26,15 @@ Options
 	-2	Second paired-end file
 	-o	Output directory for the results and log files
 	-T	Use Tophat2 to carry out alignment steps (default: HISAT2)
+	-p	Number of CPUs to use {default is to calculate the number of processors and use 75%}
 
 	Input file format should be FASTQ (.fq/.fastq) or gzipped FASTQ (.gz)
 	" 1>&2; }
 
 if [ $# -eq 0 ]; then
     echo "No arguments provided"
-    usage
+    asciiArt
+	usage
 	info
 	exit 1
 fi
@@ -64,6 +68,7 @@ while getopts ":hTp:s:1:2:o:" o; do
 		*)
             echo "Error in input parameters!"
 			usage
+			info
 			exit 1
             ;;
     esac

@@ -3,9 +3,16 @@
 # Email: pauldonovan@rcsi.com
 # 12-12-2018
 
-echo "Started at $(date)"
-StartTime="Pipeline initiated at $(date)" 
+asciiArt() { echo "
 
+	  __  .____________  _______      _____    __________.__              .__  .__               
+	_/  |_|__\______   \ \      \    /  _  \   \______   \__|_____   ____ |  | |__| ____   ____  
+	\   __\  ||       _/ /   |   \  /  /_\  \   |     ___/  \____ \_/ __ \|  | |  |/    \_/ __ \ 
+	 |  | |  ||    |   \/    |    \/    |    \  |    |   |  |  |_> >  ___/|  |_|  |   |  \  ___/ 
+	 |__| |__||____|_  /\____|__  /\____|__  /  |____|   |__|   __/ \___  >____/__|___|  /\___  >
+			 \/         \/         \/               |__|        \/             \/     \/ 
+	
+	" 1>&1; }
 usage() { echo "
 	Usage: $0 -p -d Path/To/Input/Files -o OutputDirectory/ -e ExperimentLayout.csv
 	" 1>&2; }
@@ -17,7 +24,7 @@ Options
 	-d	Directory containing the files for analysis. Directory should have no other contents.
 	-o	Output directory for the results and log files
 	-e	Optional (but recommended) CSV file containing file names and file groups (see examples in ./additional-files/)
-	-t	Number of threads/CPUs to use
+	-t	Number of threads/CPUs to use {default is to calculate the number of processors and use 75%}
 
 	" 1>&2; }
 
@@ -51,6 +58,7 @@ while getopts ":hpt:d:e:o:" o; do
 		*)
             echo "Error in input parameters!"
 			usage
+			info
 			exit 1
             ;;
     esac
@@ -59,10 +67,14 @@ done
 ### If no command line arguments provided, quit
 if [ -z "$*" ] ; then
     echo "No command line parameters provided!"
+	asciiArt
 	usage
     info
 	exit 0
 fi
+
+echo "Started at $(date)"
+StartTime="Pipeline initiated at $(date)"
 
 for f in $inDir/*; do
 	mkdir -p $outDir
