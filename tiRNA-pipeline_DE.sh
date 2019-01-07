@@ -70,7 +70,27 @@ if [ -z "$*" ] ; then
 	asciiArt
 	usage
     info
-	exit 0
+	exit 1
+fi
+
+### If the pathname specified by $inDir does not begin with a slash, quit (we need full path name)
+if [[ ! $inDir = /* ]]; then
+	echo "Error: File paths must absolute. Please specify the full path for the input directory."
+	exit 1
+fi
+
+### If the pathname specified by $outDir does not begin with a slash, quit (we need full path name)
+if [[ ! $outDir = /* ]]; then
+	echo "Error: File paths must absolute. Please specify the full path for the output directory."
+	exit 1
+fi
+
+### If the pathname specified by $expFile does not begin with a slash, quit (we need full path name)
+if [ "$expFile" ]; then
+    if [[ ! $expFile = /* ]]; then
+        echo "Error: File paths must absolute. Please specify the full path for the experiment layout file."
+        exit 1
+    fi
 fi
 
 echo "Started at $(date)"
@@ -90,10 +110,6 @@ for f in $inDir/*; do
 	sed -i '1s/^/Features\t'"$filename"'\n/' $outDir/Results/Data/$filename.all_features.count # Add column headers
 	readsMapped=$(awk '{sum+=$2} END{print sum;}' $outDir/Results/Data/$filename.all_features.count)
 	echo "Reads mapped: $readsMapped" >> $outDir/Results/$filename/Stats.log
-	#if [ ! "$expFile" ];
-	#	echo -e "$filename" >> $outDir/Results/Plots/FilenamesForR.txt
-	#
-	#fi
 done
 
 ### Gather count files
