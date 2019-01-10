@@ -139,12 +139,8 @@ function bam_to_plots () {  ### Steps for plotting regions with high variation i
 	fi
 	### Sort by tRNA isoacceptor and nucleotide position
 	sort -k1,1 -k2,2n $1/accepted_hits.genomecov > $1/accepted_hits_sorted.genomecov
-	### Plot the coverage of all features (arg 3 is mean coverage)
-	if [ $3 = "snomiRNA" ]; then
-		Rscript scripts/Bedgraph_plotter-v4.R $1/accepted_hits_sorted.genomecov $1/$2_$3_Coverage-plots.pdf 20 DBs/hg19-snomiRNA.gtf
-	else
-		Rscript scripts/Bedgraph_plotter-v4.R $1/accepted_hits_sorted.genomecov $1/$2_$3_Coverage-plots.pdf 0
-	fi
+	### Plot the coverage of all tRNA isoacceptors
+	Rscript scripts/Bedgraph_plotter-v3.R $1/accepted_hits_sorted.genomecov $1/$2_$3_Coverage-plots.pdf
 	### Output the mean, standard deviation and coefficient of variance of each isoacceptor
 	python scripts/Bedgraph-analyser.py $1/accepted_hits_sorted.genomecov $1/accepted_hits_sorted.tsv
 	### Gather all tRNA isoacceptors with at least a mean coverage of 10
@@ -300,7 +296,7 @@ elif [[ $pairedEnd = "False" ]]; then
 		if [ ! -f $outDir/snomiRNA-alignment/$trimmedFile ]; then # If this file was not generated, try and align the unmapped reads from the tRNA alignment
 			if [ ! -d DBs/snomiRNA_DB ]; then
 				string_padder "Creating one-time sno/miRNA transcriptome"
-				tophat2 -p $CPUs -G DBs/hg19-snomiRNA.gtf --transcriptome-index=DBs/snomiRNA_DB/known DBs/bowtie2_index/Homo_sapiens.GRCh37.dna.primary_assembly
+				tophat2 -p $CPUs -G DBs/hg19-snomiRNAs_geneNames.gtf --transcriptome-index=DBs/snomiRNA_DB/known DBs/bowtie2_index/Homo_sapiens.GRCh37.dna.primary_assembly
 			fi
 			string_padder "Running sno/miRNA alignment step..."
 			tophat2 -p $CPUs -x 1 -T -N 1 -o $outDir/snomiRNA-alignment/ --transcriptome-index=DBs/snomiRNA_DB/known DBs/bowtie2_index/Homo_sapiens.GRCh37.dna.primary_assembly $outDir/tRNA-alignment/$trimmedFile		
