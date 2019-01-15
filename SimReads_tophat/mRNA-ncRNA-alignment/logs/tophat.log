@@ -1,0 +1,26 @@
+
+[2019-01-15 10:25:42] Beginning TopHat run (v2.0.14)
+-----------------------------------------------
+[2019-01-15 10:25:42] Checking for Bowtie
+		  Bowtie version:	 2.3.4.3
+[2019-01-15 10:25:42] Checking for Bowtie index files (genome)..
+[2019-01-15 10:25:42] Checking for reference FASTA file
+	Warning: Could not find FASTA file DBs/bowtie2_index/Homo_sapiens.GRCh37.dna.primary_assembly.fa
+[2019-01-15 10:25:42] Reconstituting reference FASTA file from Bowtie index
+  Executing: /usr/bin/bowtie2-inspect DBs/bowtie2_index/Homo_sapiens.GRCh37.dna.primary_assembly > SimReads_tophat/mRNA-ncRNA-alignment//tmp/Homo_sapiens.GRCh37.dna.primary_assembly.fa
+[2019-01-15 10:27:38] Generating SAM header for DBs/bowtie2_index/Homo_sapiens.GRCh37.dna.primary_assembly
+[2019-01-15 10:28:07] Preparing reads
+	 left reads: min. length=43, max. length=50, 3476 kept reads (0 discarded)
+[2019-01-15 10:28:07] Mapping left_kept_reads to genome Homo_sapiens.GRCh37.dna.primary_assembly with Bowtie2 
+[2019-01-15 10:28:09] Mapping left_kept_reads_seg1 to genome Homo_sapiens.GRCh37.dna.primary_assembly with Bowtie2 (1/2)
+[2019-01-15 10:28:11] Mapping left_kept_reads_seg2 to genome Homo_sapiens.GRCh37.dna.primary_assembly with Bowtie2 (2/2)
+[2019-01-15 10:28:13] Searching for junctions via segment mapping
+[2019-01-15 10:29:49] Retrieving sequences for splices
+[2019-01-15 10:31:07] Indexing splices
+[2019-01-15 10:31:07] Mapping left_kept_reads_seg1 to genome segment_juncs with Bowtie2 (1/2)
+[2019-01-15 10:31:07] Mapping left_kept_reads_seg2 to genome segment_juncs with Bowtie2 (2/2)
+[2019-01-15 10:31:07] Joining segment hits
+[2019-01-15 10:32:10] Reporting output tracks
+-----------------------------------------------
+[2019-01-15 10:33:18] A summary of the alignment counts can be found in SimReads_tophat/mRNA-ncRNA-alignment//align_summary.txt
+[2019-01-15 10:33:18] Run complete: 00:07:35 elapsed
