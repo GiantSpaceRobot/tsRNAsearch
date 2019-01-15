@@ -28,6 +28,11 @@ library(ggplot2)
 input1 <- read.table(args[1])
 input2 <- read.table(args[2])
 
+if (length(args)==4) {
+  GTF <- read.table(args[4], sep = "\t")
+  #GTF <- read.table("/home/paul/Documents/Pipelines/tirna-pipeline/DBs/hg19-snomiRNA.gtf", sep = "\t")
+} 
+
 ### Get names of conditions from arg3 name for writing in plots
 file3 <- basename(args[3])
 conditions.for.plots <- strsplit(x = file3, "_DEGs")[[1]][1] #Must do double index to access the resulting list from strsplit
@@ -60,6 +65,15 @@ for(feature in featuresUnion) {
   subset2.NoFlanks$Conditions <- condition2  
   subset2.mean <- mean(subset2.NoFlanks$V10)
   
+  ### get sno/miRNA gene names rather than IDs
+  if (length(args)==4) {
+    featureRows <- GTF[grep(feature, GTF$V9),]
+    featureRows <- featureRows[1,]
+    geneName <- as.character(sub(".*gene_name *(.*?) *; gene_source.*", "\\1", featureRows$V9))
+  } else {
+    geneName <- feature
+  }
+  
   ### combine dataframes
   new.df <- rbind(subset1.NoFlanks, subset2.NoFlanks)
   
@@ -73,7 +87,7 @@ for(feature in featuresUnion) {
       ylab('Read coverage') +
       scale_fill_manual(values=c("red", "blue")) +
       scale_color_manual(values=c("red", "blue")) +
-      labs(fill="Conditions", title = feature)
+      labs(fill="Conditions", title = geneName)
   plot_list[[feature]] = p
   }
 }
