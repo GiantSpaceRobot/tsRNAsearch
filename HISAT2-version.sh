@@ -163,7 +163,6 @@ function bam_to_plots () {  ### Steps for plotting regions with high variation i
 	### Sort the remaining tRNA isoacceptors by coef. of variance
 	sort -k4,4nr $1/accepted_hits_sorted_mean-std.tsv > $1/$2_$3_accepted_hits_sorted_mean-std_sorted.tsv
 	### Move finalised data for further analysis
-	mkdir -p $outDir/Data_and_Plots
 	cp $1/$2_$3_Coverage-plots.pdf $outDir/Data_and_Plots/$2_$3_Coverage-plots.pdf
 	cp $1/accepted_hits_sorted.genomecov $outDir/Data_and_Plots/$2_$3.genomecov
 	cp $1/$2_$3_accepted_hits_sorted_mean-std_sorted.tsv $outDir/Data_and_Plots/$2_$3_genomecov.stats
@@ -204,6 +203,7 @@ mkdir -p $outDir/tRNA-alignment
 mkdir -p $outDir/snomiRNA-alignment
 mkdir -p $outDir/mRNA-ncRNA-alignment
 mkdir -p $outDir/HTSeq-count-output
+mkdir -p $outDir/Data_and_Plots
 
 #touch $outDir/checkpoints/checkpoint-1.flag
 
@@ -292,13 +292,13 @@ elif [[ $pairedEnd = "False" ]]; then
 		#tophat2 -p $CPUs -x 1 -o $outDir/tRNA-alignment/ DBs/bowtie2_index/hg38-tRNAs_CCA $outDir/trim_galore_output/$trimmedFile
 
 		if [ ! -f $outDir/tRNA-alignment/align_summary.txt ]; then
-			if [ ! -d DBs/tRNA_DB ]; then
-				string_padder "Creating one-time tRNA transcriptome"
-				tophat2 -p $CPUs -G DBs/hg19-wholetRNA-CCA.gtf --transcriptome-index=DBs/tRNA_DB/known DBs/bowtie2_index/hg19-wholetRNA-CCA
-			fi
+			#if [ ! -d DBs/tRNA_DB ]; then
+			#	string_padder "Creating one-time tRNA transcriptome"
+			#	tophat2 -p $CPUs -G DBs/hg19-wholetRNA-CCA.gtf --transcriptome-index=DBs/tRNA_DB/known DBs/bowtie2_index/hg19-wholetRNA-CCA
+			#fi
 			string_padder "Running tRNA alignment step..."
-			#tophat2 -p $CPUs -x 1 -N 1 -o $outDir/tRNA-alignment DBs/bowtie2_index/hg19-wholetRNA-CCA $outDir/trim_galore_output/$trimmedFile
-			tophat2 -p $CPUs -x 1 -T -N 1 -o $outDir/tRNA-alignment --transcriptome-index=DBs/tRNA_DB/known DBs/bowtie2_index/hg19-wholetRNA-CCA $outDir/trim_galore_output/$trimmedFile
+			tophat2 -p $CPUs -x 1 -N 1 --b2-very-sensitive -o $outDir/tRNA-alignment DBs/bowtie2_index/hg19-wholetRNA-CCA $outDir/trim_galore_output/$trimmedFile
+			#tophat2 -p $CPUs -x 1 -T -N 1 -o $outDir/tRNA-alignment --transcriptome-index=DBs/tRNA_DB/known DBs/bowtie2_index/hg19-wholetRNA-CCA $outDir/trim_galore_output/$trimmedFile
 			if [ -f $outDir/tRNA-alignment/unmapped.bam ]; then  #If tophat2 successfully mapped reads, convert the unmapped to FASTQ
 				bedtools bamtofastq -i $outDir/tRNA-alignment/unmapped.bam -fq $outDir/tRNA-alignment/${singleFile_basename}_unmapped.fq	
 				samtools index $outDir/tRNA-alignment/accepted_hits.bam
@@ -314,12 +314,13 @@ elif [[ $pairedEnd = "False" ]]; then
 		fi
 
 		if [ ! -f $outDir/snomiRNA-alignment/${singleFile_basename}_unmapped.fq ]; then # If this file was not generated, try and align the unmapped reads from the tRNA alignment
-			if [ ! -d DBs/snomiRNA_DB ]; then
-				string_padder "Creating one-time sno/miRNA transcriptome"
-				tophat2 -p $CPUs -G DBs/hg19-snomiRNA.gtf --transcriptome-index=DBs/snomiRNA_DB/known DBs/bowtie2_index/Homo_sapiens.GRCh37.dna.primary_assembly
-			fi
+			#if [ ! -d DBs/snomiRNA_DB ]; then
+			#	string_padder "Creating one-time sno/miRNA transcriptome"
+			#	tophat2 -p $CPUs -G DBs/hg19-snomiRNA.gtf --transcriptome-index=DBs/snomiRNA_DB/known DBs/bowtie2_index/Homo_sapiens.GRCh37.dna.primary_assembly
+			#fi
 			string_padder "Running sno/miRNA alignment step..."
-			tophat2 -p $CPUs -x 1 -T -N 1 -o $outDir/snomiRNA-alignment/ --transcriptome-index=DBs/snomiRNA_DB/known DBs/bowtie2_index/Homo_sapiens.GRCh37.dna.primary_assembly $outDir/tRNA-alignment/${singleFile_basename}_unmapped.fq		
+			tophat2 -p $CPUs -x 1 -N 1 --b2-very-sensitive -o $outDir/snomiRNA-alignment/ DBs/bowtie2_index/hg19-snomiRNA $outDir/tRNA-alignment/${singleFile_basename}_unmapped.fq
+			#tophat2 -p $CPUs -x 1 -T -N 1 -o $outDir/snomiRNA-alignment/ --transcriptome-index=DBs/snomiRNA_DB/known DBs/bowtie2_index/Homo_sapiens.GRCh37.dna.primary_assembly $outDir/tRNA-alignment/${singleFile_basename}_unmapped.fq		
 		fi
 		if [ ! -f $outDir/snomiRNA-alignment/align_summary.txt ]; then # If this file was still not generated, use the unmapped FASTQ from the first alignment output
 			echo "
@@ -334,12 +335,13 @@ elif [[ $pairedEnd = "False" ]]; then
 		
 		#touch $outDir/checkpoints/checkpoint-3.flag
 		if [ ! -f $outDir/mRNA-ncRNA-alignment/align_summary.txt ]; then # If this file was not generated, try and align the unmapped reads from the tRNA alignment	
-			if [ ! -d DBs/mRNA-ncRNA_DB ]; then
-				string_padder "Creating one-time sno/miRNA transcriptome"
-				tophat2 -p $CPUs -G DBs/hg19-mRNA-ncRNA.gtf --transcriptome-index=DBs/mRNA-ncRNA_DB/known DBs/bowtie2_index/Homo_sapiens.GRCh37.dna.primary_assembly
-			fi
+			#if [ ! -d DBs/mRNA-ncRNA_DB ]; then
+			#	string_padder "Creating one-time sno/miRNA transcriptome"
+			#	tophat2 -p $CPUs -G DBs/hg19-mRNA-ncRNA.gtf --transcriptome-index=DBs/mRNA-ncRNA_DB/known DBs/bowtie2_index/Homo_sapiens.GRCh37.dna.primary_assembly
+			#fi
 			string_padder "Running mRNA/ncRNA alignment step..."
-			tophat2 -p $CPUs -T -o $outDir/mRNA-ncRNA-alignment/ --transcriptome-index=DBs/mRNA-ncRNA_DB/known DBs/bowtie2_index/Homo_sapiens.GRCh37.dna.primary_assembly $outDir/snomiRNA-alignment/${singleFile_basename}_unmapped.fq		
+			tophat2 -p $CPUs -o $outDir/mRNA-ncRNA-alignment/ --b2-very-sensitive DBs/bowtie2_index/Homo_sapiens.GRCh37.dna.primary_assembly $outDir/snomiRNA-alignment/${singleFile_basename}_unmapped.fq
+			#tophat2 -p $CPUs -T -o $outDir/mRNA-ncRNA-alignment/ --transcriptome-index=DBs/mRNA-ncRNA_DB/known DBs/bowtie2_index/Homo_sapiens.GRCh37.dna.primary_assembly $outDir/snomiRNA-alignment/${singleFile_basename}_unmapped.fq		
 			if [ -f $outDir/mRNA-ncRNA-alignment/unmapped.bam ]; then  #If tophat2 successfully mapped reads, convert the unmapped to FASTQ
 				samtools index $outDir/mRNA-ncRNA-alignment/accepted_hits.bam
 				bedtools bamtofastq -i $outDir/mRNA-ncRNA-alignment/unmapped.bam -fq $outDir/mRNA-ncRNA-alignment/${singleFile_basename}_unmapped.fq
@@ -444,13 +446,13 @@ if [ ! -f $outDir/tRNA-alignment/accepted_hits.bam ]; then
 	echo "
 No alignment file found for tRNA alignment. Using blank count file instead
 "
-	cp additional-files/empty_tRNA.count $outDir/HTSeq-count-output/tRNA-alignment.count
+	cp additional-files/empty_tRNA.count $outDir/HTSeq-count-output/tRNA-alignment.count &
 else
 	echo "
 Counting tRNA alignment reads
 "
-	htseq-count -f bam $outDir/tRNA-alignment/accepted_hits.bam DBs/hg19-wholetRNA-CCA.gtf > $outDir/HTSeq-count-output/tRNA-alignment.count
-	bam_to_plots $outDir/tRNA-alignment $singleFile_basename tiRNA
+	htseq-count -f bam $outDir/tRNA-alignment/accepted_hits.bam DBs/hg19-wholetRNA-CCA.gtf > $outDir/HTSeq-count-output/tRNA-alignment.count &
+	bam_to_plots $outDir/tRNA-alignment $singleFile_basename tiRNA &
 fi
 
 # Count for alignment step 2
@@ -458,13 +460,13 @@ if [ ! -f $outDir/snomiRNA-alignment/accepted_hits.bam ]; then
 	echo "
 No alignment file found for sno/miRNA alignment. Using blank count file instead
 "
-	cp additional-files/empty_snomiRNA.count $outDir/HTSeq-count-output/snomiRNA-alignment.count
+	cp additional-files/empty_snomiRNA.count $outDir/HTSeq-count-output/snomiRNA-alignment.count &
 else
 	echo "
 Counting sno/miRNA alignment reads
 "
-	htseq-count -f bam $outDir/snomiRNA-alignment/accepted_hits.bam DBs/hg19-snomiRNA.gtf > $outDir/HTSeq-count-output/snomiRNA-alignment.count
-    bam_to_plots $outDir/snomiRNA-alignment $singleFile_basename snomiRNA
+	htseq-count -f bam $outDir/snomiRNA-alignment/accepted_hits.bam DBs/hg19-snomiRNA.gtf > $outDir/HTSeq-count-output/snomiRNA-alignment.count &
+    bam_to_plots $outDir/snomiRNA-alignment $singleFile_basename snomiRNA &
 fi
 
 #touch $outDir/checkpoints/checkpoint-5.flag
@@ -473,7 +475,7 @@ if [ ! -f $outDir/mRNA-ncRNA-alignment/accepted_hits.bam ]; then
 	echo "
 No alignment file found for mRNA/ncRNA alignment. Using blank count file instead
 "
-	cp additional-files/empty_mRNA-ncRNA.count $outDir/HTSeq-count-output/mRNA-ncRNA-alignment.count
+	cp additional-files/empty_mRNA-ncRNA.count $outDir/HTSeq-count-output/mRNA-ncRNA-alignment.count &
 else
 	echo "
 Counting mRNA/ncRNA alignment reads
@@ -482,6 +484,7 @@ Counting mRNA/ncRNA alignment reads
     #bam_to_plots $outDir/mRNA-ncRNA-alignment # The resulting file would be too big. It would be interesting to see the top few genes/ncRNAs and their coverage.
 fi
 
+wait
 #touch $outDir/checkpoints/checkpoint-6.flag
 
 
