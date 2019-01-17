@@ -78,6 +78,7 @@ for(feature in featuresUnion) {
     featureRows <- GTF[grep(feature, GTF$V9),]
     featureRows <- featureRows[1,]
     geneName <- as.character(sub(".*gene_name *(.*?) *; gene_source.*", "\\1", featureRows$V9))
+    geneName <- paste0(geneName, " (", feature, ")")
   } else {
     geneName <- feature
   }

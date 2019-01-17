@@ -116,9 +116,9 @@ for f in $inDir/*; do
 	file_base=$(basename $f)
 	filename="$( cut -d '.' -f 1 <<< "$file_base" )" 
 	if [ "$tophat" ]; then # Use tophat2
-		./HISAT2-version.sh -s "$f" -o "$outDir/Results/$filename" -p "$CPUs" -T -A "$Plots"
+		./HISAT2-version-v2.sh -s "$f" -o "$outDir/Results/$filename" -p "$CPUs" -T -A "$Plots"
 	else # Use HISAT2
-		./HISAT2-version.sh -s "$f" -o "$outDir/Results/$filename" -p "$CPUs" -A "$Plots"
+		./HISAT2-version-v2.sh -s "$f" -o "$outDir/Results/$filename" -p "$CPUs" -A "$Plots"
 	fi
 	cp $outDir/Results/$filename/Data_and_Plots/* $outDir/Results/Plots/
 	wait
@@ -178,10 +178,16 @@ if [ ! "$expFile" ]; then
     Rscript scripts/Mean_Stdev.R $myPath/$outDir/Results/Data/condition1_concatenated.snomiRNA.genomecov $myPath/$outDir/Results/Data/condition1_concatenated_mean_stdev.snomiRNA.genomecov &
     Rscript scripts/Mean_Stdev.R $myPath/$outDir/Results/Data/condition2_concatenated.snomiRNA.genomecov $myPath/$outDir/Results/Data/condition2_concatenated_mean_stdev.snomiRNA.genomecov &
 	wait
-    ### Plot DEGs arg1 and 2 are inputs, arg 3 is list of differentially expressed genes, arg 4 is output pdf, 
-    ### arg 5 is mean coverage cutoff (plot features with coverage above this), arg 5 is GTF file for snomiRNAs (arg 5 is not given to tiRNA data)
-    Rscript scripts/Bedgraph_plotter_DEGs-v3.R $myPath/$outDir/Results/Data/condition1_concatenated_mean_stdev.tiRNA.genomecov $myPath/$outDir/Results/Data/condition2_concatenated_mean_stdev.tiRNA.genomecov $myPath/$outDir/Results/Data/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_tiRNAs_DEGs.pdf 0 &
-    Rscript scripts/Bedgraph_plotter_DEGs-v3.R $myPath/$outDir/Results/Data/condition1_concatenated_mean_stdev.snomiRNA.genomecov $myPath/$outDir/Results/Data/condition2_concatenated_mean_stdev.snomiRNA.genomecov $myPath/$outDir/Results/Data/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_snomiRNAs_DEGs.pdf 0 DBs/hg19-snomiRNA.gtf &
+	### Get names of differentially expressed genes
+	cat $myPath/$outDir/Results/Data/DE_Results/DESeq2/*regulated.csv | grep -v ^,base | awk -F ',' '{print $1}' > $myPath/$outDir/Results/Data/DE_Results/DESeq2/DEGs_names-only.txt
+	if [[ $(wc -l < $myPath/$outDir/Results/Data/DE_Results/DESeq2/DEGs_names-only.txt) -ge 1 ]]; then 
+		### Plot DEGs arg1 and 2 are inputs, arg 3 is list of differentially expressed genes, arg 4 is output pdf, 
+		### arg 5 is mean coverage cutoff (plot features with coverage above this), arg 5 is GTF file for snomiRNAs (arg 5 is not given to tiRNA data)
+		Rscript scripts/Bedgraph_plotter_DEGs-v3.R $myPath/$outDir/Results/Data/condition1_concatenated_mean_stdev.tiRNA.genomecov $myPath/$outDir/Results/Data/condition2_concatenated_mean_stdev.tiRNA.genomecov $myPath/$outDir/Results/Data/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_tiRNAs_DEGs.pdf 0 &
+		Rscript scripts/Bedgraph_plotter_DEGs-v3.R $myPath/$outDir/Results/Data/condition1_concatenated_mean_stdev.snomiRNA.genomecov $myPath/$outDir/Results/Data/condition2_concatenated_mean_stdev.snomiRNA.genomecov $myPath/$outDir/Results/Data/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_snomiRNAs_DEGs.pdf 0 DBs/hg19-snomiRNA.gtf &
+	else
+		echo "There were no differentially expressed features. No plots were generated." >> $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_no-features-to-plot.txt
+	fi
 	wait
 else
     echo "An experiment layout plan was provided. Carrying out DESeq2 analysis now."
@@ -222,10 +228,17 @@ else
     Rscript scripts/Mean_Stdev.R $myPath/$outDir/Results/Data/condition1_concatenated.snomiRNA.genomecov $myPath/$outDir/Results/Data/condition1_concatenated_mean_stdev.snomiRNA.genomecov &
     Rscript scripts/Mean_Stdev.R $myPath/$outDir/Results/Data/condition2_concatenated.snomiRNA.genomecov $myPath/$outDir/Results/Data/condition2_concatenated_mean_stdev.snomiRNA.genomecov &
 	wait
-    ### Plot DEGs arg1 and 2 are inputs, arg 3 is list of differentially expressed genes, arg 4 is output pdf, 
-    ### arg 5 is mean coverage cutoff (plot features with coverage above this), arg 5 is GTF file for snomiRNAs (arg 5 is not given to tiRNA data)
-    Rscript scripts/Bedgraph_plotter_DEGs-v3.R $myPath/$outDir/Results/Data/condition1_concatenated_mean_stdev.tiRNA.genomecov $myPath/$outDir/Results/Data/condition2_concatenated_mean_stdev.tiRNA.genomecov $myPath/$outDir/Results/Data/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_tiRNAs_DEGs.pdf 0 &
-    Rscript scripts/Bedgraph_plotter_DEGs-v3.R $myPath/$outDir/Results/Data/condition1_concatenated_mean_stdev.snomiRNA.genomecov $myPath/$outDir/Results/Data/condition2_concatenated_mean_stdev.snomiRNA.genomecov $myPath/$outDir/Results/Data/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_snomiRNAs_DEGs.pdf 0 DBs/hg19-snomiRNA.gtf &
+    ### Get names of differentially expressed genes
+	cat $myPath/$outDir/Results/Data/DE_Results/DESeq2/*regulated.csv | grep -v ^,base | awk -F ',' '{print $1}' > $myPath/$outDir/Results/Data/DE_Results/DESeq2/DEGs_names-only.txt
+	### If there are differentially expressed features, plot these:
+	if [[ $(wc -l < $myPath/$outDir/Results/Data/DE_Results/DESeq2/DEGs_names-only.txt) -ge 1 ]]; then
+		### Plot DEGs arg1 and 2 are inputs, arg 3 is list of differentially expressed genes, arg 4 is output pdf, 
+		### arg 5 is mean coverage cutoff (plot features with coverage above this), arg 5 is GTF file for snomiRNAs (arg 5 is not given to tiRNA data)
+		Rscript scripts/Bedgraph_plotter_DEGs-v3.R $myPath/$outDir/Results/Data/condition1_concatenated_mean_stdev.tiRNA.genomecov $myPath/$outDir/Results/Data/condition2_concatenated_mean_stdev.tiRNA.genomecov $myPath/$outDir/Results/Data/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_tiRNAs_DEGs.pdf 0 &
+		Rscript scripts/Bedgraph_plotter_DEGs-v3.R $myPath/$outDir/Results/Data/condition1_concatenated_mean_stdev.snomiRNA.genomecov $myPath/$outDir/Results/Data/condition2_concatenated_mean_stdev.snomiRNA.genomecov $myPath/$outDir/Results/Data/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_snomiRNAs_DEGs.pdf 0 DBs/hg19-snomiRNA.gtf &
+	else
+		echo "There were no differentially expressed features. No plots were generated." >> $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_no-features-to-plot.txt
+	fi
 	wait
 fi
 
