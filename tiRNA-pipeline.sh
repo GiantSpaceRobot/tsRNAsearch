@@ -129,6 +129,8 @@ function bam_to_plots () {  ### Steps for plotting regions with high variation i
 	
 	### Output coverage of all features we are interested in (e.g. tRNAs)
 	bedtools genomecov -d -split -ibam $1/accepted_hits.bam > $1/accepted_hits.genomecov
+	### Normalise by reads per million (RPM)
+	#python scripts/Genomecov-to-Genomecov_RPM.py $1/accepted_hits_raw.genomecov 100000 $1/accepted_hits.genomecov 
 	### If we are working with tRNAs, collapse all tRNAs based on same isoacceptor
 	if [[ $3 = "tiRNA" ]]; then
 		### Remove introns from tRNA counts (as these will interfere with the read counts of collapsed tRNAs)
@@ -142,7 +144,7 @@ function bam_to_plots () {  ### Steps for plotting regions with high variation i
 		### Copy the collapsed genomecov file and name it so that the remaining steps below do not have errors
 		cp $1/accepted_hits_collapsed.genomecov $1/accepted_hits.genomecov	
 	fi
-	### Sort by tRNA isoacceptor and nucleotide position
+	### Sort by feature name and nucleotide position
 	sort -k1,1 -k2,2n $1/accepted_hits.genomecov > $1/accepted_hits_sorted.genomecov
 	### If -A parameter was provided, plot everything
 	if [[ $Plots == "yes" ]]; then # Plot everything
@@ -156,11 +158,11 @@ function bam_to_plots () {  ### Steps for plotting regions with high variation i
 	#else
 	#	return # Exit function and don't plot
 	fi
-	### Output the mean, standard deviation and coefficient of variance of each isoacceptor
+	### Output the mean, standard deviation and coefficient of variance of each ncRNA/gene
 	python scripts/Bedgraph-analyser.py $1/accepted_hits_sorted.genomecov $1/accepted_hits_sorted.tsv
-	### Gather all tRNA isoacceptors with at least a mean coverage of 10
+	### Gather all ncRNAs/genes with at least a mean coverage of 10
 	awk '$2>10' $1/accepted_hits_sorted.tsv > $1/accepted_hits_sorted_mean-std.tsv
-	### Sort the remaining tRNA isoacceptors by coef. of variance
+	### Sort the remaining ncRNAs/genes by coef. of variance
 	sort -k4,4nr $1/accepted_hits_sorted_mean-std.tsv > $1/$2_$3_accepted_hits_sorted_mean-std_sorted.tsv
 	### Move finalised data for further analysis
 	cp $1/accepted_hits_sorted.genomecov $outDir/Data_and_Plots/$2_$3.genomecov &
@@ -202,6 +204,7 @@ mkdir -p $outDir/tRNA-alignment
 mkdir -p $outDir/snomiRNA-alignment
 mkdir -p $outDir/mRNA-ncRNA-alignment
 mkdir -p $outDir/HTSeq-count-output
+mkdir -p $outDir/HTSeq-to-RPM
 mkdir -p $outDir/Data_and_Plots
 
 #touch $outDir/checkpoints/checkpoint-1.flag
@@ -302,6 +305,7 @@ if [ ! -f $outDir/checkpoints/checkpoint-4.flag ]; then
 				string_padder "Running tRNA alignment step..."
 				#tophat2 -p $CPUs -x 1 -N 1 --b2-very-sensitive -o $outDir/tRNA-alignment DBs/bowtie2_index/hg19-wholetRNA-CCA_cdhit $outDir/trim_galore_output/$trimmedFile
 				tophat2 -p $CPUs -x 1 -T -N 1 -o $outDir/tRNA-alignment --transcriptome-index=DBs/tRNA_DB/known DBs/bowtie2_index/hg19-wholetRNA-CCA_cdhit $outDir/trim_galore_output/$trimmedFile
+				grep "Input" $outDir/tRNA-alignment/align_summary.txt > $outDir/Stats.log
 				if [ -f $outDir/tRNA-alignment/unmapped.bam ]; then  #If tophat2 successfully mapped reads, convert the unmapped to FASTQ
 					bedtools bamtofastq -i $outDir/tRNA-alignment/unmapped.bam -fq $outDir/tRNA-alignment/${singleFile_basename}_unmapped.fq	
 					samtools index $outDir/tRNA-alignment/accepted_hits.bam &
@@ -371,7 +375,7 @@ if [ ! -f $outDir/checkpoints/checkpoint-4.flag ]; then
 			if [ ! -f $outDir/tRNA-alignment/align_summary.txt ]; then
 				string_padder "Running tRNA alignment step..."
 				hisat2 -p $CPUs -x DBs/hisat2_index/hg19-wholetRNA-CCA_cdhit -U $outDir/trim_galore_output/$trimmedFile -S $outDir/tRNA-alignment/aligned_tRNAdb.sam --summary-file $outDir/tRNA-alignment/align_summary.txt --un $outDir/tRNA-alignment/unmapped.fastq
-				
+				grep "reads" $outDir/tRNA-alignment/align_summary.txt > $outDir/Stats.log	
 				if [ -f $outDir/tRNA-alignment/aligned_tRNAdb.sam ]; then  #If hisat2 successfully mapped reads, convert to bam and index
 					samtools view -bS $outDir/tRNA-alignment/aligned_tRNAdb.sam > $outDir/tRNA-alignment/accepted_hits_unsorted.bam
 					rm $outDir/tRNA-alignment/aligned_tRNAdb.sam &
@@ -444,53 +448,82 @@ fi
 # Produce read counts for the three alignment steps. If one of the alignment steps failed, use an empty htseq-count output file.
 string_padder "Alignment steps complete. Moving on to read-counting using HTSeq-count"
 
-# Count for alignment step 1
-if [ ! -f $outDir/tRNA-alignment/accepted_hits.bam ]; then
-	echo "
-No alignment file found for tRNA alignment. Using blank count file instead
-"
-	cp additional-files/empty_tRNA.count $outDir/HTSeq-count-output/tRNA-alignment.count &
+if [ ! -f $outDir/checkpoints/checkpoint-5.flag ]; then
+	# Count for alignment step 1
+	if [ ! -f $outDir/tRNA-alignment/accepted_hits.bam ]; then
+		echo "
+	No alignment file found for tRNA alignment. Using blank count file instead
+	"
+		cp additional-files/empty_tRNA.count $outDir/HTSeq-count-output/tRNA-alignment.count &
+	else
+		echo "
+	Counting tRNA alignment reads
+	"
+		htseq-count -f bam $outDir/tRNA-alignment/accepted_hits.bam DBs/hg19-wholetRNA-CCA_cdhit.gtf > $outDir/HTSeq-count-output/tRNA-alignment.count &
+		bam_to_plots $outDir/tRNA-alignment $singleFile_basename tiRNA &
+	fi
+
+	# Count for alignment step 2
+	if [ ! -f $outDir/snomiRNA-alignment/accepted_hits.bam ]; then
+		echo "
+	No alignment file found for sno/miRNA alignment. Using blank count file instead
+	"
+		cp additional-files/empty_snomiRNA.count $outDir/HTSeq-count-output/snomiRNA-alignment.count &
+	else
+		echo "
+	Counting sno/miRNA alignment reads
+	"
+		htseq-count -f bam $outDir/snomiRNA-alignment/accepted_hits.bam DBs/hg19-snomiRNA_cdhit.gtf > $outDir/HTSeq-count-output/snomiRNA-alignment.count &
+		bam_to_plots $outDir/snomiRNA-alignment $singleFile_basename snomiRNA &
+	fi
+
+	#touch $outDir/checkpoints/checkpoint-5.flag
+	# Count for alignment step 3
+	if [ ! -f $outDir/mRNA-ncRNA-alignment/accepted_hits.bam ]; then
+		echo "
+	No alignment file found for mRNA/ncRNA alignment. Using blank count file instead
+	"
+		cp additional-files/empty_mRNA-ncRNA.count $outDir/HTSeq-count-output/mRNA-ncRNA-alignment.count &
+	else
+		echo "
+	Counting mRNA/ncRNA alignment reads
+	"
+		htseq-count -f bam $outDir/mRNA-ncRNA-alignment/accepted_hits.bam DBs/Homo_sapiens.GRCh37.87.gtf > $outDir/HTSeq-count-output/mRNA-ncRNA-alignment.count
+		#bam_to_plots $outDir/mRNA-ncRNA-alignment # The resulting file would be too big. It would be interesting to see the top few genes/ncRNAs and their coverage.
+	fi
+	touch $outDir/checkpoints/checkpoint-5.flag
+	wait
 else
 	echo "
-Counting tRNA alignment reads
-"
-	htseq-count -f bam $outDir/tRNA-alignment/accepted_hits.bam DBs/hg19-wholetRNA-CCA_cdhit.gtf > $outDir/HTSeq-count-output/tRNA-alignment.count &
-	bam_to_plots $outDir/tRNA-alignment $singleFile_basename tiRNA &
+	Checkpoint 5 exists, skipping this step
+	"
 fi
 
-# Count for alignment step 2
-if [ ! -f $outDir/snomiRNA-alignment/accepted_hits.bam ]; then
-	echo "
-No alignment file found for sno/miRNA alignment. Using blank count file instead
-"
-	cp additional-files/empty_snomiRNA.count $outDir/HTSeq-count-output/snomiRNA-alignment.count &
-else
-	echo "
-Counting sno/miRNA alignment reads
-"
-	htseq-count -f bam $outDir/snomiRNA-alignment/accepted_hits.bam DBs/hg19-snomiRNA_cdhit.gtf > $outDir/HTSeq-count-output/snomiRNA-alignment.count &
-    bam_to_plots $outDir/snomiRNA-alignment $singleFile_basename snomiRNA &
-fi
-
-#touch $outDir/checkpoints/checkpoint-5.flag
-# Count for alignment step 3
-if [ ! -f $outDir/mRNA-ncRNA-alignment/accepted_hits.bam ]; then
-	echo "
-No alignment file found for mRNA/ncRNA alignment. Using blank count file instead
-"
-	cp additional-files/empty_mRNA-ncRNA.count $outDir/HTSeq-count-output/mRNA-ncRNA-alignment.count &
-else
-	echo "
-Counting mRNA/ncRNA alignment reads
-"
-	htseq-count -f bam $outDir/mRNA-ncRNA-alignment/accepted_hits.bam DBs/Homo_sapiens.GRCh37.87.gtf > $outDir/HTSeq-count-output/mRNA-ncRNA-alignment.count
-    #bam_to_plots $outDir/mRNA-ncRNA-alignment # The resulting file would be too big. It would be interesting to see the top few genes/ncRNAs and their coverage.
-fi
-
-wait
 #touch $outDir/checkpoints/checkpoint-6.flag
 
+#if [[ $oldAligner = "yes" ]]; then  # Get the number of mapped reads for each mapping step
+#	mapped_tRNA=$(grep "Mapped" $outDir/tRNA-alignment/align_summary.txt | awk '{print $3}')
+#	mapped_snomiRNA=$(grep "Mapped" $outDir/snomiRNA-alignment/align_summary.txt | awk '{print $3}')
+#	mapped_mRNAncRNA=$(grep "Mapped" $outDir/mRNA-ncRNA-alignment/align_summary.txt | awk '{print $3}')
+#else
+#	mapped_tRNA1=$(grep "exactly" $outDir/tRNA-alignment/align_summary.txt | awk '{print $1}')
+#	mapped_tRNA2=$(grep ">1" $outDir/tRNA-alignment/align_summary.txt | awk '{print $1}')
+#	mapped_tRNA=$((mapped_tRNA1 + mapped_tRNA2))
+#	### snomiRNAs
+#	mapped_snomiRNA1=$(grep "exactly" $outDir/snomiRNA-alignment/align_summary.txt | awk '{print $1}')
+#	mapped_snomiRNA2=$(grep ">1" $outDir/snomiRNA-alignment/align_summary.txt | awk '{print $1}')
+#	mapped_snomiRNA=$((mapped_snomiRNA1 + mapped_snomiRNA2))
+#	### m/ncRNAs
+#	mapped_mRNAncRNA1=$(grep "exactly" $outDir/mRNA-ncRNA-alignment/align_summary.txt | awk '{print $1}')
+#	mapped_mRNAncRNA2=$(grep ">1" $outDir/mRNA-ncRNA-alignment/align_summary.txt | awk '{print $1}')
+#	mapped_mRNAncRNA=$((mapped_mRNAncRNA1 + mapped_mRNAncRNA2))
+#fi
+#mapped_total=$((mapped_tRNA + mapped_snomiRNA + mapped_mRNAncRNA))
+#echo -e "tRNA\t$mapped_tRNA\nsnomiRNA\t$mapped_snomiRNA\nmRNA/ncRNA\t$mapped_mRNAncRNA\nTotal\t$mapped_total" > $outDir/Data_and_Plots/MappedReadCount.txt
+#
+#python scripts/HTSeq-to-RPM.py $outDir/HTSeq-count-output/tRNA-alignment.count $outDir/Data_and_Plots/MappedReadCount.txt $outDir/HTSeq-to-RPM/tRNA-alignment.RPM
+#python scripts/HTSeq-to-RPM.py $outDir/HTSeq-count-output/snomiRNA-alignment.count $outDir/Data_and_Plots/MappedReadCount.txt $outDir/HTSeq-to-RPM/snomiRNA-alignment.RPM
+#python scripts/HTSeq-to-RPM.py $outDir/HTSeq-count-output/mRNA-ncRNA-alignment.count $outDir/Data_and_Plots/MappedReadCount.txt $outDir/HTSeq-to-RPM/mRNA-ncRNA-alignment.RPM
+#
 
 # Create a log file with the date, time and name of the input file in it's name
-
-

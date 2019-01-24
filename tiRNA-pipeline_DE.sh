@@ -116,16 +116,22 @@ for f in $inDir/*; do
 	file_base=$(basename $f)
 	filename="$( cut -d '.' -f 1 <<< "$file_base" )" 
 	if [ "$tophat" ]; then # Use tophat2
-		./tiRNA-pipeline.sh -s "$f" -o "$outDir/Results/$filename" -p "$CPUs" -T -A "$Plots"
+		./tiRNA-pipeline.sh -s "$f" -o "$outDir/Results/$filename" -p "$CPUs" -T -A "$Plots" > $outDir/$filename_tiRNApipeline.log
 	else # Use HISAT2
-		./tiRNA-pipeline.sh -s "$f" -o "$outDir/Results/$filename" -p "$CPUs" -A "$Plots"
+		./tiRNA-pipeline.sh -s "$f" -o "$outDir/Results/$filename" -p "$CPUs" -A "$Plots" > $outDir/$filename_tiRNApipeline.log
 	fi
 	cp $outDir/Results/$filename/Data_and_Plots/* $outDir/Results/Plots/
 	wait
-	cat $outDir/Results/$filename/HTSeq-count-output/*.count | grep -v ^__ | sort -k1,1 > $outDir/Results/Data/$filename.all_features.count
+	cat $outDir/Results/$filename/HTSeq-count-output/*.count | grep -v ^__ | sort -k1,1 > $outDir/Results/Data/$filename.all_features.count	
 	sed -i '1s/^/Features\t'"$filename"'\n/' $outDir/Results/Data/$filename.all_features.count # Add column headers
 	readsMapped=$(awk '{sum+=$2} END{print sum;}' $outDir/Results/Data/$filename.all_features.count)
 	echo "Reads mapped: $readsMapped" >> $outDir/Results/$filename/Stats.log
+	
+	### Normalise HTSeq-count files by total reads mapped to get RPM (reads per million) 
+	#python scripts/HTSeq-to-RPM.py $outDir/Results/$filename/HTSeq-count-output/tRNA-alignment.count $readsMapped $outDir/Results/$filename/HTSeq-to-RPM/tRNA-alignment.RPM &
+	#python scripts/HTSeq-to-RPM.py $outDir/Results/$filename/HTSeq-count-output/snomiRNA-alignment.count $readsMapped $outDir/Results/$filename/HTSeq-to-RPM/snomiRNA-alignment.RPM &
+	#python scripts/HTSeq-to-RPM.py $outDir/Results/$filename/HTSeq-count-output/mRNA-ncRNA-alignment.count $readsMapped $outDir/Results/$filename/HTSeq-to-RPM/mRNA-ncRNA-alignment.RPM &
+	#wait
 done
 
 ### Gather count files
@@ -155,10 +161,15 @@ if [ ! "$expFile" ]; then
         cond1base="$(cut -d '.' -f1 <<< $cond1)"
         find $myPath/$outDir/ -type f -name "$cond1base*tiRNA.genomecov" -exec cp {} $myPath/$outDir/Results/Data/condition1_file$count.tiRNA.genomecov \; &
     	find $myPath/$outDir/ -type f -name "$cond1base*snomiRNA.genomecov" -exec cp {} $myPath/$outDir/Results/Data/condition1_file$count.snomiRNA.genomecov \; & # Gather sno/miRNAs
-	done
-    paste $myPath/$outDir/Results/Data/condition1_file*.tiRNA.genomecov > $myPath/$outDir/Results/Data/condition1_concatenated.tiRNA.genomecov
-    paste $myPath/$outDir/Results/Data/condition1_file*.snomiRNA.genomecov > $myPath/$outDir/Results/Data/condition1_concatenated.snomiRNA.genomecov &
+    	wait
+		mapped=$(grep "mapped" $myPath/$outDir/Results/$cond1base/Stats.log | awk '{print $3}')
+        python scripts/Genomecov-to-Genomecov_RPM.py "$myPath/$outDir/Results/Data/condition1_file$count.tiRNA.genomecov" "$mapped" "$myPath/$outDir/Results/Data/condition1_file$count.tiRNA.genomecov.readspermil" &
+        python scripts/Genomecov-to-Genomecov_RPM.py "$myPath/$outDir/Results/Data/condition1_file$count.snomiRNA.genomecov" "$mapped" "$myPath/$outDir/Results/Data/condition1_file$count.snomiRNA.genomecov.readspermil" &
+    done
     wait
+    paste $myPath/$outDir/Results/Data/condition1_file*.tiRNA.genomecov.readspermil > $myPath/$outDir/Results/Data/condition1_concatenated.tiRNA.genomecov &
+    paste $myPath/$outDir/Results/Data/condition1_file*.snomiRNA.genomecov.readspermil > $myPath/$outDir/Results/Data/condition1_concatenated.snomiRNA.genomecov &
+	wait
 	### Concatenate the genomecov files for the replicates of condition 2 
     count=0
     for fname in $(cat $myPath/$outDir/Results/Data/predicted_exp_layout_cond2.csv); do
@@ -168,9 +179,13 @@ if [ ! "$expFile" ]; then
         find $myPath/$outDir/ -type f -name "$cond2base*tiRNA.genomecov" -exec cp {} $myPath/$outDir/Results/Data/condition2_file$count.tiRNA.genomecov \; &
     	find $myPath/$outDir/ -type f -name "$cond2base*snomiRNA.genomecov" -exec cp {} $myPath/$outDir/Results/Data/condition2_file$count.snomiRNA.genomecov \; &
 		wait
-	done
-    paste $myPath/$outDir/Results/Data/condition2_file*.tiRNA.genomecov > $myPath/$outDir/Results/Data/condition2_concatenated.tiRNA.genomecov &
-    paste $myPath/$outDir/Results/Data/condition2_file*.snomiRNA.genomecov > $myPath/$outDir/Results/Data/condition2_concatenated.snomiRNA.genomecov &
+		mapped=$(grep "mapped" $myPath/$outDir/Results/$cond2base/Stats.log | awk '{print $3}')
+        python scripts/Genomecov-to-Genomecov_RPM.py "$myPath/$outDir/Results/Data/condition2_file$count.tiRNA.genomecov" "$mapped" "$myPath/$outDir/Results/Data/condition2_file$count.tiRNA.genomecov.readspermil" &
+        python scripts/Genomecov-to-Genomecov_RPM.py "$myPath/$outDir/Results/Data/condition2_file$count.snomiRNA.genomecov" "$mapped" "$myPath/$outDir/Results/Data/condition2_file$count.snomiRNA.genomecov.readspermil" &
+    done
+    wait
+    paste $myPath/$outDir/Results/Data/condition2_file*.tiRNA.genomecov.readspermil > $myPath/$outDir/Results/Data/condition2_concatenated.tiRNA.genomecov &
+    paste $myPath/$outDir/Results/Data/condition2_file*.snomiRNA.genomecov.readspermil > $myPath/$outDir/Results/Data/condition2_concatenated.snomiRNA.genomecov &
 	wait
 	### Get mean and standard deviation for both files
     Rscript scripts/Mean_Stdev.R $myPath/$outDir/Results/Data/condition1_concatenated.tiRNA.genomecov $myPath/$outDir/Results/Data/condition1_concatenated_mean_stdev.tiRNA.genomecov &
@@ -184,7 +199,7 @@ if [ ! "$expFile" ]; then
 		### Plot DEGs arg1 and 2 are inputs, arg 3 is list of differentially expressed genes, arg 4 is output pdf, 
 		### arg 5 is mean coverage cutoff (plot features with coverage above this), arg 5 is GTF file for snomiRNAs (arg 5 is not given to tiRNA data)
 		Rscript scripts/Bedgraph_plotter_DEGs-v3.R $myPath/$outDir/Results/Data/condition1_concatenated_mean_stdev.tiRNA.genomecov $myPath/$outDir/Results/Data/condition2_concatenated_mean_stdev.tiRNA.genomecov $myPath/$outDir/Results/Data/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_tiRNAs_DEGs.pdf 0 &
-		Rscript scripts/Bedgraph_plotter_DEGs-v3.R $myPath/$outDir/Results/Data/condition1_concatenated_mean_stdev.snomiRNA.genomecov $myPath/$outDir/Results/Data/condition2_concatenated_mean_stdev.snomiRNA.genomecov $myPath/$outDir/Results/Data/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_snomiRNAs_DEGs.pdf 0 DBs/hg19-snomiRNA.gtf &
+		Rscript scripts/Bedgraph_plotter_DEGs-v3.R $myPath/$outDir/Results/Data/condition1_concatenated_mean_stdev.snomiRNA.genomecov $myPath/$outDir/Results/Data/condition2_concatenated_mean_stdev.snomiRNA.genomecov $myPath/$outDir/Results/Data/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_snomiRNAs_DEGs.pdf 0 DBs/hg19-snomiRNA_cdhit.gtf &
 	else
 		echo "There were no differentially expressed features. No plots were generated." >> $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_no-features-to-plot.txt
 	fi
@@ -204,10 +219,14 @@ else
         cond1base="$(cut -d '.' -f1 <<< $cond1)"
         find $myPath/$outDir/ -type f -name "$cond1base*tiRNA.genomecov" -exec cp {} $myPath/$outDir/Results/Data/condition1_file$count.tiRNA.genomecov \; & # Gather tiRNAs 
     	find $myPath/$outDir/ -type f -name "$cond1base*snomiRNA.genomecov" -exec cp {} $myPath/$outDir/Results/Data/condition1_file$count.snomiRNA.genomecov \; & # Gather sno/miRNAs
-	wait
+		wait
+		mapped=$(grep "mapped" $myPath/$outDir/Results/$cond1base/Stats.log | awk '{print $3}')
+        python scripts/Genomecov-to-Genomecov_RPM.py "$myPath/$outDir/Results/Data/condition1_file$count.tiRNA.genomecov" "$mapped" "$myPath/$outDir/Results/Data/condition1_file$count.tiRNA.genomecov.readspermil" &
+        python scripts/Genomecov-to-Genomecov_RPM.py "$myPath/$outDir/Results/Data/condition1_file$count.snomiRNA.genomecov" "$mapped" "$myPath/$outDir/Results/Data/condition1_file$count.snomiRNA.genomecov.readspermil" &
 	done
-    paste $myPath/$outDir/Results/Data/condition1_file*.tiRNA.genomecov > $myPath/$outDir/Results/Data/condition1_concatenated.tiRNA.genomecov &
-	paste $myPath/$outDir/Results/Data/condition1_file*.snomiRNA.genomecov > $myPath/$outDir/Results/Data/condition1_concatenated.snomiRNA.genomecov &
+	wait
+    paste $myPath/$outDir/Results/Data/condition1_file*.tiRNA.genomecov.readspermil > $myPath/$outDir/Results/Data/condition1_concatenated.tiRNA.genomecov &
+	paste $myPath/$outDir/Results/Data/condition1_file*.snomiRNA.genomecov.readspermil > $myPath/$outDir/Results/Data/condition1_concatenated.snomiRNA.genomecov &
 	wait
     ### Concatenate the genomecov files for the replicates of condition 2 
     count=0
@@ -218,9 +237,13 @@ else
         find $myPath/$outDir/ -type f -name "$cond2base*tiRNA.genomecov" -exec cp {} $myPath/$outDir/Results/Data/condition2_file$count.tiRNA.genomecov \; & # Gather tiRNAs
     	find $myPath/$outDir/ -type f -name "$cond2base*snomiRNA.genomecov" -exec cp {} $myPath/$outDir/Results/Data/condition2_file$count.snomiRNA.genomecov \; & # Gather snomiRNAs
 		wait
+		mapped=$(grep "mapped" $myPath/$outDir/Results/$cond2base/Stats.log | awk '{print $3}')
+        python scripts/Genomecov-to-Genomecov_RPM.py "$myPath/$outDir/Results/Data/condition2_file$count.tiRNA.genomecov" "$mapped" "$myPath/$outDir/Results/Data/condition2_file$count.tiRNA.genomecov.readspermil" &
+        python scripts/Genomecov-to-Genomecov_RPM.py "$myPath/$outDir/Results/Data/condition2_file$count.snomiRNA.genomecov" "$mapped" "$myPath/$outDir/Results/Data/condition2_file$count.snomiRNA.genomecov.readspermil" &
 	done
-    paste $myPath/$outDir/Results/Data/condition2_file*.tiRNA.genomecov > $myPath/$outDir/Results/Data/condition2_concatenated.tiRNA.genomecov &
-	paste $myPath/$outDir/Results/Data/condition2_file*.snomiRNA.genomecov > $myPath/$outDir/Results/Data/condition2_concatenated.snomiRNA.genomecov &
+    wait
+	paste $myPath/$outDir/Results/Data/condition2_file*.tiRNA.genomecov.readspermil > $myPath/$outDir/Results/Data/condition2_concatenated.tiRNA.genomecov &
+	paste $myPath/$outDir/Results/Data/condition2_file*.snomiRNA.genomecov.readspermil > $myPath/$outDir/Results/Data/condition2_concatenated.snomiRNA.genomecov &
 	wait
     ### Get mean and standard deviation for both files
     Rscript scripts/Mean_Stdev.R $myPath/$outDir/Results/Data/condition1_concatenated.tiRNA.genomecov $myPath/$outDir/Results/Data/condition1_concatenated_mean_stdev.tiRNA.genomecov &
@@ -235,7 +258,7 @@ else
 		### Plot DEGs arg1 and 2 are inputs, arg 3 is list of differentially expressed genes, arg 4 is output pdf, 
 		### arg 5 is mean coverage cutoff (plot features with coverage above this), arg 5 is GTF file for snomiRNAs (arg 5 is not given to tiRNA data)
 		Rscript scripts/Bedgraph_plotter_DEGs-v3.R $myPath/$outDir/Results/Data/condition1_concatenated_mean_stdev.tiRNA.genomecov $myPath/$outDir/Results/Data/condition2_concatenated_mean_stdev.tiRNA.genomecov $myPath/$outDir/Results/Data/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_tiRNAs_DEGs.pdf 0 &
-		Rscript scripts/Bedgraph_plotter_DEGs-v3.R $myPath/$outDir/Results/Data/condition1_concatenated_mean_stdev.snomiRNA.genomecov $myPath/$outDir/Results/Data/condition2_concatenated_mean_stdev.snomiRNA.genomecov $myPath/$outDir/Results/Data/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_snomiRNAs_DEGs.pdf 0 DBs/hg19-snomiRNA.gtf &
+		Rscript scripts/Bedgraph_plotter_DEGs-v3.R $myPath/$outDir/Results/Data/condition1_concatenated_mean_stdev.snomiRNA.genomecov $myPath/$outDir/Results/Data/condition2_concatenated_mean_stdev.snomiRNA.genomecov $myPath/$outDir/Results/Data/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_snomiRNAs_DEGs.pdf 0 DBs/hg19-snomiRNA_cdhit.gtf &
 	else
 		echo "There were no differentially expressed features. No plots were generated." >> $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_no-features-to-plot.txt
 	fi
