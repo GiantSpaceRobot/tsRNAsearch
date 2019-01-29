@@ -29,7 +29,7 @@ newfile = open(sys.argv[3], "w")
 
 for line in htseq_readlines:
     strpline = line.strip().split("\t")
-    read_count = int(strpline[2])
+    read_count = float(strpline[2])
     rpm = read_count/scaling_factor
     newfile.write(strpline[0] + "\t" + strpline[1] + "\t" + str(rpm) + "\n")	
 newfile.close()
