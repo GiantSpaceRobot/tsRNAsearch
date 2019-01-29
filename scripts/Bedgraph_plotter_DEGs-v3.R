@@ -52,9 +52,9 @@ plot_list = list()
 
 #pdf(args[3])
 for(feature in featuresUnion) {
-  #if (any(grepl(feature,input3$V1))) { # Only generate plots for differentially expressed genes
-  #  # Do nothing and continue to generate plot etc.
-  #} else next  # Skip this iteration and do not generate plot
+  if (any(grepl(feature,input3$V1))) { # Only generate plots for differentially expressed genes
+    # Do nothing and continue to generate plot etc.
+  } else next  # Skip this iteration and do not generate plot
   
   ### file 1
   subset1 <- input1[grep(feature, input1$V1),]

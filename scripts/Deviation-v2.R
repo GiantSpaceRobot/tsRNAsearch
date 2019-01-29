@@ -30,7 +30,7 @@ if (length(args)==0) {
 #name2 <- basename(args[2])
 
 #### Input file
-#input <- read.table("/home/paul/Documents/Pipelines/tirna-pipeline/TOPHAT-FullTest/Results/Data/1-vs-2.stddev")
+#input <- read.table("/home/paul/Documents/Pipelines/tirna-pipeline/subset/Results/Data/Coef-of-Var/arpse.txt")
 input <- read.table(args[1])
 
 #plot(input$V4)
@@ -42,6 +42,7 @@ featuresUnion <- union(features, features) # Get unique set of features
 #pdf("/home/paul/Documents/Pipelines/tirna-pipeline/TOPHAT-FullTest/Results/Plots/CoverageVariability.pdf")
 
 my.list = list("feature", 
+               "mean.coverage",
                "mean.of.difference",
                "stddev.of.difference",
                "sum.of.percent",
@@ -50,8 +51,14 @@ my.list = list("feature",
                "coefficient.of.variation",
                "Fragment retained in:")
 write.table(my.list, 
-            #file = "/home/paul/Documents/Pipelines/tirna-pipeline/TOPHAT-FullTest/Results/Data/Multi-stats2.txt",
-            file = args[2],
+            file = paste0(args[2], ".All-features.txt"),
+            quote = FALSE, 
+            append = TRUE,
+            sep = "\t",
+            row.names = FALSE,
+            col.names = FALSE)
+write.table(my.list, 
+            file = paste0(args[2], "_Different-distributions.txt"),
             quote = FALSE, 
             append = TRUE,
             sep = "\t",
@@ -60,10 +67,13 @@ write.table(my.list,
 
 for(feature in featuresUnion) {
   subset <- input[grep(feature, input$V1),]
+  mean1 <- mean(subset$V2)
+  mean2 <- mean(subset$V3)
+  mean.coverage <- mean(c(mean1, mean2))  # Get the overall mean coverage of the two conditions
   subset$V5 <- (subset$V2-subset$V3)
   mean.of.difference <- mean(subset$V5)
-  mean.of.percent <- mean(subset$V4)
-  sum.of.percent <- sum(subset$V4)
+  mean.of.percent <- mean(as.numeric(subset$V4))
+  sum.of.percent <- sum(subset$V4, na.rm = TRUE)
   #ks.output <- ks.test(subset$V2, subset$V3)
   #wilcox.output <- wilcox.test(subset$V2, subset$V3)
   #if(subset$V2 == subset$V3) {
@@ -79,27 +89,38 @@ for(feature in featuresUnion) {
   #median.of.difference <- median(subset$V5)
   #skewness <- 3*(median.of.difference/mean.of.difference)/stddev.of.difference
   #}
-  if (mean.of.difference > 0) {
-    condition <- 1
-  } else {
-    condition <- 2
-  }
-  my.list <- list(feature, 
-                  mean.of.difference,
-                  stddev.of.difference,
-                  sum.of.percent,
-                  mean.of.percent,
-                  stddev.of.percent,
-                  coef.of.variation,
-                  paste0("Condition ", condition))
-  write.table(my.list, 
-              #file = "/home/paul/Documents/Pipelines/tirna-pipeline/TOPHAT-FullTest/Results/Data/Multi-stats2.txt",
-              file = args[2],
-              append = TRUE, 
-              quote = FALSE, 
-              sep = "\t",
-              row.names = FALSE,
-              col.names = FALSE)
+  #if (mean.of.difference > 0) {
+  #  condition <- 1
+  #} else {
+  #  condition <- 2
+  #}
+  #my.list <- list(feature, 
+  #                mean.coverage,
+  #                mean.of.difference,
+  #                stddev.of.difference,
+  #                sum.of.percent,
+  #                mean.of.percent,
+  #                stddev.of.percent,
+  #                coef.of.variation,
+  #                paste0("Condition ", condition))
+  #write.table(my.list, 
+  #            file = paste0(args[2], ".All-features.txt"),
+  #            append = TRUE, 
+  #            quote = FALSE, 
+  #            sep = "\t",
+  #            row.names = FALSE,
+  #            col.names = FALSE)
+  #if (mean.coverage > 10) {  # Mean coverage must be over 10
+  #  if (coef.of.variation > 30) { # Coefficient must be over 30 to be plotted
+  #    write.table(my.list, 
+  #              file = paste0(args[2], "_Different-distributions.txt"),
+  #              append = TRUE, 
+  #              quote = FALSE, 
+  #              sep = "\t",
+  #              row.names = FALSE,
+  #              col.names = FALSE)
+  #  }
+  #}
   #plot(subset$V4, 
   #     type = "l",
   #     col = "blue", 
