@@ -58,16 +58,18 @@ for(feature in featuresUnion) {
   
   ### file 1
   subset1 <- input1[grep(feature, input1$V1),]
-  subset1.NoFlanks <- tail(subset1, -10)
-  subset1.NoFlanks <- head(subset1.NoFlanks, -10)
+  #subset1.NoFlanks <- tail(subset1, -10)
+  #subset1.NoFlanks <- head(subset1.NoFlanks, -10)
+  subset1.NoFlanks <- subset1
   subset1.NoFlanks$coordinates <- 1:nrow(subset1.NoFlanks)   # Make a new column with coordinates starting from 1
   subset1.NoFlanks$Conditions <- condition1
   subset1.mean <- mean(subset1.NoFlanks$V10)
   
   ### file 2
   subset2 <- input2[grep(feature, input2$V1),]
-  subset2.NoFlanks <- tail(subset2, -10)
-  subset2.NoFlanks <- head(subset2.NoFlanks, -10)
+  #subset2.NoFlanks <- tail(subset2, -10)
+  #subset2.NoFlanks <- head(subset2.NoFlanks, -10)
+  subset2.NoFlanks <- subset2
   subset2.NoFlanks$coordinates <- 1:nrow(subset2.NoFlanks)   # Make a new column with coordinates starting from 1
   subset2.NoFlanks$Conditions <- condition2  
   subset2.mean <- mean(subset2.NoFlanks$V10)
