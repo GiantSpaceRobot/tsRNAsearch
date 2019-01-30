@@ -36,8 +36,9 @@ pdf(args[2])
 #pdf("/home/paul/Documents/Pipelines/tirna-pipeline/output.pdf3")
 for(feature in featuresUnion) {
   subset <- fileData[grep(feature, fileData$chrom),]
-  subset.NoFlanks <- tail(subset, -10)
-  subset.NoFlanks <- head(subset.NoFlanks, -10)
+  #subset.NoFlanks <- tail(subset, -10)
+  #subset.NoFlanks <- head(subset.NoFlanks, -10)
+  subset.NoFlanks <- subset
   subset.mean <- mean(subset.NoFlanks$dataValue)
   if (length(args)==4) {
     featureRows <- GTF[grep(feature, GTF$V9),]

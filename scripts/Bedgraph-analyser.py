@@ -27,9 +27,10 @@ for line in readlines:
         tRNAs[strpline[0]] = [strpline[2]] 
 
 for k, v in tRNAs.iteritems():
-    v2 = v[10:]
-    v3 = v2[:len(v2) - 10] # Get values without the counts for the flanking Ns from the FASTA
-    tRNALen = len(v) - 20     # Minus 20 because the FASTA was buffered/flanked with 10 Ns either side
+    #v2 = v[10:]
+    #v3 = v2[:len(v2) - 10] # Get values without the counts for the flanking Ns from the FASTA
+    v3 = v
+    tRNALen = len(v)     # Minus 20 because the FASTA was buffered/flanked with 10 Ns either side
     values = map(int, v3)
     meanV = np.mean(values)
     stdV = np.std(values)
