@@ -256,7 +256,7 @@ if [ ! -f $outDir/checkpoints/checkpoint-4.flag ]; then
 		echo "
 		Input: single-end read file
 		"
-		
+			
 		singleFile_base=${singleFile##*/}    # Remove pathname
 		singleFile_basename="$( cut -d '.' -f 1 <<< "$singleFile_base" )" # Get filename before first occurence of .
 		#suffix="$( cut -d '.' -f 2- <<< "$singleFile_base" )" # Get full file suffix/entension
@@ -534,9 +534,10 @@ fi
 #mapped_total=$((mapped_tRNA + mapped_snomiRNA + mapped_mRNAncRNA))
 #echo -e "tRNA\t$mapped_tRNA\nsnomiRNA\t$mapped_snomiRNA\nmRNA/ncRNA\t$mapped_mRNAncRNA\nTotal\t$mapped_total" > $outDir/Data_and_Plots/MappedReadCount.txt
 #
-#python scripts/HTSeq-to-RPM.py $outDir/HTSeq-count-output/tRNA-alignment.count $outDir/Data_and_Plots/MappedReadCount.txt $outDir/HTSeq-to-RPM/tRNA-alignment.RPM
-#python scripts/HTSeq-to-RPM.py $outDir/HTSeq-count-output/snomiRNA-alignment.count $outDir/Data_and_Plots/MappedReadCount.txt $outDir/HTSeq-to-RPM/snomiRNA-alignment.RPM
-#python scripts/HTSeq-to-RPM.py $outDir/HTSeq-count-output/mRNA-ncRNA-alignment.count $outDir/Data_and_Plots/MappedReadCount.txt $outDir/HTSeq-to-RPM/mRNA-ncRNA-alignment.RPM
-#
 
-# Create a log file with the date, time and name of the input file in it's name
+mapped=$(grep "mapped" $outDir/Stats.log | awk '{print $3}')
+python scripts/HTSeq-to-RPM.py $outDir/HTSeq-count-output/tRNA-alignment.count $mapped $outDir/HTSeq-to-RPM/tRNA-alignment.RPM
+python scripts/HTSeq-to-RPM.py $outDir/HTSeq-count-output/snomiRNA-alignment.count $mapped $outDir/HTSeq-to-RPM/snomiRNA-alignment.RPM
+python scripts/HTSeq-to-RPM.py $outDir/HTSeq-count-output/mRNA-ncRNA-alignment.count $mapped $outDir/HTSeq-to-RPM/mRNA-ncRNA-alignment.RPM
+sort -o $outDir/HTSeq-to-RPM/tRNA-alignment.RPM -k3,3nr $outDir/HTSeq-to-RPM/tRNA-alignment.RPM
+
