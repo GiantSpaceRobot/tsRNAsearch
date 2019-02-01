@@ -123,11 +123,11 @@ for f in $inDir/*; do
 	fi
 	cp $outDir/Results/$filename/Data_and_Plots/* $outDir/Results/Plots/
 	wait
-	cat $outDir/Results/$filename/HTSeq-count-output/*.count | grep -v ^__ | sort -k1,1 > $outDir/Results/Data/Intermediate-files/$filename.all_features.count	
-	sed -i '1s/^/Features\t'"$filename"'\n/' $outDir/Results/Data/Intermediate-files/$filename.all_features.count # Add column headers
+	#cat $outDir/Results/$filename/HTSeq-count-output/*.count | grep -v ^__ | sort -k1,1 > $outDir/Results/Data/Intermediate-files/$filename.all_features.count	
+	#sed -i '1s/^/Features\t'"$filename"'\n/' $outDir/Results/Data/Intermediate-files/$filename.all_features.count # Add column headers
 	readsMapped=$(awk '{sum+=$2} END{print sum;}' $outDir/Results/Data/Intermediate-files/$filename.all_features.count)
-	echo "Reads mapped: $readsMapped" >> $outDir/Results/$filename/Stats.log
-	
+	#echo "Reads mapped: $readsMapped" >> $outDir/Results/$filename/Stats.log
+	cp $outDir/Results/$filename/Data_and_Plots/$filename.all-features.rpm.count $outDir/Results/Data/Intermediate-files/$filename.all_features.count	
 	### Normalise HTSeq-count files by total reads mapped to get RPM (reads per million) 
 	#python scripts/HTSeq-to-RPM.py $outDir/Results/$filename/HTSeq-count-output/tRNA-alignment.count $readsMapped $outDir/Results/$filename/HTSeq-to-RPM/tRNA-alignment.RPM &
 	#python scripts/HTSeq-to-RPM.py $outDir/Results/$filename/HTSeq-count-output/snomiRNA-alignment.count $readsMapped $outDir/Results/$filename/HTSeq-to-RPM/snomiRNA-alignment.RPM &

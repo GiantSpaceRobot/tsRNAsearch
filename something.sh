@@ -544,12 +544,11 @@ python scripts/HTSeq-to-RPM.py $outDir/HTSeq-count-output/tRNA-alignment.count $
 python scripts/HTSeq-to-RPM.py $outDir/HTSeq-count-output/snomiRNA-alignment.count $mapped $outDir/HTSeq-to-RPM/snomiRNA-alignment.rpm.count &
 python scripts/HTSeq-to-RPM.py $outDir/HTSeq-count-output/mRNA-ncRNA-alignment.count $mapped $outDir/HTSeq-to-RPM/mRNA-ncRNA-alignment.rpm.count &
 wait
-cat $outDir/HTSeq-to-RPM/$singleFile_basename.all_features.rpm.count
 
 ### Move results to Data_and_Plots
-cp $outDir/HTSeq-to-RPM/$singleFile_basename.all_features.rpm.count $outDir/Data_and_Plots/
-cp $outDir/tRNA-alignment/*Results.* $outDir/Data_and_Plots/
-cp $outDir/snomiRNA-alignment/*Results.* $outDir/Data_and_Plots/
+cp $outDir/HTSeq-to-RPM/* $outDir/Data_and_Plots/
+cp $outDir/tRNA-alignment/*pdf $outDir/Data_and_Plots/
+cp $outDir/snomiRNA-alignment/*pdf $outDir/Data_and_Plots/
 
 
 

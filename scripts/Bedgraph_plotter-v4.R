@@ -53,7 +53,7 @@ for(feature in featuresUnion) {
        lwd = 2, 
        main = feature,
        xlab = "Nucleotide position",
-       ylab = "Coverage depth")
+       ylab = "Coverage depth (Reads Per Million)")
   }
 }
 dev.off()

@@ -31,7 +31,7 @@ for k, v in tRNAs.iteritems():
     #v3 = v2[:len(v2) - 10] # Get values without the counts for the flanking Ns from the FASTA
     v3 = v
     tRNALen = len(v)     # Minus 20 because the FASTA was buffered/flanked with 10 Ns either side
-    values = map(int, v3)
+    values = map(float, v3)
     meanV = np.mean(values)
     stdV = np.std(values)
     if float(meanV) == 0:
