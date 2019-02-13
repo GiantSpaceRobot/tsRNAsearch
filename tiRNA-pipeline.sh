@@ -158,7 +158,8 @@ function bam_to_plots () {  ### Steps for plotting regions with high variation i
 	#else
 	#	return # Exit function and don't plot
 	fi
-	Rscript scripts/Five-vs-Threeprime.R $1/accepted_hits_sorted.depth $1/$2_$3_Results
+	### Create plot and txt file describing relationship between 5' and 3' regions of feature
+	Rscript scripts/Five-vs-Threeprime.R $1/accepted_hits_sorted.depth $1/$2_$3_Results &
 	### Output the mean, standard deviation and coefficient of variance of each ncRNA/gene
 	python scripts/Bedgraph-analyser.py $1/accepted_hits_sorted.depth $1/accepted_hits_sorted.tsv
 	### Gather all ncRNAs/genes with at least a mean coverage of 10
@@ -166,7 +167,7 @@ function bam_to_plots () {  ### Steps for plotting regions with high variation i
 	### Sort the remaining ncRNAs/genes by coef. of variance
 	sort -k4,4nr $1/accepted_hits_sorted_mean-std.tsv > $1/$2_$3_accepted_hits_sorted_mean-std_sorted.tsv
 	### Move finalised data for further analysis
-	#cp $1/accepted_hits_sorted.depth $outDir/Data_and_Plots/$2_$3.depth &
+	cp $1/accepted_hits_sorted.depth $outDir/Data_and_Plots/$2_$3.depth &
 	cp $1/$2_$3_accepted_hits_sorted_mean-std_sorted.tsv $outDir/Data_and_Plots/$2_$3_depth.inf
 	echo -e "Feature\tMean\tStandard Deviation\tCoefficient of Variation\n" > $outDir/Data_and_Plots/Header.txt
 	cat $outDir/Data_and_Plots/Header.txt $outDir/Data_and_Plots/$2_$3_depth.inf > $outDir/Data_and_Plots/$2_$3_depth.stats
@@ -533,10 +534,12 @@ else
 fi
 
 ### Get total reads mapped
-cat $outDir/HTSeq-count-output/*.count | grep -v ^__ | sort -k1,1 > $outDir/HTSeq-count-output/$singleFile_basename.all_features.count 
-sed -i '1s/^/Features\t'"$singleFile_basename"'\n/' $outDir/HTSeq-count-output/$singleFile_basename.all_features.count # Add column headers
-mapped=$(awk '{sum+=$2} END{print sum;}' $outDir/HTSeq-count-output/$singleFile_basename.all_features.count)
+string_padder "Get total number of reads mapped"
+cat $outDir/HTSeq-count-output/*.count | grep -v ^__ | sort -k1,1 > $outDir/HTSeq-count-output/$singleFile_basename.all-features.count 
+sed -i '1s/^/Features\t'"$singleFile_basename"'\n/' $outDir/HTSeq-count-output/$singleFile_basename.all-features.count # Add column headers
+mapped=$(awk '{sum+=$2} END{print sum;}' $outDir/HTSeq-count-output/$singleFile_basename.all-features.count)
 echo "Reads mapped: $mapped" >> $outDir/Stats.log
+echo "Reads mapped: $mapped"
 wait
 
 ### Plot everything
@@ -547,15 +550,17 @@ bam_to_plots $outDir/snomiRNA-alignment $singleFile_basename snomiRNA &
 
 ### Get RPM-normalised HTSeq count data
 string_padder "Get RPM-normalised read-counts"
-python scripts/HTSeq-to-RPM.py $outDir/HTSeq-count-output/$singleFile_basename.all_features.count $mapped $outDir/HTSeq-to-RPM/$singleFile_basename.all_features &
+python scripts/HTSeq-to-RPM.py $outDir/HTSeq-count-output/$singleFile_basename.all-features.count $mapped $outDir/HTSeq-to-RPM/$singleFile_basename.all-features &
 python scripts/HTSeq-to-RPM.py $outDir/HTSeq-count-output/tRNA-alignment.count $mapped $outDir/HTSeq-to-RPM/tRNA-alignment & 
 python scripts/HTSeq-to-RPM.py $outDir/HTSeq-count-output/snomiRNA-alignment.count $mapped $outDir/HTSeq-to-RPM/snomiRNA-alignment &
 python scripts/HTSeq-to-RPM.py $outDir/HTSeq-count-output/mRNA-ncRNA-alignment.count $mapped $outDir/HTSeq-to-RPM/mRNA-ncRNA-alignment &
 wait
-cat $outDir/HTSeq-to-RPM/$singleFile_basename.all_features.rpm.count
+#cat $outDir/HTSeq-to-RPM/$singleFile_basename.all-features.rpm.count
+
+sleep 5  # Just making sure everything is finished running
 
 ### Move results to Data_and_Plots
-cp $outDir/HTSeq-to-RPM/$singleFile_basename.all_features.rpm.count $outDir/Data_and_Plots/
+cp $outDir/HTSeq-to-RPM/$singleFile_basename.all-features.rpm.count $outDir/Data_and_Plots/
 cp $outDir/tRNA-alignment/*Results.* $outDir/Data_and_Plots/
 cp $outDir/snomiRNA-alignment/*Results.* $outDir/Data_and_Plots/
 

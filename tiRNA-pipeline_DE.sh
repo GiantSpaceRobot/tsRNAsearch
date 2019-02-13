@@ -122,32 +122,22 @@ for f in $inDir/*; do
 		./tiRNA-pipeline.sh -s "$f" -o "$outDir/Results/$filename" -p "$CPUs" -A "$Plots" #>> "$outDir"/"$filename"_tiRNApipeline.log
 	fi
 	wait
-	cp $outDir/Results/$filename/Data_and_Plots/* $outDir/Results/Plots/
-	#cat $outDir/Results/$filename/HTSeq-count-output/*.count | grep -v ^__ | sort -k1,1 > $outDir/Results/Data/Intermediate-files/$filename.all_features.count	
-	#sed -i '1s/^/Features\t'"$filename"'\n/' $outDir/Results/Data/Intermediate-files/$filename.all_features.count # Add column headers
-	readsMapped=$(awk '{sum+=$2} END{print sum;}' $outDir/Results/Data/Intermediate-files/$filename.all_features.count)
-	#echo "Reads mapped: $readsMapped" >> $outDir/Results/$filename/Stats.log
-	cp $outDir/Results/$filename/Data_and_Plots/$filename.all-features.rpm.count $outDir/Results/Data/Intermediate-files/$filename.all_features.count	
-	
-	
-	#python scripts/Depth-to-RPM.py $outDir/Results/$filename/tRNA-alignment/accepted_hits_sorted.depth $readsMapped $outDir/Results/Data/Intermediate-files/$filename.depth
-	
-	
-	### Normalise HTSeq-count files by total reads mapped to get RPM (reads per million) 
-	#python scripts/HTSeq-to-RPM.py $outDir/Results/$filename/HTSeq-count-output/tRNA-alignment.count $readsMapped $outDir/Results/$filename/HTSeq-to-RPM/tRNA-alignment.RPM &
-	#python scripts/HTSeq-to-RPM.py $outDir/Results/$filename/HTSeq-count-output/snomiRNA-alignment.count $readsMapped $outDir/Results/$filename/HTSeq-to-RPM/snomiRNA-alignment.RPM &
-	#python scripts/HTSeq-to-RPM.py $outDir/Results/$filename/HTSeq-count-output/mRNA-ncRNA-alignment.count $readsMapped $outDir/Results/$filename/HTSeq-to-RPM/mRNA-ncRNA-alignment.RPM &
-	#wait
+	cp $outDir/Results/$filename/Data_and_Plots/*pdf $outDir/Results/Plots/
+	cat $outDir/Results/$filename/HTSeq-count-output/*.count | grep -v ^__ | sort -k1,1 > $outDir/Results/Data/Intermediate-files/$filename.all-features.count	
+	#sed -i '1s/^/Features\t'"$filename"'\n/' $outDir/Results/Data/Intermediate-files/$filename.all-features.count # Add column headers
+	readsMapped=$(awk '{sum+=$2} END{print sum;}' $outDir/Results/Data/Intermediate-files/$filename.all-features.count)
+	cp $outDir/Results/$filename/Data_and_Plots/$filename.all-features.rpm.count $outDir/Results/Data/	
+	cp $outDir/Results/$filename/HTSeq-count-output/$filename.all-features.count $outDir/Results/Data/Intermediate-files/ 
 done
 
 ### Gather count files
-awk '{print $1}' $outDir/Results/Data/Intermediate-files/$filename.all_features.count > $outDir/Results/Data/Intermediate-files/HTSeq.all_features # Get feature names
+awk '{print $1}' $outDir/Results/Data/Intermediate-files/$filename.all-features.count > $outDir/Results/Data/Intermediate-files/HTSeq.all-features # Get feature names
 for f in $outDir/Results/Data/Intermediate-files/*count; do
-	awk '{print $2}' $f | paste $outDir/Results/Data/Intermediate-files/HTSeq.all_features - >> $outDir/Results/Data/Intermediate-files/HTSeq.temp
-	mv $outDir/Results/Data/Intermediate-files/HTSeq.temp $outDir/Results/Data/Intermediate-files/HTSeq.all_features
+	awk '{print $2}' $f | paste $outDir/Results/Data/Intermediate-files/HTSeq.all-features - >> $outDir/Results/Data/Intermediate-files/HTSeq.temp
+	mv $outDir/Results/Data/Intermediate-files/HTSeq.temp $outDir/Results/Data/Intermediate-files/HTSeq.all-features
 done
 
-mv $outDir/Results/Data/Intermediate-files/HTSeq.all_features $outDir/Results/Plots/HTSeq.all_features.count
+mv $outDir/Results/Data/Intermediate-files/HTSeq.all-features $outDir/Results/Data/HTSeq.all-features.raw.count
 
 
 ### Determine if experiment layout file was provided or not. If not, try and figure out which files group together using R.
