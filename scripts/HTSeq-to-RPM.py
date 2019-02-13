@@ -24,8 +24,8 @@ scaling_factor = float(total_reads/1000000)
 #reads_mapped.close()
 #print (sys.argv[1], sys.argv[2], sys.argv[3])
 
-raw_and_rpm_outfile = open(sys.argv[3] + "raw_rpm.txt", "w")
-rpm_outfile = open(sys.argv[3] + "rpm.count", "w")
+raw_and_rpm_outfile = open(sys.argv[3] + ".raw_rpm.txt", "w")
+rpm_outfile = open(sys.argv[3] + ".rpm.count", "w")
 
 for line in htseq_readlines:
     strpline = line.strip().split("\t")
