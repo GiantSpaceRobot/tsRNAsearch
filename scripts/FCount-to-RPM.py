@@ -1,7 +1,7 @@
 #!/usr/bin/env python
  
 """
-Convert HTSeq-count into RPM
+Convert FeatureCounts into RPM
 """
  
 __author__ = "Paul Donovan"

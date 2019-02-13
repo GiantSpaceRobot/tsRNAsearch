@@ -216,8 +216,8 @@ mkdir -p $outDir/FastQC
 mkdir -p $outDir/tRNA-alignment
 mkdir -p $outDir/snomiRNA-alignment
 mkdir -p $outDir/mRNA-ncRNA-alignment
-mkdir -p $outDir/HTSeq-count-output
-mkdir -p $outDir/HTSeq-to-RPM
+mkdir -p $outDir/FCount-count-output
+mkdir -p $outDir/FCount-to-RPM
 mkdir -p $outDir/Data_and_Plots
 
 #touch $outDir/checkpoints/checkpoint-1.flag
@@ -471,7 +471,7 @@ if [ ! -f $outDir/checkpoints/checkpoint-4.flag ]; then
 fi
 
 # Produce read counts for the three alignment steps. If one of the alignment steps failed, use an empty htseq-count output file.
-string_padder "Alignment steps complete. Moving on to read-counting using HTSeq-count"
+string_padder "Alignment steps complete. Moving on to read-counting using FCount-count"
 
 if [ ! -f $outDir/checkpoints/checkpoint-5.flag ]; then
 	
@@ -480,14 +480,14 @@ if [ ! -f $outDir/checkpoints/checkpoint-5.flag ]; then
 		echo "
 	No alignment file found for mRNA/ncRNA alignment. Using blank count file instead
 	"
-		cp additional-files/empty_mRNA-ncRNA.count $outDir/HTSeq-count-output/mRNA-ncRNA-alignment.count &
+		cp additional-files/empty_mRNA-ncRNA.count $outDir/FCount-count-output/mRNA-ncRNA-alignment.count &
 	else
 		echo "
 	Counting mRNA/ncRNA alignment reads
 	"
-		#htseq-count -f bam $outDir/mRNA-ncRNA-alignment/accepted_hits.bam DBs/Homo_sapiens.GRCh37.87.gtf > $outDir/HTSeq-count-output/mRNA-ncRNA-alignment.count &
-		featureCounts -T $featureCountCPUs -a DBs/Homo_sapiens.GRCh37.87.gtf -o $outDir/HTSeq-count-output/mRNA-ncRNA-alignment.fcount $outDir/mRNA-ncRNA-alignment/accepted_hits.bam
-		grep -v featureCounts $outDir/HTSeq-count-output/mRNA-ncRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/HTSeq-count-output/mRNA-ncRNA-alignment.count
+		#htseq-count -f bam $outDir/mRNA-ncRNA-alignment/accepted_hits.bam DBs/Homo_sapiens.GRCh37.87.gtf > $outDir/FCount-count-output/mRNA-ncRNA-alignment.count &
+		featureCounts -T $featureCountCPUs -a DBs/Homo_sapiens.GRCh37.87.gtf -o $outDir/FCount-count-output/mRNA-ncRNA-alignment.fcount $outDir/mRNA-ncRNA-alignment/accepted_hits.bam
+		grep -v featureCounts $outDir/FCount-count-output/mRNA-ncRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/FCount-count-output/mRNA-ncRNA-alignment.count
 		#bam_to_plots $outDir/mRNA-ncRNA-alignment # The resulting file would be too big. It would be interesting to see the top few genes/ncRNAs and their coverage.
 	fi
 	
@@ -496,14 +496,14 @@ if [ ! -f $outDir/checkpoints/checkpoint-5.flag ]; then
 		echo "
 	No alignment file found for sno/miRNA alignment. Using blank count file instead
 	"
-		cp additional-files/empty_snomiRNA.count $outDir/HTSeq-count-output/snomiRNA-alignment.count &
+		cp additional-files/empty_snomiRNA.count $outDir/FCount-count-output/snomiRNA-alignment.count &
 	else
 		echo "
 	Counting sno/miRNA alignment reads
 	"
-		#htseq-count -f bam $outDir/snomiRNA-alignment/accepted_hits.bam DBs/hg19-snomiRNA_cdhit.gtf > $outDir/HTSeq-count-output/snomiRNA-alignment.count &
-		featureCounts -T $featureCountCPUs -a DBs/hg19-snomiRNA_cdhit.gtf -o $outDir/HTSeq-count-output/snomiRNA-alignment.fcount $outDir/snomiRNA-alignment/accepted_hits.bam
-		grep -v featureCounts $outDir/HTSeq-count-output/snomiRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/HTSeq-count-output/snomiRNA-alignment.count
+		#htseq-count -f bam $outDir/snomiRNA-alignment/accepted_hits.bam DBs/hg19-snomiRNA_cdhit.gtf > $outDir/FCount-count-output/snomiRNA-alignment.count &
+		featureCounts -T $featureCountCPUs -a DBs/hg19-snomiRNA_cdhit.gtf -o $outDir/FCount-count-output/snomiRNA-alignment.fcount $outDir/snomiRNA-alignment/accepted_hits.bam
+		grep -v featureCounts $outDir/FCount-count-output/snomiRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/FCount-count-output/snomiRNA-alignment.count
 		#bam_to_plots $outDir/snomiRNA-alignment $singleFile_basename snomiRNA &
 	fi
 	
@@ -512,14 +512,14 @@ if [ ! -f $outDir/checkpoints/checkpoint-5.flag ]; then
 		echo "
 	No alignment file found for tRNA alignment. Using blank count file instead
 	"
-		cp additional-files/empty_tRNA.count $outDir/HTSeq-count-output/tRNA-alignment.count &
+		cp additional-files/empty_tRNA.count $outDir/FCount-count-output/tRNA-alignment.count &
 	else
 		echo "
 	Counting tRNA alignment reads
 	"
-		#htseq-count -f bam $outDir/tRNA-alignment/accepted_hits.bam DBs/hg19-wholetRNA-CCA_cdhit.gtf > $outDir/HTSeq-count-output/tRNA-alignment.count &	
-		featureCounts -T $featureCountCPUs -a DBs/hg19-wholetRNA-CCA_cdhit.gtf -o $outDir/HTSeq-count-output/tRNA-alignment.fcount $outDir/tRNA-alignment/accepted_hits.bam
-		grep -v featureCounts $outDir/HTSeq-count-output/tRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/HTSeq-count-output/tRNA-alignment.count	
+		#htseq-count -f bam $outDir/tRNA-alignment/accepted_hits.bam DBs/hg19-wholetRNA-CCA_cdhit.gtf > $outDir/FCount-count-output/tRNA-alignment.count &	
+		featureCounts -T $featureCountCPUs -a DBs/hg19-wholetRNA-CCA_cdhit.gtf -o $outDir/FCount-count-output/tRNA-alignment.fcount $outDir/tRNA-alignment/accepted_hits.bam
+		grep -v featureCounts $outDir/FCount-count-output/tRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/FCount-count-output/tRNA-alignment.count	
 		#bam_to_plots $outDir/tRNA-alignment $singleFile_basename tiRNA &
 	fi
 
@@ -535,9 +535,9 @@ fi
 
 ### Get total reads mapped
 string_padder "Get total number of reads mapped"
-cat $outDir/HTSeq-count-output/*.count | grep -v ^__ | sort -k1,1 > $outDir/HTSeq-count-output/$singleFile_basename.all-features.count 
-sed -i '1s/^/Features\t'"$singleFile_basename"'\n/' $outDir/HTSeq-count-output/$singleFile_basename.all-features.count # Add column headers
-mapped=$(awk '{sum+=$2} END{print sum;}' $outDir/HTSeq-count-output/$singleFile_basename.all-features.count)
+cat $outDir/FCount-count-output/*.count | grep -v ^__ | sort -k1,1 > $outDir/FCount-count-output/$singleFile_basename.all-features.count 
+sed -i '1s/^/Features\t'"$singleFile_basename"'\n/' $outDir/FCount-count-output/$singleFile_basename.all-features.count # Add column headers
+mapped=$(awk '{sum+=$2} END{print sum;}' $outDir/FCount-count-output/$singleFile_basename.all-features.count)
 echo "Reads mapped: $mapped" >> $outDir/Stats.log
 echo "Reads mapped: $mapped"
 wait
@@ -548,27 +548,27 @@ bam_to_plots $outDir/tRNA-alignment $singleFile_basename tiRNA &
 bam_to_plots $outDir/snomiRNA-alignment $singleFile_basename snomiRNA &
 #bam_to_plots $outDir/mRNA-ncRNA-alignment $singleFile_basename mRNA &  
 
-### Get RPM-normalised HTSeq count data
+### Get RPM-normalised FCount count data
 string_padder "Get RPM-normalised read-counts"
-python scripts/HTSeq-to-RPM.py $outDir/HTSeq-count-output/$singleFile_basename.all-features.count $mapped $outDir/HTSeq-to-RPM/$singleFile_basename.all-features &
-python scripts/HTSeq-to-RPM.py $outDir/HTSeq-count-output/tRNA-alignment.count $mapped $outDir/HTSeq-to-RPM/tRNA-alignment & 
-python scripts/HTSeq-to-RPM.py $outDir/HTSeq-count-output/snomiRNA-alignment.count $mapped $outDir/HTSeq-to-RPM/snomiRNA-alignment &
-python scripts/HTSeq-to-RPM.py $outDir/HTSeq-count-output/mRNA-ncRNA-alignment.count $mapped $outDir/HTSeq-to-RPM/mRNA-ncRNA-alignment &
+python scripts/FCount-to-RPM.py $outDir/FCount-count-output/$singleFile_basename.all-features.count $mapped $outDir/FCount-to-RPM/$singleFile_basename.all-features &
+python scripts/FCount-to-RPM.py $outDir/FCount-count-output/tRNA-alignment.count $mapped $outDir/FCount-to-RPM/tRNA-alignment & 
+python scripts/FCount-to-RPM.py $outDir/FCount-count-output/snomiRNA-alignment.count $mapped $outDir/FCount-to-RPM/snomiRNA-alignment &
+python scripts/FCount-to-RPM.py $outDir/FCount-count-output/mRNA-ncRNA-alignment.count $mapped $outDir/FCount-to-RPM/mRNA-ncRNA-alignment &
 wait
-#cat $outDir/HTSeq-to-RPM/$singleFile_basename.all-features.rpm.count
+#cat $outDir/FCount-to-RPM/$singleFile_basename.all-features.rpm.count
 
 sleep 5  # Just making sure everything is finished running
 
 ### Move results to Data_and_Plots
-cp $outDir/HTSeq-to-RPM/$singleFile_basename.all-features.rpm.count $outDir/Data_and_Plots/
+cp $outDir/FCount-to-RPM/$singleFile_basename.all-features.rpm.count $outDir/Data_and_Plots/
 cp $outDir/tRNA-alignment/*Results.* $outDir/Data_and_Plots/
 cp $outDir/snomiRNA-alignment/*Results.* $outDir/Data_and_Plots/
 
 
 
-#sort -o $outDir/HTSeq-to-RPM/tRNA-alignment.RPM -k3,3nr $outDir/HTSeq-to-RPM/tRNA-alignment.RPM
-#sort -o $outDir/HTSeq-to-RPM/snomiRNA-alignment.RPM -k3,3nr $outDir/HTSeq-to-RPM/snomiRNA-alignment.RPM
-#sort -o $outDir/HTSeq-to-RPM/mRNA-ncRNA-alignment.RPM -k3,3nr $outDir/HTSeq-to-RPM/mRNA-ncRNA-alignment.RPM
+#sort -o $outDir/FCount-to-RPM/tRNA-alignment.RPM -k3,3nr $outDir/FCount-to-RPM/tRNA-alignment.RPM
+#sort -o $outDir/FCount-to-RPM/snomiRNA-alignment.RPM -k3,3nr $outDir/FCount-to-RPM/snomiRNA-alignment.RPM
+#sort -o $outDir/FCount-to-RPM/mRNA-ncRNA-alignment.RPM -k3,3nr $outDir/FCount-to-RPM/mRNA-ncRNA-alignment.RPM
 
 #touch $outDir/checkpoints/checkpoint-6.flag
 
