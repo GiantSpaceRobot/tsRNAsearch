@@ -128,7 +128,7 @@ function bam_to_plots () {  ### Steps for plotting regions with high variation i
 	samtools depth -aa $1/accepted_hits.bam > $1/accepted_hits.depth   # A lot faster than bedtools genomecov
 	cp $1/accepted_hits.depth $1/accepted_hits_raw.depth
 	### Normalise by reads per million (RPM)
-	python scripts/Genomecov-to-Genomecov_RPM.py $1/accepted_hits_raw.depth 100000 $1/accepted_hits.depth 
+	python scripts/Depth-to-Depth_RPM.py $1/accepted_hits_raw.depth $mapped $1/accepted_hits.depth 
 	### If we are working with tRNAs, collapse all tRNAs based on same isoacceptor
 	if [[ $3 = "tiRNA" ]]; then
 		### Remove introns from tRNA counts (as these will interfere with the read counts of collapsed tRNAs)
@@ -137,9 +137,9 @@ function bam_to_plots () {  ### Steps for plotting regions with high variation i
 		Rscript scripts/Coverage-flipper.R $1/accepted_hits_intron-removed.depth DBs/hg19-wholetRNA-CCA_cdhit.gtf $1/accepted_hits_flipped.depth	
 		### Collapse tRNAs from the same tRNA species
 		python scripts/Bedgraph_collapse-tRNAs.py $1/accepted_hits_flipped.depth $1/accepted_hits_collapsed.depth
-		### Rename input genomecov file
+		### Rename input depth file
 		mv $1/accepted_hits.depth $1/accepted_hits_original.depth 
-		### Copy the collapsed genomecov file and name it so that the remaining steps below do not have errors
+		### Copy the collapsed depth file and name it so that the remaining steps below do not have errors
 		cp $1/accepted_hits_collapsed.depth $1/accepted_hits.depth	
 	fi
 	### Sort by feature name and nucleotide position
@@ -167,10 +167,10 @@ function bam_to_plots () {  ### Steps for plotting regions with high variation i
 	sort -k4,4nr $1/accepted_hits_sorted_mean-std.tsv > $1/$2_$3_accepted_hits_sorted_mean-std_sorted.tsv
 	### Move finalised data for further analysis
 	#cp $1/accepted_hits_sorted.depth $outDir/Data_and_Plots/$2_$3.depth &
-	cp $1/$2_$3_accepted_hits_sorted_mean-std_sorted.tsv $outDir/Data_and_Plots/$2_$3_genomecov.inf
+	cp $1/$2_$3_accepted_hits_sorted_mean-std_sorted.tsv $outDir/Data_and_Plots/$2_$3_depth.inf
 	echo -e "Feature\tMean\tStandard Deviation\tCoefficient of Variation\n" > $outDir/Data_and_Plots/Header.txt
-	cat $outDir/Data_and_Plots/Header.txt $outDir/Data_and_Plots/$2_$3_genomecov.inf > $outDir/Data_and_Plots/$2_$3_genomecov.stats
-	rm $outDir/Data_and_Plots/$2_$3_genomecov.stats $outDir/Data_and_Plots/Header.txt
+	cat $outDir/Data_and_Plots/Header.txt $outDir/Data_and_Plots/$2_$3_depth.inf > $outDir/Data_and_Plots/$2_$3_depth.stats
+	rm $outDir/Data_and_Plots/$2_$3_depth.stats $outDir/Data_and_Plots/Header.txt
 }
 
 # If -A parameter was not provided, default is to plot everything
@@ -189,6 +189,14 @@ if [ -z "$CPUs" ]; then
 		maxCPUs=1
 	fi
 	CPUs=$(echo "$maxCPUs * 0.75" | bc | awk '{print int($1+0.5)}') # Use 75% of max CPU number
+fi
+
+# The documentation for featureCounts says to use 4 threads max.
+# This if statement ensures this.
+if (( $CPUs > 4 )); then 
+	featureCountCPUs=4
+else
+	featureCountCPUs=1
 fi
 
 # Determine if paired-end or single-end files were provided as input
@@ -477,7 +485,7 @@ if [ ! -f $outDir/checkpoints/checkpoint-5.flag ]; then
 	Counting mRNA/ncRNA alignment reads
 	"
 		#htseq-count -f bam $outDir/mRNA-ncRNA-alignment/accepted_hits.bam DBs/Homo_sapiens.GRCh37.87.gtf > $outDir/HTSeq-count-output/mRNA-ncRNA-alignment.count &
-		featureCounts -T $CPUs -a DBs/Homo_sapiens.GRCh37.87.gtf -o $outDir/HTSeq-count-output/mRNA-ncRNA-alignment.fcount $outDir/mRNA-ncRNA-alignment/accepted_hits.bam
+		featureCounts -T $featureCountCPUs -a DBs/Homo_sapiens.GRCh37.87.gtf -o $outDir/HTSeq-count-output/mRNA-ncRNA-alignment.fcount $outDir/mRNA-ncRNA-alignment/accepted_hits.bam
 		grep -v featureCounts $outDir/HTSeq-count-output/mRNA-ncRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/HTSeq-count-output/mRNA-ncRNA-alignment.count
 		#bam_to_plots $outDir/mRNA-ncRNA-alignment # The resulting file would be too big. It would be interesting to see the top few genes/ncRNAs and their coverage.
 	fi
@@ -493,7 +501,7 @@ if [ ! -f $outDir/checkpoints/checkpoint-5.flag ]; then
 	Counting sno/miRNA alignment reads
 	"
 		#htseq-count -f bam $outDir/snomiRNA-alignment/accepted_hits.bam DBs/hg19-snomiRNA_cdhit.gtf > $outDir/HTSeq-count-output/snomiRNA-alignment.count &
-		featureCounts -T $CPUs -a DBs/hg19-snomiRNA_cdhit.gtf -o $outDir/HTSeq-count-output/snomiRNA-alignment.fcount $outDir/snomiRNA-alignment/accepted_hits.bam
+		featureCounts -T $featureCountCPUs -a DBs/hg19-snomiRNA_cdhit.gtf -o $outDir/HTSeq-count-output/snomiRNA-alignment.fcount $outDir/snomiRNA-alignment/accepted_hits.bam
 		grep -v featureCounts $outDir/HTSeq-count-output/snomiRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/HTSeq-count-output/snomiRNA-alignment.count
 		#bam_to_plots $outDir/snomiRNA-alignment $singleFile_basename snomiRNA &
 	fi
@@ -509,7 +517,7 @@ if [ ! -f $outDir/checkpoints/checkpoint-5.flag ]; then
 	Counting tRNA alignment reads
 	"
 		#htseq-count -f bam $outDir/tRNA-alignment/accepted_hits.bam DBs/hg19-wholetRNA-CCA_cdhit.gtf > $outDir/HTSeq-count-output/tRNA-alignment.count &	
-		featureCounts -T $CPUs -a DBs/hg19-wholetRNA-CCA_cdhit.gtf -o $outDir/HTSeq-count-output/tRNA-alignment.fcount $outDir/tRNA-alignment/accepted_hits.bam
+		featureCounts -T $featureCountCPUs -a DBs/hg19-wholetRNA-CCA_cdhit.gtf -o $outDir/HTSeq-count-output/tRNA-alignment.fcount $outDir/tRNA-alignment/accepted_hits.bam
 		grep -v featureCounts $outDir/HTSeq-count-output/tRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/HTSeq-count-output/tRNA-alignment.count	
 		#bam_to_plots $outDir/tRNA-alignment $singleFile_basename tiRNA &
 	fi
@@ -524,12 +532,6 @@ else
 	"
 fi
 
-### Plot everything
-string_padder "Generate genomecov files and plot features"
-bam_to_plots $outDir/tRNA-alignment $singleFile_basename tiRNA &
-bam_to_plots $outDir/snomiRNA-alignment $singleFile_basename snomiRNA &
-bam_to_plots $outDir/mRNA-ncRNA-alignment $singleFile_basename mRNA &  
-
 ### Get total reads mapped
 cat $outDir/HTSeq-count-output/*.count | grep -v ^__ | sort -k1,1 > $outDir/HTSeq-count-output/$singleFile_basename.all_features.count 
 sed -i '1s/^/Features\t'"$singleFile_basename"'\n/' $outDir/HTSeq-count-output/$singleFile_basename.all_features.count # Add column headers
@@ -537,12 +539,18 @@ mapped=$(awk '{sum+=$2} END{print sum;}' $outDir/HTSeq-count-output/$singleFile_
 echo "Reads mapped: $mapped" >> $outDir/Stats.log
 wait
 
+### Plot everything
+string_padder "Generate depth files and plot features"
+bam_to_plots $outDir/tRNA-alignment $singleFile_basename tiRNA &
+bam_to_plots $outDir/snomiRNA-alignment $singleFile_basename snomiRNA &
+#bam_to_plots $outDir/mRNA-ncRNA-alignment $singleFile_basename mRNA &  
+
 ### Get RPM-normalised HTSeq count data
 string_padder "Get RPM-normalised read-counts"
-python scripts/HTSeq-to-RPM.py $outDir/HTSeq-count-output/$singleFile_basename.all_features.count $mapped $outDir/HTSeq-to-RPM/$singleFile_basename.all_features.rpm.count &
-python scripts/HTSeq-to-RPM.py $outDir/HTSeq-count-output/tRNA-alignment.count $mapped $outDir/HTSeq-to-RPM/tRNA-alignment.rpm.count & 
-python scripts/HTSeq-to-RPM.py $outDir/HTSeq-count-output/snomiRNA-alignment.count $mapped $outDir/HTSeq-to-RPM/snomiRNA-alignment.rpm.count &
-python scripts/HTSeq-to-RPM.py $outDir/HTSeq-count-output/mRNA-ncRNA-alignment.count $mapped $outDir/HTSeq-to-RPM/mRNA-ncRNA-alignment.rpm.count &
+python scripts/HTSeq-to-RPM.py $outDir/HTSeq-count-output/$singleFile_basename.all_features.count $mapped $outDir/HTSeq-to-RPM/$singleFile_basename.all_features &
+python scripts/HTSeq-to-RPM.py $outDir/HTSeq-count-output/tRNA-alignment.count $mapped $outDir/HTSeq-to-RPM/tRNA-alignment & 
+python scripts/HTSeq-to-RPM.py $outDir/HTSeq-count-output/snomiRNA-alignment.count $mapped $outDir/HTSeq-to-RPM/snomiRNA-alignment &
+python scripts/HTSeq-to-RPM.py $outDir/HTSeq-count-output/mRNA-ncRNA-alignment.count $mapped $outDir/HTSeq-to-RPM/mRNA-ncRNA-alignment &
 wait
 cat $outDir/HTSeq-to-RPM/$singleFile_basename.all_features.rpm.count
 

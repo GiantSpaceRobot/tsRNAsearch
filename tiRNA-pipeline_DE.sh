@@ -121,13 +121,18 @@ for f in $inDir/*; do
 	else # Use HISAT2
 		./tiRNA-pipeline.sh -s "$f" -o "$outDir/Results/$filename" -p "$CPUs" -A "$Plots" #>> "$outDir"/"$filename"_tiRNApipeline.log
 	fi
-	cp $outDir/Results/$filename/Data_and_Plots/* $outDir/Results/Plots/
 	wait
+	cp $outDir/Results/$filename/Data_and_Plots/* $outDir/Results/Plots/
 	#cat $outDir/Results/$filename/HTSeq-count-output/*.count | grep -v ^__ | sort -k1,1 > $outDir/Results/Data/Intermediate-files/$filename.all_features.count	
 	#sed -i '1s/^/Features\t'"$filename"'\n/' $outDir/Results/Data/Intermediate-files/$filename.all_features.count # Add column headers
 	readsMapped=$(awk '{sum+=$2} END{print sum;}' $outDir/Results/Data/Intermediate-files/$filename.all_features.count)
 	#echo "Reads mapped: $readsMapped" >> $outDir/Results/$filename/Stats.log
 	cp $outDir/Results/$filename/Data_and_Plots/$filename.all-features.rpm.count $outDir/Results/Data/Intermediate-files/$filename.all_features.count	
+	
+	
+	#python scripts/Depth-to-RPM.py $outDir/Results/$filename/tRNA-alignment/accepted_hits_sorted.depth $readsMapped $outDir/Results/Data/Intermediate-files/$filename.depth
+	
+	
 	### Normalise HTSeq-count files by total reads mapped to get RPM (reads per million) 
 	#python scripts/HTSeq-to-RPM.py $outDir/Results/$filename/HTSeq-count-output/tRNA-alignment.count $readsMapped $outDir/Results/$filename/HTSeq-to-RPM/tRNA-alignment.RPM &
 	#python scripts/HTSeq-to-RPM.py $outDir/Results/$filename/HTSeq-count-output/snomiRNA-alignment.count $readsMapped $outDir/Results/$filename/HTSeq-to-RPM/snomiRNA-alignment.RPM &
@@ -154,6 +159,7 @@ if [ ! "$expFile" ]; then
     grep $condition1 $myPath/$outDir/Results/Data/Intermediate-files/predicted_exp_layout.csv > $myPath/$outDir/Results/Data/Intermediate-files/predicted_exp_layout_cond1.csv
     condition2=$( grep -v $condition1 $myPath/$outDir/Results/Data/Intermediate-files/predicted_exp_layout.csv | awk -F ',' 'NR == 1 {print $2}') # Get the second condition using the inverse of the first one
     grep $condition2 $myPath/$outDir/Results/Data/Intermediate-files/predicted_exp_layout.csv > $myPath/$outDir/Results/Data/Intermediate-files/predicted_exp_layout_cond2.csv
+	expFile="$myPath/$outDir/Results/Data/Intermediate-files/predicted_exp_layout.csv"
 else
     echo "An experiment layout plan was provided. Carrying out DESeq2 analysis now."
     Rscript --vanilla scripts/DESeq2_tiRNA-pipeline.R "$expFile" "$myPath/$outDir/Results/Data/Intermediate-files/"
@@ -163,40 +169,48 @@ else
     grep $condition2 "$expFile" > $myPath/$outDir/Results/Data/Intermediate-files/predicted_exp_layout_cond2.csv
 fi
 
-### Concatenate the genomecov files for the replicates of condition 1
+### Concatenate the depth files for the replicates of condition 1
 count=0
 for fname in $(cat $myPath/$outDir/Results/Data/Intermediate-files/predicted_exp_layout_cond1.csv); do
 	count=$((count + 1))
 	cond1="$(cut -d ',' -f1 <<< $fname)"
 	cond1base="$(cut -d '.' -f1 <<< $cond1)"
-	find $myPath/$outDir/ -type f -name "$cond1base*tiRNA.genomecov" -exec cp {} $myPath/$outDir/Results/Data/Intermediate-files/condition1_file$count.tiRNA.genomecov \; & # Gather tiRNAs 
-	find $myPath/$outDir/ -type f -name "$cond1base*snomiRNA.genomecov" -exec cp {} $myPath/$outDir/Results/Data/Intermediate-files/condition1_file$count.snomiRNA.genomecov \; & # Gather sno/miRNAs
+	find $myPath/$outDir/ -type f -name "$cond1base*tiRNA.depth" -exec cp {} $myPath/$outDir/Results/Data/Intermediate-files/condition1_file$count.tiRNA.depth \; & # Gather tiRNAs 
+	find $myPath/$outDir/ -type f -name "$cond1base*snomiRNA.depth" -exec cp {} $myPath/$outDir/Results/Data/Intermediate-files/condition1_file$count.snomiRNA.depth \; & # Gather sno/miRNAs
 	wait
 	mapped=$(grep "mapped" $myPath/$outDir/Results/$cond1base/Stats.log | awk '{print $3}')
-	python scripts/Genomecov-to-Genomecov_RPM.py "$myPath/$outDir/Results/Data/Intermediate-files/condition1_file$count.tiRNA.genomecov" "$mapped" "$myPath/$outDir/Results/Data/Intermediate-files/condition1_file$count.tiRNA.genomecov.readspermil" &
-	python scripts/Genomecov-to-Genomecov_RPM.py "$myPath/$outDir/Results/Data/Intermediate-files/condition1_file$count.snomiRNA.genomecov" "$mapped" "$myPath/$outDir/Results/Data/Intermediate-files/condition1_file$count.snomiRNA.genomecov.readspermil" &
+	python scripts/Depth-to-Depth_RPM.py "$myPath/$outDir/Results/Data/Intermediate-files/condition1_file$count.tiRNA.depth" "$mapped" "$myPath/$outDir/Results/Data/Intermediate-files/condition1_file$count.tiRNA.depth.readspermil" &
+	python scripts/Depth-to-Depth_RPM.py "$myPath/$outDir/Results/Data/Intermediate-files/condition1_file$count.snomiRNA.depth" "$mapped" "$myPath/$outDir/Results/Data/Intermediate-files/condition1_file$count.snomiRNA.depth.readspermil" &
 done
 wait
-paste $myPath/$outDir/Results/Data/Intermediate-files/condition1_file*.tiRNA.genomecov.readspermil > $myPath/$outDir/Results/Data/Intermediate-files/tiRNA.condition1_concatenated.genomecov &
-paste $myPath/$outDir/Results/Data/Intermediate-files/condition1_file*.snomiRNA.genomecov.readspermil > $myPath/$outDir/Results/Data/Intermediate-files/snomiRNA.condition1_concatenated.genomecov &
+### Concatenate data horizontally
+paste $myPath/$outDir/Results/Data/Intermediate-files/condition1_file*.tiRNA.depth.readspermil > $myPath/$outDir/Results/Data/Intermediate-files/tiRNA.condition1_concatenated.depth &
+paste $myPath/$outDir/Results/Data/Intermediate-files/condition1_file*.snomiRNA.depth.readspermil > $myPath/$outDir/Results/Data/Intermediate-files/snomiRNA.condition1_concatenated.depth &
+### Concatenate data vertically
+cat $myPath/$outDir/Results/Data/Intermediate-files/condition1_file*.tiRNA.depth.readspermil | sort -k1,1 -k2,2n > $myPath/$outDir/Results/Data/Intermediate-files/tiRNA.condition1_concatenated.depthVert &
+cat $myPath/$outDir/Results/Data/Intermediate-files/condition1_file*.snomiRNA.depth.readspermil | sort -k1,1 -k2,2n > $myPath/$outDir/Results/Data/Intermediate-files/snomiRNA.condition1_concatenated.depthVert &
 wait
 
-### Concatenate the genomecov files for the replicates of condition 2 
+### Concatenate the depth files for the replicates of condition 2 
 count=0
 for fname in $(cat $myPath/$outDir/Results/Data/Intermediate-files/predicted_exp_layout_cond2.csv); do
 	count=$((count + 1))
 	cond2="$(cut -d ',' -f1 <<< $fname)"
 	cond2base="$(cut -d '.' -f1 <<< $cond2)"
-	find $myPath/$outDir/ -type f -name "$cond2base*tiRNA.genomecov" -exec cp {} $myPath/$outDir/Results/Data/Intermediate-files/condition2_file$count.tiRNA.genomecov \; & # Gather tiRNAs
-	find $myPath/$outDir/ -type f -name "$cond2base*snomiRNA.genomecov" -exec cp {} $myPath/$outDir/Results/Data/Intermediate-files/condition2_file$count.snomiRNA.genomecov \; & # Gather snomiRNAs
+	find $myPath/$outDir/ -type f -name "$cond2base*tiRNA.depth" -exec cp {} $myPath/$outDir/Results/Data/Intermediate-files/condition2_file$count.tiRNA.depth \; & # Gather tiRNAs
+	find $myPath/$outDir/ -type f -name "$cond2base*snomiRNA.depth" -exec cp {} $myPath/$outDir/Results/Data/Intermediate-files/condition2_file$count.snomiRNA.depth \; & # Gather snomiRNAs
 	wait
 	mapped=$(grep "mapped" $myPath/$outDir/Results/$cond2base/Stats.log | awk '{print $3}')
-	python scripts/Genomecov-to-Genomecov_RPM.py "$myPath/$outDir/Results/Data/Intermediate-files/condition2_file$count.tiRNA.genomecov" "$mapped" "$myPath/$outDir/Results/Data/Intermediate-files/condition2_file$count.tiRNA.genomecov.readspermil" &
-	python scripts/Genomecov-to-Genomecov_RPM.py "$myPath/$outDir/Results/Data/Intermediate-files/condition2_file$count.snomiRNA.genomecov" "$mapped" "$myPath/$outDir/Results/Data/Intermediate-files/condition2_file$count.snomiRNA.genomecov.readspermil" &
+	python scripts/Depth-to-Depth_RPM.py "$myPath/$outDir/Results/Data/Intermediate-files/condition2_file$count.tiRNA.depth" "$mapped" "$myPath/$outDir/Results/Data/Intermediate-files/condition2_file$count.tiRNA.depth.readspermil" &
+	python scripts/Depth-to-Depth_RPM.py "$myPath/$outDir/Results/Data/Intermediate-files/condition2_file$count.snomiRNA.depth" "$mapped" "$myPath/$outDir/Results/Data/Intermediate-files/condition2_file$count.snomiRNA.depth.readspermil" &
 done
 wait
-paste $myPath/$outDir/Results/Data/Intermediate-files/condition2_file*.tiRNA.genomecov.readspermil > $myPath/$outDir/Results/Data/Intermediate-files/tiRNA.condition2_concatenated.genomecov &
-paste $myPath/$outDir/Results/Data/Intermediate-files/condition2_file*.snomiRNA.genomecov.readspermil > $myPath/$outDir/Results/Data/Intermediate-files/snomiRNA.condition2_concatenated.genomecov &
+### Concatenate data horizontally
+paste $myPath/$outDir/Results/Data/Intermediate-files/condition2_file*.tiRNA.depth.readspermil > $myPath/$outDir/Results/Data/Intermediate-files/tiRNA.condition2_concatenated.depth &
+paste $myPath/$outDir/Results/Data/Intermediate-files/condition2_file*.snomiRNA.depth.readspermil > $myPath/$outDir/Results/Data/Intermediate-files/snomiRNA.condition2_concatenated.depth &
+### Concatenate data vertically
+cat $myPath/$outDir/Results/Data/Intermediate-files/condition2_file*.tiRNA.depth.readspermil | sort -k1,1 -k2,2n > $myPath/$outDir/Results/Data/Intermediate-files/tiRNA.condition2_concatenated.depthVert &
+cat $myPath/$outDir/Results/Data/Intermediate-files/condition2_file*.snomiRNA.depth.readspermil | sort -k1,1 -k2,2n > $myPath/$outDir/Results/Data/Intermediate-files/snomiRNA.condition2_concatenated.depthVert &
 wait
 
 
@@ -206,15 +220,15 @@ mkdir -p $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score
 
 ### tiRNAs
 ### Calculate mean
-python scripts/MeanCalculator.py $myPath/$outDir/Results/Data/Intermediate-files/tiRNA.condition1_concatenated.genomecov $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.condition1_concatenated.genomecov.mean & 
-python scripts/MeanCalculator.py $myPath/$outDir/Results/Data/Intermediate-files/tiRNA.condition2_concatenated.genomecov $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.condition2_concatenated.genomecov.mean &
+python scripts/MeanCalculator.py $myPath/$outDir/Results/Data/Intermediate-files/tiRNA.condition1_concatenated.depth $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.condition1_concatenated.depth.mean & 
+python scripts/MeanCalculator.py $myPath/$outDir/Results/Data/Intermediate-files/tiRNA.condition2_concatenated.depth $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.condition2_concatenated.depth.mean &
 wait
 ### Sort output
-sort -k1,1 -k2,2n $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.condition1_concatenated.genomecov.mean > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_tiRNA.condition1_concatenated.genomecov.mean &
-sort -k1,1 -k2,2n $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.condition2_concatenated.genomecov.mean > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_tiRNA.condition2_concatenated.genomecov.mean &
+sort -k1,1 -k2,2n $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.condition1_concatenated.depth.mean > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_tiRNA.condition1_concatenated.depth.mean &
+sort -k1,1 -k2,2n $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.condition2_concatenated.depth.mean > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_tiRNA.condition2_concatenated.depth.mean &
 wait
 ### Concatenate horizontally to make a dataframe
-paste $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_tiRNA.condition1_concatenated.genomecov.mean $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_tiRNA.condition2_concatenated.genomecov.mean > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.mean
+paste $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_tiRNA.condition1_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_tiRNA.condition2_concatenated.depth.mean > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.mean
 ### Calculate StdDev
 python scripts/Mean-to-RelativeDifference.py $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.mean $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.stddev
 ### Calculate distribution scores
@@ -225,15 +239,15 @@ cat $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.con
 
 ### snomiRNAs
 ### Calculate mean
-python scripts/MeanCalculator.py $myPath/$outDir/Results/Data/Intermediate-files/snomiRNA.condition1_concatenated.genomecov $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.condition1_concatenated.genomecov.mean &
-python scripts/MeanCalculator.py $myPath/$outDir/Results/Data/Intermediate-files/snomiRNA.condition2_concatenated.genomecov $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.condition2_concatenated.genomecov.mean &
+python scripts/MeanCalculator.py $myPath/$outDir/Results/Data/Intermediate-files/snomiRNA.condition1_concatenated.depth $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.condition1_concatenated.depth.mean &
+python scripts/MeanCalculator.py $myPath/$outDir/Results/Data/Intermediate-files/snomiRNA.condition2_concatenated.depth $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.condition2_concatenated.depth.mean &
 wait
 ### Sort output
-sort -k1,1 -k2,2n $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.condition1_concatenated.genomecov.mean > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_snomiRNA.condition1_concatenated.genomecov.mean &
-sort -k1,1 -k2,2n $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.condition2_concatenated.genomecov.mean > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_snomiRNA.condition2_concatenated.genomecov.mean &
+sort -k1,1 -k2,2n $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.condition1_concatenated.depth.mean > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_snomiRNA.condition1_concatenated.depth.mean &
+sort -k1,1 -k2,2n $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.condition2_concatenated.depth.mean > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_snomiRNA.condition2_concatenated.depth.mean &
 wait
 ### Concatenate horizontally to make a dataframe
-paste $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_snomiRNA.condition1_concatenated.genomecov.mean $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_snomiRNA.condition2_concatenated.genomecov.mean > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.mean
+paste $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_snomiRNA.condition1_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_snomiRNA.condition2_concatenated.depth.mean > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.mean
 ### Calculate StdDev
 python scripts/Mean-to-RelativeDifference.py $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.mean $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.stddev
 ### Calculate distribution score
@@ -242,11 +256,16 @@ Rscript scripts/Distribution-score.R $myPath/$outDir/Results/Data/Intermediate-f
 cat $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.different-distributions.txt | awk 'NR<2{print $0;next}{print $0| "sort -k10,10nr"}' > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.different-distributions.sorted.txt
 cat $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.all-features.txt | awk 'NR<2{print $0;next}{print $0| "sort -k10,10nr"}' > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.all-features.sorted.txt
 
+
+### Test whether certain features are cleaved in one condition vs the other
+
+
+
 ### Get mean and standard deviation (redundant step)
-Rscript scripts/Mean_Stdev.R $myPath/$outDir/Results/Data/Intermediate-files/tiRNA.condition1_concatenated.genomecov $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.tiRNA.genomecov &
-Rscript scripts/Mean_Stdev.R $myPath/$outDir/Results/Data/Intermediate-files/tiRNA.condition2_concatenated.genomecov $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.tiRNA.genomecov &
-Rscript scripts/Mean_Stdev.R $myPath/$outDir/Results/Data/Intermediate-files/snomiRNA.condition1_concatenated.genomecov $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.genomecov &
-Rscript scripts/Mean_Stdev.R $myPath/$outDir/Results/Data/Intermediate-files/snomiRNA.condition2_concatenated.genomecov $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.genomecov &
+Rscript scripts/Mean_Stdev.R $myPath/$outDir/Results/Data/Intermediate-files/tiRNA.condition1_concatenated.depth $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.tiRNA.depth &
+Rscript scripts/Mean_Stdev.R $myPath/$outDir/Results/Data/Intermediate-files/tiRNA.condition2_concatenated.depth $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.tiRNA.depth &
+Rscript scripts/Mean_Stdev.R $myPath/$outDir/Results/Data/Intermediate-files/snomiRNA.condition1_concatenated.depth $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth &
+Rscript scripts/Mean_Stdev.R $myPath/$outDir/Results/Data/Intermediate-files/snomiRNA.condition2_concatenated.depth $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth &
 wait
 
 ### Get names of differentially expressed features
@@ -260,8 +279,8 @@ cat $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names
 if [[ $(wc -l < $myPath/$outDir/Results/Data/DEGs-and-High-distribution-scores_names-only.txt) -ge 1 ]]; then
 	### Plot DEGs arg1 and 2 are inputs, arg 3 is list of differentially expressed genes, arg 4 is output pdf, 
 	### arg 5 is mean coverage cutoff (plot features with coverage above this), arg 5 is GTF file for snomiRNAs (arg 5 is not given to tiRNA data)
-	Rscript scripts/Bedgraph_plotter_DEGs-v3.R $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.tiRNA.genomecov $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.tiRNA.genomecov $myPath/$outDir/Results/Data/DEGs-and-High-distribution-scores_names-only.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_tiRNAs_DEGs.pdf 0 &
-	Rscript scripts/Bedgraph_plotter_DEGs-v3.R $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.genomecov $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.genomecov $myPath/$outDir/Results/Data/DEGs-and-High-distribution-scores_names-only.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_snomiRNAs_DEGs.pdf 0 DBs/hg19-snomiRNA_cdhit.gtf &
+	Rscript scripts/Bedgraph_plotter_DEGs-v3.R $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.tiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.tiRNA.depth $myPath/$outDir/Results/Data/DEGs-and-High-distribution-scores_names-only.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_tiRNAs_DEGs.pdf 0 &
+	Rscript scripts/Bedgraph_plotter_DEGs-v3.R $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/DEGs-and-High-distribution-scores_names-only.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_snomiRNAs_DEGs.pdf 0 DBs/hg19-snomiRNA_cdhit.gtf &
 else
 	echo "There were no differentially expressed features. No plots were generated." >> $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_no-features-to-plot.txt
 fi
