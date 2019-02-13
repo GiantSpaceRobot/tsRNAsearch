@@ -123,21 +123,21 @@ for f in $inDir/*; do
 	fi
 	wait
 	cp $outDir/Results/$filename/Data_and_Plots/*pdf $outDir/Results/Plots/
-	cat $outDir/Results/$filename/HTSeq-count-output/*.count | grep -v ^__ | sort -k1,1 > $outDir/Results/Data/Intermediate-files/$filename.all-features.count	
+	cat $outDir/Results/$filename/FCount-count-output/*.count | grep -v ^__ | sort -k1,1 > $outDir/Results/Data/Intermediate-files/$filename.all-features.count	
 	#sed -i '1s/^/Features\t'"$filename"'\n/' $outDir/Results/Data/Intermediate-files/$filename.all-features.count # Add column headers
 	readsMapped=$(awk '{sum+=$2} END{print sum;}' $outDir/Results/Data/Intermediate-files/$filename.all-features.count)
 	cp $outDir/Results/$filename/Data_and_Plots/$filename.all-features.rpm.count $outDir/Results/Data/	
-	cp $outDir/Results/$filename/HTSeq-count-output/$filename.all-features.count $outDir/Results/Data/Intermediate-files/ 
+	cp $outDir/Results/$filename/FCount-count-output/$filename.all-features.count $outDir/Results/Data/Intermediate-files/ 
 done
 
-### Gather count files
-awk '{print $1}' $outDir/Results/Data/Intermediate-files/$filename.all-features.count > $outDir/Results/Data/Intermediate-files/HTSeq.all-features # Get feature names
+### Gather raw count files
+awk '{print $1}' $outDir/Results/Data/Intermediate-files/$filename.all-features.count > $outDir/Results/Data/Intermediate-files/FCount.all-features # Get feature names
 for f in $outDir/Results/Data/Intermediate-files/*count; do
-	awk '{print $2}' $f | paste $outDir/Results/Data/Intermediate-files/HTSeq.all-features - >> $outDir/Results/Data/Intermediate-files/HTSeq.temp
-	mv $outDir/Results/Data/Intermediate-files/HTSeq.temp $outDir/Results/Data/Intermediate-files/HTSeq.all-features
+	awk '{print $2}' $f | paste $outDir/Results/Data/Intermediate-files/FCount.all-features - >> $outDir/Results/Data/Intermediate-files/FCount.temp
+	mv $outDir/Results/Data/Intermediate-files/FCount.temp $outDir/Results/Data/Intermediate-files/FCount.all-features
 done
+mv $outDir/Results/Data/Intermediate-files/FCount.all-features $outDir/Results/Data/FCount.all-features.raw.count
 
-mv $outDir/Results/Data/Intermediate-files/HTSeq.all-features $outDir/Results/Data/HTSeq.all-features.raw.count
 
 
 ### Determine if experiment layout file was provided or not. If not, try and figure out which files group together using R.
@@ -180,6 +180,7 @@ paste $myPath/$outDir/Results/Data/Intermediate-files/condition1_file*.snomiRNA.
 cat $myPath/$outDir/Results/Data/Intermediate-files/condition1_file*.tiRNA.depth.readspermil | sort -k1,1 -k2,2n > $myPath/$outDir/Results/Data/Intermediate-files/tiRNA.condition1_concatenated.depthVert &
 cat $myPath/$outDir/Results/Data/Intermediate-files/condition1_file*.snomiRNA.depth.readspermil | sort -k1,1 -k2,2n > $myPath/$outDir/Results/Data/Intermediate-files/snomiRNA.condition1_concatenated.depthVert &
 wait
+ 
 
 ### Concatenate the depth files for the replicates of condition 2 
 count=0
@@ -246,10 +247,18 @@ Rscript scripts/Distribution-score.R $myPath/$outDir/Results/Data/Intermediate-f
 cat $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.different-distributions.txt | awk 'NR<2{print $0;next}{print $0| "sort -k10,10nr"}' > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.different-distributions.sorted.txt
 cat $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.all-features.txt | awk 'NR<2{print $0;next}{print $0| "sort -k10,10nr"}' > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.all-features.sorted.txt
 
+### Copy txt files illustrating features with very different distributions to the Results directory:
+cp $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.different-distributions.sorted.txt $myPath/$outDir/Results/Data/${condition1}_vs_${condition2}_High-distribution-tiRNAs.txt 
+cp $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.different-distributions.sorted.txt $myPath/$outDir/Results/Data/${condition1}_vs_${condition2}_High-distribution-snomiRNAs.txt
 
 ### Test whether certain features are cleaved in one condition vs the other
-
-
+Rscript scripts/Five-vs-Threeprime_CompareConditions.R $myPath/$outDir/Results/Data/Intermediate-files/tiRNA.condition1_concatenated.depthVert $myPath/$outDir/Results/Data/Intermediate-files/tiRNA.condition2_concatenated.depthVert $myPath/$outDir/Results/Data/Intermediate-files/tiRNA.cleavage &
+Rscript scripts/Five-vs-Threeprime_CompareConditions.R $myPath/$outDir/Results/Data/Intermediate-files/snomiRNA.condition1_concatenated.depthVert $myPath/$outDir/Results/Data/Intermediate-files/snomiRNA.condition2_concatenated.depthVert $myPath/$outDir/Results/Data/Intermediate-files/snomiRNA.cleavage &
+wait
+cp $myPath/$outDir/Results/Data/Intermediate-files/tiRNA.cleavage*potentially-cleaved-features.txt $myPath/$outDir/Results/Data/
+cp $myPath/$outDir/Results/Data/Intermediate-files/tiRNA.cleavage*potentially-cleaved-features.pdf $myPath/$outDir/Results/Plots/
+cp $myPath/$outDir/Results/Data/Intermediate-files/snomiRNA.cleavage*potentially-cleaved-features.txt $myPath/$outDir/Results/Data/
+cp $myPath/$outDir/Results/Data/Intermediate-files/snomiRNA.cleavage*potentially-cleaved-features.pdf $myPath/$outDir/Results/Plots/
 
 ### Get mean and standard deviation (redundant step)
 Rscript scripts/Mean_Stdev.R $myPath/$outDir/Results/Data/Intermediate-files/tiRNA.condition1_concatenated.depth $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.tiRNA.depth &
@@ -262,22 +271,41 @@ wait
 cat $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/*regulated.csv | grep -v ^,base | awk -F ',' '{print $1}' > $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt
 ### Get names of features with highest distribution scores 
 cat $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/*different-distributions.sorted.txt | grep -v ^feat | awk '{print $1}' > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/High-distribution-scores_feature-names.txt 
-### Get unique set of differentially expressed features and features with high coefficient of variation
-cat $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/High-distribution-scores_feature-names.txt | sort | uniq > $myPath/$outDir/Results/Data/DEGs-and-High-distribution-scores_names-only.txt
+### Get names of features that are likely cleaved
+cat $myPath/$outDir/Results/Data/Intermediate-files/*potentially-cleaved-features.txt | grep -v ^feat | awk '{print $1}' > $myPath/$outDir/Results/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt
+### Get unique set of differentially expressed features and features with high distribution scores
+echo -e "#This is a collection of features that are differentially expressed, have large differences in distribution between the conditions, or are likely cleaved\n" > $myPath/$outDir/Results/Data/Features-of-interest.txt
+cat $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/High-distribution-scores_feature-names.txt $myPath/$outDir/Results/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt | sort | uniq >> $myPath/$outDir/Results/Data/Features-of-interest.txt
 
 ### If there are differentially expressed/high distribution features, plot these:
-if [[ $(wc -l < $myPath/$outDir/Results/Data/DEGs-and-High-distribution-scores_names-only.txt) -ge 1 ]]; then
+if [[ $(wc -l < $myPath/$outDir/Results/Data/Features-of-interest.txt) -ge 2 ]]; then
 	### Plot DEGs arg1 and 2 are inputs, arg 3 is list of differentially expressed genes, arg 4 is output pdf, 
 	### arg 5 is mean coverage cutoff (plot features with coverage above this), arg 5 is GTF file for snomiRNAs (arg 5 is not given to tiRNA data)
-	Rscript scripts/Bedgraph_plotter_DEGs-v3.R $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.tiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.tiRNA.depth $myPath/$outDir/Results/Data/DEGs-and-High-distribution-scores_names-only.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_tiRNAs_DEGs.pdf 0 &
-	Rscript scripts/Bedgraph_plotter_DEGs-v3.R $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/DEGs-and-High-distribution-scores_names-only.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_snomiRNAs_DEGs.pdf 0 DBs/hg19-snomiRNA_cdhit.gtf &
+	# tiRNAs
+	Rscript scripts/Bedgraph_plotter_DEGs-v3.R $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.tiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.tiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_Differentially-expressed-tiRNAs.pdf 0 &
+	Rscript scripts/Bedgraph_plotter_DEGs-v3.R $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.tiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.tiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/High-distribution-scores_feature-names.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_High-distribution-tiRNAs.pdf 0 &
+	Rscript scripts/Bedgraph_plotter_DEGs-v3.R $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.tiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.tiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_Potentially-cleaved-tiRNAs.pdf 0 &
+	# snomiRNAs
+	Rscript scripts/Bedgraph_plotter_DEGs-v3.R $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_Differentially-expressed-snomiRNAs.pdf 0 DBs/hg19-snomiRNA_cdhit.gtf &
+	Rscript scripts/Bedgraph_plotter_DEGs-v3.R $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/High-distribution-scores_feature-names.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_High-distribution-snomiRNAs.pdf 0 DBs/hg19-snomiRNA_cdhit.gtf &
+	Rscript scripts/Bedgraph_plotter_DEGs-v3.R $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_Potentially-cleaved-snomiRNAs.pdf 0 DBs/hg19-snomiRNA_cdhit.gtf &
 else
 	echo "There were no differentially expressed features. No plots were generated." >> $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_no-features-to-plot.txt
 fi
 wait
 
+### Gather RPM count files
+awk '{print $1}' $outDir/Results/Data/$filename.all-features.rpm.count > $outDir/Results/Data/Intermediate-files/FCount.rpm.all-features # Get feature names
+for f in $outDir/Results/Data/*rpm.count; do
+	awk '{print $2}' $f | paste $outDir/Results/Data/Intermediate-files/FCount.rpm.all-features - >> $outDir/Results/Data/Intermediate-files/FCount.rpm.temp
+	mv $outDir/Results/Data/Intermediate-files/FCount.rpm.temp $outDir/Results/Data/Intermediate-files/FCount.rpm.all-features
+done
+rm $outDir/Results/Data/*rpm.count
+mv $outDir/Results/Data/Intermediate-files/FCount.rpm.all-features $outDir/Results/Data/FCount.all-features.rpm.count
+
 ### Move DESeq results to Data directory
 mv $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/ $myPath/$outDir/Results/Data/
+cp $myPath/$outDir/Results/Data/DE_Results/*pdf $myPath/$outDir/Results/Plots/
 
 #rm -rf Data
 
