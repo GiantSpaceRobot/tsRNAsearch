@@ -1,7 +1,7 @@
 #!/usr/bin/env python
  
 """
-Normalise Genomecov to RPM
+Normalise samtools depth/bedtools genomecov to RPM
 """
  
 __author__ = "Paul Donovan"

@@ -15,9 +15,7 @@ if (length(args)==0) {
 
 #### Input file
 input <- read.table(args[1])
-
-features <- input$V1   # Group features by name
-featuresUnion <- union(features, features) # Get unique set of features
+df <- split( input , f = input$V1 )  # Split dataframe based on column 1 elements
 
 #pdf(args[2])
 
@@ -49,9 +47,8 @@ write.table(my.list,
             row.names = FALSE,
             col.names = FALSE)
 
-for(feature in featuresUnion) {
-  #feature <- "GluCTC"
-  subset <- input[grep(feature, input$V1),]
+for(subset in df) {
+  feature <- as.character(subset[1,1])
   subset$V5 <- (subset$V2-subset$V3)
   if(all(is.na(subset$V4))) {  # If all values for the percent of relative difference ar NA, do not calculate values
     mean1 <- 0

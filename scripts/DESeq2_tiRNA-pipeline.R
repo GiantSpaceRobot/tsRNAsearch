@@ -28,8 +28,8 @@ if (length(args)==0) {
     message("Carrying out hierarchical clustering of filenames to classify files into groups.")
     ### A weird idea of clustering the filenames based on string similarity 
     ### (so I don't need to ask the user which samples belong to the same group)
-    file.names.long <- dir(pattern=".all_features.count")
-    file.names <- gsub(".all_features.count", "", file.names.long)
+    file.names.long <- dir(pattern=".all-features.count")
+    file.names <- gsub(".all-features.count", "", file.names.long)
     d <- adist(file.names)
     rownames(d) <- file.names
     hc <- hclust(as.dist(d))

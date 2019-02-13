@@ -17,11 +17,9 @@ if (length(args)==0) {
 
 #### Input file
 input <- read.table(args[1])
-#input <- read.table("/home/paul/Documents/Pipelines/tirna-pipeline/Full/Results/Ang_1_ATCACG_L008_R1_001/tRNA-alignment/accepted_hits_sorted.depth")
+#input <- read.table("/home/paul/Documents/Pipelines/tirna-pipeline/subset/Results/Ang_1_ATCACG_L008_R1_001/snomiRNA-alignment/accepted_hits_sorted.depth")
 
-
-features <- input$V1   # Group features by name
-featuresUnion <- union(features, features) # Get unique set of features
+df <- split( input , f = input$V1 )  # Split dataframe based on column 1 elements
 
 results.df <- setNames(data.frame(matrix(ncol = 5, nrow = 0)), c("feature",
                                                                  "Mean of 5prime",
@@ -30,9 +28,8 @@ results.df <- setNames(data.frame(matrix(ncol = 5, nrow = 0)), c("feature",
                                                                  "Kolmogorov-smirnov p-value",
                                                                  "-Log10 of KS p-value")) # Initialise empty dataframe with column headers
 
-for(feature in featuresUnion) {
-  #feature <- "ValCAC"
-  subset <- input[grep(feature, input$V1),]
+for(subset in df) {
+  feature <- as.character(subset[1,1])
   subset.length <- nrow(subset)
   half.length <- as.integer(subset.length/2)
   if (half.length < 150) {

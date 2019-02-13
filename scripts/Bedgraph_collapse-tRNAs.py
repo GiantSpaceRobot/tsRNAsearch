@@ -43,8 +43,8 @@ for line in readlines:
 
 for k, v in collapsed.iteritems():
     for key, values in v.iteritems():
-        int_values = map(int, values)
-        summed = sum(int_values)
+        float_values = map(float, values)
+        summed = sum(float_values)
         newfile.write("%s\t%s\t%s\n" % (k, key, summed))
 newfile.close()
 
