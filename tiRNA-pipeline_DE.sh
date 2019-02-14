@@ -117,9 +117,9 @@ for f in $inDir/*; do
 	file_base=$(basename $f)
 	filename="$( cut -d '.' -f 1 <<< "$file_base" )" 
 	if [ "$tophat" ]; then # Use tophat2
-		./tiRNA-pipeline.sh -s "$f" -o "$outDir/Results/$filename" -p "$CPUs" -T -A "$Plots" #>> "$outDir"/"$filename"_tiRNApipeline.log
+		./tiRNA-pipeline_No-mRNA.sh -s "$f" -o "$outDir/Results/$filename" -p "$CPUs" -T -A "$Plots" #>> "$outDir"/"$filename"_tiRNApipeline.log
 	else # Use HISAT2
-		./tiRNA-pipeline.sh -s "$f" -o "$outDir/Results/$filename" -p "$CPUs" -A "$Plots" #>> "$outDir"/"$filename"_tiRNApipeline.log
+		./tiRNA-pipeline_No-mRNA.sh -s "$f" -o "$outDir/Results/$filename" -p "$CPUs" -A "$Plots" #>> "$outDir"/"$filename"_tiRNApipeline.log
 	fi
 	wait
 	cp $outDir/Results/$filename/Data_and_Plots/*pdf $outDir/Results/Plots/
