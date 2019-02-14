@@ -105,7 +105,7 @@ write.table(newdata,
             col.names = TRUE)
 
 pdf.width <- nrow(newdata)*0.2 + 3
-pdf(file = paste0(args[2], ".potentially-cleaved-features.pdf"), width = pdf.width, height = 5)
+pdf(file = paste0(args[3], ".potentially-cleaved-features.pdf"), width = pdf.width, height = 5)
 ggplot(data = newdata, mapping = aes(feature, newdata$`Difference.of.-Log10`, color=newdata$`Difference.of.-Log10`)) +
   geom_point() +
   ggtitle("Feature cleavage likelihood (-Log10 cutoff = 3)") +
