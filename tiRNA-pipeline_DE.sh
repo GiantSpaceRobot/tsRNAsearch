@@ -99,7 +99,7 @@ fi
 
 
 ##### Start of pipeline #####
-echo "Started at $(date)"
+echo "Started project analysis on $(date)"
 StartTime="Pipeline initiated at $(date)"
 
 ### If -A parameter was not provided, default is to only plot differentially expressed features
@@ -252,13 +252,11 @@ cp $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond
 cp $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.different-distributions.sorted.txt $myPath/$outDir/Results/Data/${condition1}_vs_${condition2}_High-distribution-snomiRNAs.txt
 
 ### Test whether certain features are cleaved in one condition vs the other
-Rscript scripts/Five-vs-Threeprime_CompareConditions.R $myPath/$outDir/Results/Data/Intermediate-files/tiRNA.condition1_concatenated.depthVert $myPath/$outDir/Results/Data/Intermediate-files/tiRNA.condition2_concatenated.depthVert $myPath/$outDir/Results/Data/Intermediate-files/tiRNA.cleavage &
-Rscript scripts/Five-vs-Threeprime_CompareConditions.R $myPath/$outDir/Results/Data/Intermediate-files/snomiRNA.condition1_concatenated.depthVert $myPath/$outDir/Results/Data/Intermediate-files/snomiRNA.condition2_concatenated.depthVert $myPath/$outDir/Results/Data/Intermediate-files/snomiRNA.cleavage &
+Rscript scripts/Five-vs-Threeprime_CompareConditions.R $myPath/$outDir/Results/Data/Intermediate-files/tiRNA.condition1_concatenated.depthVert $myPath/$outDir/Results/Data/Intermediate-files/tiRNA.condition2_concatenated.depthVert $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_tiRNAs &
+Rscript scripts/Five-vs-Threeprime_CompareConditions.R $myPath/$outDir/Results/Data/Intermediate-files/snomiRNA.condition1_concatenated.depthVert $myPath/$outDir/Results/Data/Intermediate-files/snomiRNA.condition2_concatenated.depthVert $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_snomiRNAs &
 wait
-cp $myPath/$outDir/Results/Data/Intermediate-files/tiRNA.cleavage*potentially-cleaved-features.txt $myPath/$outDir/Results/Data/
-cp $myPath/$outDir/Results/Data/Intermediate-files/tiRNA.cleavage*potentially-cleaved-features.pdf $myPath/$outDir/Results/Plots/
-cp $myPath/$outDir/Results/Data/Intermediate-files/snomiRNA.cleavage*potentially-cleaved-features.txt $myPath/$outDir/Results/Data/
-cp $myPath/$outDir/Results/Data/Intermediate-files/snomiRNA.cleavage*potentially-cleaved-features.pdf $myPath/$outDir/Results/Plots/
+cp $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_*potentially-cleaved-features.txt $myPath/$outDir/Results/Data/
+cp $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_*potentially-cleaved-features.pdf $myPath/$outDir/Results/Plots/
 
 ### Get mean and standard deviation (redundant step)
 Rscript scripts/Mean_Stdev.R $myPath/$outDir/Results/Data/Intermediate-files/tiRNA.condition1_concatenated.depth $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.tiRNA.depth &
@@ -273,9 +271,12 @@ cat $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/*regulated
 cat $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/*different-distributions.sorted.txt | grep -v ^feat | awk '{print $1}' > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/High-distribution-scores_feature-names.txt 
 ### Get names of features that are likely cleaved
 cat $myPath/$outDir/Results/Data/Intermediate-files/*potentially-cleaved-features.txt | grep -v ^feat | awk '{print $1}' > $myPath/$outDir/Results/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt
+
 ### Get unique set of differentially expressed features and features with high distribution scores
-echo -e "#This is a collection of features that are differentially expressed, have large differences in distribution between the conditions, or are likely cleaved\n" > $myPath/$outDir/Results/Data/Features-of-interest.txt
+echo -e "#This is a collection of features that are differentially expressed, have large differences in distribution between the conditions, or are likely cleaved. Ordered alphanumerically." > $myPath/$outDir/Results/Data/Features-of-interest.txt
 cat $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/High-distribution-scores_feature-names.txt $myPath/$outDir/Results/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt | sort | uniq >> $myPath/$outDir/Results/Data/Features-of-interest.txt
+### Gather all features for Venn diagram
+#paste $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/High-distribution-scores_feature-names.txt $myPath/$outDir/Results/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt > $myPath/$outDir/Results/Data/Intermediate-files/Data-for-Venn.txt
 
 ### If there are differentially expressed/high distribution features, plot these:
 if [[ $(wc -l < $myPath/$outDir/Results/Data/Features-of-interest.txt) -ge 2 ]]; then
@@ -289,6 +290,8 @@ if [[ $(wc -l < $myPath/$outDir/Results/Data/Features-of-interest.txt) -ge 2 ]];
 	Rscript scripts/Bedgraph_plotter_DEGs-v3.R $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_Differentially-expressed-snomiRNAs.pdf 0 DBs/hg19-snomiRNA_cdhit.gtf &
 	Rscript scripts/Bedgraph_plotter_DEGs-v3.R $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/High-distribution-scores_feature-names.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_High-distribution-snomiRNAs.pdf 0 DBs/hg19-snomiRNA_cdhit.gtf &
 	Rscript scripts/Bedgraph_plotter_DEGs-v3.R $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_Potentially-cleaved-snomiRNAs.pdf 0 DBs/hg19-snomiRNA_cdhit.gtf &
+	# Venn diagram
+	Rscript scripts/VennDiagram.R $myPath/$outDir/Results/Data/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/High-distribution-scores_feature-names.txt $myPath/$outDir/Results/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_VennDiagram.pdf
 else
 	echo "There were no differentially expressed features. No plots were generated." >> $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_no-features-to-plot.txt
 fi
@@ -309,5 +312,5 @@ cp $myPath/$outDir/Results/Data/DE_Results/*pdf $myPath/$outDir/Results/Plots/
 
 #rm -rf Data
 
-echo "Finished at $(date)"
+echo "Finished project analysis on $(date)"
 

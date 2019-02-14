@@ -104,7 +104,7 @@ if [ "$file2" ]; then
 fi
 #########
 
-echo "Started at $(date)" # Print pipeline start-time
+echo "Started analysing "$singleFile" on $(date)" # Print pipeline start-time
 
 # Function to pad text with characters to make sentences stand out more
 function string_padder () {
@@ -564,33 +564,7 @@ cp $outDir/FCount-to-RPM/$singleFile_basename.all-features.rpm.count $outDir/Dat
 cp $outDir/tRNA-alignment/*Results.* $outDir/Data_and_Plots/
 cp $outDir/snomiRNA-alignment/*Results.* $outDir/Data_and_Plots/
 
-
-
-#sort -o $outDir/FCount-to-RPM/tRNA-alignment.RPM -k3,3nr $outDir/FCount-to-RPM/tRNA-alignment.RPM
-#sort -o $outDir/FCount-to-RPM/snomiRNA-alignment.RPM -k3,3nr $outDir/FCount-to-RPM/snomiRNA-alignment.RPM
-#sort -o $outDir/FCount-to-RPM/mRNA-ncRNA-alignment.RPM -k3,3nr $outDir/FCount-to-RPM/mRNA-ncRNA-alignment.RPM
-
-#touch $outDir/checkpoints/checkpoint-6.flag
-
-#if [[ $oldAligner = "yes" ]]; then  # Get the number of mapped reads for each mapping step
-#	mapped_tRNA=$(grep "Mapped" $outDir/tRNA-alignment/align_summary.txt | awk '{print $3}')
-#	mapped_snomiRNA=$(grep "Mapped" $outDir/snomiRNA-alignment/align_summary.txt | awk '{print $3}')
-#	mapped_mRNAncRNA=$(grep "Mapped" $outDir/mRNA-ncRNA-alignment/align_summary.txt | awk '{print $3}')
-#else
-#	mapped_tRNA1=$(grep "exactly" $outDir/tRNA-alignment/align_summary.txt | awk '{print $1}')
-#	mapped_tRNA2=$(grep ">1" $outDir/tRNA-alignment/align_summary.txt | awk '{print $1}')
-#	mapped_tRNA=$((mapped_tRNA1 + mapped_tRNA2))
-#	### snomiRNAs
-#	mapped_snomiRNA1=$(grep "exactly" $outDir/snomiRNA-alignment/align_summary.txt | awk '{print $1}')
-#	mapped_snomiRNA2=$(grep ">1" $outDir/snomiRNA-alignment/align_summary.txt | awk '{print $1}')
-#	mapped_snomiRNA=$((mapped_snomiRNA1 + mapped_snomiRNA2))
-#	### m/ncRNAs
-#	mapped_mRNAncRNA1=$(grep "exactly" $outDir/mRNA-ncRNA-alignment/align_summary.txt | awk '{print $1}')
-#	mapped_mRNAncRNA2=$(grep ">1" $outDir/mRNA-ncRNA-alignment/align_summary.txt | awk '{print $1}')
-#	mapped_mRNAncRNA=$((mapped_mRNAncRNA1 + mapped_mRNAncRNA2))
-#fi
-#mapped_total=$((mapped_tRNA + mapped_snomiRNA + mapped_mRNAncRNA))
-#echo -e "tRNA\t$mapped_tRNA\nsnomiRNA\t$mapped_snomiRNA\nmRNA/ncRNA\t$mapped_mRNAncRNA\nTotal\t$mapped_total" > $outDir/Data_and_Plots/MappedReadCount.txt
-#
+echo "Finised analysing "$singleFile" on $(date)" # Print pipeline start-time
+echo "_____________________________________________________________________________________"
 
 
