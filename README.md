@@ -5,7 +5,5 @@ A pipeline for the identification, quantification and analysis of ncRNAs (especi
 INSTALL
 
 chmod 755 setup.sh
-./setup.sh
+sudo ./setup.sh
 
-You may need to run:
-sudo Rscript InstallLibs.R
