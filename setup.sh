@@ -11,6 +11,9 @@ if ! [ -x "$(command -v Rscript)" ]; then
 	sudo apt install r-base  #Rscript 3.4.4 #ggplot2 #gplots
 fi
 
+### Install necessary R libraries
+sudo Rscript scripts/InstallLibs.R
+
 if ! [ -x "$(command -v samtools)" ]; then
 	sudo apt install samtools  #1.7 # Requires htslib 1.7-2
 fi
