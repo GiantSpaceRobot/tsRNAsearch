@@ -119,5 +119,5 @@ if (file.size(args[3]) == 0) { # Check if features file contains any lines
   for(feature in featuresUnion) {
     print(plot_list[[feature]])
   }
-  dev.off()
+  garbage <- dev.off() # Suppress message 'NULL'
 }
