@@ -23,9 +23,9 @@ if (length(args)==0) {
 library(ggplot2)
 
 ### Read in files and get file basename
-#input1 <- read.table("/home/paul/Documents/Pipelines/tirna-pipeline/HISAT-FullTest/Results/Data/condition1_concatenated_mean_stdev.snomiRNA.genomecov")
-#input2 <- read.table("/home/paul/Documents/Pipelines/tirna-pipeline/HISAT-FullTest/Results/Data/condition2_concatenated_mean_stdev.snomiRNA.genomecov")
-#input3 <- read.table("/home/paul/Documents/Pipelines/tirna-pipeline/HISAT-FullTest/Results/Data/DE_Results/DESeq2/Something2.csv", sep = ",")
+#input1 <- read.table("/home/paul/Documents/Pipelines/tirna-pipeline/Full-test2/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth")
+#input2 <- read.table("/home/paul/Documents/Pipelines/tirna-pipeline/Full-test2/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth")
+#input3 <- read.table("/home/paul/Documents/Pipelines/tirna-pipeline/Full-test2/Results/Data/DE_Results/DESeq2/DEGs_names-only.txt")
 #mean.cutoff = 0
 
 input1 <- read.table(args[1])
@@ -48,9 +48,9 @@ if (file.size(args[3]) == 0) { # Check if features file contains any lines
   } 
   
   ### Get names of conditions from arg3 name for writing in plots
-  #file3 <- "Angio_vs_Vehic_DEGs.pdf"
+  #file3 <- "Angio_vs_Vehic_Features_DiffExprtiRNAs.pdf"
   file3 <- basename(args[4])
-  conditions.for.plots <- strsplit(x = file3, "_DEGs")[[1]][1] #Must do double index to access the resulting list from strsplit
+  conditions.for.plots <- strsplit(x = file3, "_Features")[[1]][1] #Must do double index to access the resulting list from strsplit
   condition1 <- strsplit(x = conditions.for.plots, "_vs_")[[1]][1]
   condition2 <- strsplit(x = conditions.for.plots, "_vs_")[[1]][2]
   

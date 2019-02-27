@@ -23,6 +23,7 @@ if (length(args)==0) {
   stop("Error: Too many command line arguments. Quitting.")
 } else if (length(args)==1) {             # If only a filepath was provided:
   myPath <- args[1]
+  myPath <- "/home/paul/Documents/Pipelines/tirna-pipeline/Full-test/Results/Data/Intermediate-files/Counts/"
   if (dir.exists(myPath)) {
     setwd(myPath)
     message("Carrying out hierarchical clustering of filenames to classify files into groups.")
@@ -43,7 +44,7 @@ if (length(args)==0) {
     plot(hc, cex=.4)
     rect.hclust(hc,k=2)
     text(2,10, "If these groupings are incorrect,\nplease provide a CSV file indicating\nthe correct groups (see README)\nand restart the analysis")
-    garbage <- dev.off()
+    dev.off()
     df <- data.frame(file.names,cutree(hc,k=2))
     df2 <- df
     colnames(df2) <- NULL
@@ -121,6 +122,7 @@ library(ggplot2)
 ### Function to carry out DESeq2 analysis on provided files
 DESeq2.function <- function(path.to.files){
   
+  #path.to.files <- myPath
   ### Create checkpoints (for simple degbugging) 
   count <- 0
   count <- count + 1
@@ -153,20 +155,20 @@ DESeq2.function <- function(path.to.files){
   print(paste0("Checkpoint ", count))
 
   ### Create a density plot
-  pdf(paste0("DE_Results/", ResultsFile, "_Density-Plot.pdf"),
-      width=12,height=12)
-  plot(density(inlog[,1]), 
-       ylim=c(0,0.4), 
-       main="Density plot of counts per gene", 
-       lty=colTy[1], 
-       xlab="Log of TPM per gene", 
-       ylab="Density", 
-       col=colLabel[1])
-  for(i in 2:ncol(tpm)){
-   lines(density(inlog[,i]), lty=colTy[i], col=colLabel[i])
-  }
-  legend("topright", legend=colnames(tpm), lty=colTy, col=colLabel)
-  garbage <- dev.off()
+  #####pdf(paste0("DE_Results/", ResultsFile, "_Density-Plot.pdf"),
+  #####    width=12,height=12)
+  #####plot(density(inlog[,1]), 
+  #####     ylim=c(0,0.4), 
+  #####     main="Density plot of counts per gene", 
+  #####     lty=colTy[1], 
+  #####     xlab="Log of TPM per gene", 
+  #####     ylab="Density", 
+  #####     col=colLabel[1])
+  #####for(i in 2:ncol(tpm)){
+  ##### lines(density(inlog[,i]), lty=colTy[i], col=colLabel[i])
+  #####}
+  #####legend("topright", legend=colnames(tpm), lty=colTy, col=colLabel)
+  #####dev.off()
   
   ### checkpoint
   count <- count + 1
@@ -187,10 +189,10 @@ DESeq2.function <- function(path.to.files){
   rld <- rlogTransformation(dds)
 
   ### Create a histogram
-  pdf(paste0("DE_Results/", ResultsFile, "_Histogram.pdf"),
-      width=12,height=12)
-  hist(assay(rld))
-  garbage <- dev.off()
+  #####pdf(paste0("DE_Results/", ResultsFile, "_Histogram.pdf"),
+  #####    width=12,height=12)
+  #####hist(assay(rld))
+  #####dev.off()
   
   ### checkpoint
   count <- count + 1
@@ -203,18 +205,27 @@ DESeq2.function <- function(path.to.files){
   ### Sample distance heatmap
   sampleDists <- as.matrix(dist(t(assay(rld))))
   #(mycols <- brewer.pal(length(file.names), "Paired")[1:length(unique(file.names))])
-  pdf(paste0("DE_Results/", ResultsFile, "_Distance-Matrix.pdf"),
-      width=12,height=12)
-  heatmap.2(as.matrix(sampleDists), key=F, trace="none",
-            col=colorpanel(100, "black", "white"),
-            #ColSideColors=mycols[file.names], 
-            #RowSideColors=mycols[file.names],
-            cexRow = 0.8,
-            cexCol = 0.8,
-            margin=c(10, 13), 
-            srtCol=45,
-            main="Sample Distance Matrix")
-  garbage <- dev.off()
+  #####pdf(paste0("DE_Results/", ResultsFile, "_Distance-Matrix.pdf"),
+  #####    width=12,height=12)
+  #####heatmap.2(as.matrix(sampleDists), key=F, trace="none",
+  #####          col=colorpanel(100, "black", "white"),
+  #####          #ColSideColors=mycols[file.names], 
+  #####          #RowSideColors=mycols[file.names],
+  #####          cexRow = 0.8,
+  #####          cexCol = 0.8,
+  #####          margin=c(10, 13), 
+  #####          srtCol=45,
+  #####          main="Sample Distance Matrix")
+  #####dev.off()
+  
+  ### Feature heatmap
+  topVarGenes <- head(order(rowVars(assay(rld)), decreasing=T),50)
+  matrix.heatmap <- assay(rld)[ topVarGenes, ]
+  matrix.heatmap <- matrix.heatmap - rowMeans(matrix.heatmap)
+  heatmap.2(matrix.heatmap)
+  # select the 'contrast' you want
+  annotation_data <- as.data.frame(colData(rld)[c(Condition1,Condition2)])
+  pheatmap(matrix.heatmap, annotation_col=annotation_data)
   
   ### checkpoint
   count <- count + 1
@@ -226,25 +237,25 @@ DESeq2.function <- function(path.to.files){
   fit=cmdscale(d, eig=TRUE, k=2)
   x=fit$points[,1]
   y=fit$points[,2]
-  pdf(paste0("DE_Results/", ResultsFile, "_tpm-PCA.pdf"),
-      width=8,height=8)
-  par(xpd = T, mar = par()$mar + c(5,4,4,8))
-  plot(x, y, 
-       type="p", 
-       pch=20, 
-       col=colLabel,
-       bty="L")
-  box()
-  legend("right", 
-         inset=c(-0.7,0), 
-         pch=20,
-         col=colLabel,
-         cex = 0.7, 
-         legend=colnames(tpm),
-         xpd = TRUE,
-         bty = "n",
-         lty=NULL)
-  garbage <- dev.off()
+  #####pdf(paste0("DE_Results/", ResultsFile, "_tpm-PCA.pdf"),
+  #####    width=8,height=8)
+  #####par(xpd = T, mar = par()$mar + c(5,4,4,8))
+  #####plot(x, y, 
+  #####     type="p", 
+  #####     pch=20, 
+  #####     col=colLabel,
+  #####     bty="L")
+  #####box()
+  #####legend("right", 
+  #####       inset=c(-0.7,0), 
+  #####       pch=20,
+  #####       col=colLabel,
+  #####       cex = 0.7, 
+  #####       legend=colnames(tpm),
+  #####       xpd = TRUE,
+  #####       bty = "n",
+  #####       lty=NULL)
+  #####dev.off()
   #par(mar=c(5, 4, 4, 2) + 0.1)
   
   ### checkpoint
@@ -262,39 +273,39 @@ DESeq2.function <- function(path.to.files){
   #  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   #  ylab(paste0("PC2: ",percentVar[2],"% variance")) +
   #  coord_fixed()
-  #garbage <- dev.off()
+  #dev.off()
   
   ### Write DESeq2 results to file
-  if (file.exists("DE_Results/DESeq2")){
-  } else {
-    dir.create("DE_Results/DESeq2")
-  }
-  
-  ### checkpoint
-  count <- count + 1
-  print(paste0("Checkpoint ", count))
-
-  write.csv(as.data.frame(res), file=paste0("DE_Results/DESeq2/", ResultsFile, "_DESeq2-output.csv"))
-  
-  up <- (res[!is.na(res$padj) & res$padj <= 0.1 &
-                      res$log2FoldChange >= 0.5, ])
-  
-  down <- (res[!is.na(res$padj) & res$padj <= 0.1 &    
-                        res$log2FoldChange <= -0.5, ])    
-  #print(sprintf("%s genes up-regulated, %s genes down-regulated", length(up), length(down)))
-  write.table(x = up,
-              sep = ",",
-              file=paste0("DE_Results/DESeq2/", ResultsFile, "_DESeq2-output-upregulated.csv"), 
-              col.names=NA,
-              row.names=TRUE, 
-              quote = FALSE)
-  write.table(x = down,
-              sep = ",",
-              file=paste0("DE_Results/DESeq2/", ResultsFile, "_DESeq2-output-downregulated.csv"), 
-              col.names=NA,
-              row.names=TRUE, 
-              quote = FALSE)
-  
+  #####if (file.exists("DE_Results/DESeq2")){
+  #####} else {
+  #####  dir.create("DE_Results/DESeq2")
+  #####}
+  #####
+  ######## checkpoint
+  #####count <- count + 1
+  #####print(paste0("Checkpoint ", count))
+#####
+  #####write.csv(as.data.frame(res), file=paste0("DE_Results/DESeq2/", ResultsFile, "_DESeq2-output.csv"))
+  #####
+  #####up <- (res[!is.na(res$padj) & res$padj <= 0.1 &
+  #####                    res$log2FoldChange >= 0.5, ])
+  #####
+  #####down <- (res[!is.na(res$padj) & res$padj <= 0.1 &    
+  #####                      res$log2FoldChange <= -0.5, ])    
+  ######print(sprintf("%s genes up-regulated, %s genes down-regulated", length(up), length(down)))
+  #####write.table(x = up,
+  #####            sep = ",",
+  #####            file=paste0("DE_Results/DESeq2/", ResultsFile, "_DESeq2-output-upregulated.csv"), 
+  #####            col.names=NA,
+  #####            row.names=TRUE, 
+  #####            quote = FALSE)
+  #####write.table(x = down,
+  #####            sep = ",",
+  #####            file=paste0("DE_Results/DESeq2/", ResultsFile, "_DESeq2-output-downregulated.csv"), 
+  #####            col.names=NA,
+  #####            row.names=TRUE, 
+  #####            quote = FALSE)
+  #####
   ### checkpoint
   count <- count + 1
   print(paste0("Checkpoint ", count))
