@@ -1,6 +1,0 @@
-12345 reads; of these:
-  12345 (100.00%) were unpaired; of these:
-    1107 (8.97%) aligned 0 times
-    4493 (36.40%) aligned exactly 1 time
-    6745 (54.64%) aligned >1 times
-91.03% overall alignment rate
