@@ -54,11 +54,13 @@ fi
 if ! [ -x "$(command -v fastqc)" ]; then
 	sudo apt install fastqc
 fi
-if ! [ -x "$(command -v trim_galore)" ]; then
-	curl -fsSL https://github.com/FelixKrueger/TrimGalore/archive/0.4.5.tar.gz -o trim_galore.tar.gz
-	tar xvzf trim_galore.tar.gz
-	mv TrimGalore-0.4.5/trim_galore scripts/
-	sed -i -e 's/trim_galore\ /scripts\/trim_galore\ /g' tsRNAsearch.sh
+if ! [ -x "$(command -v trim_galore)" ]; then # Check for global trim_galore
+	if [ ! -f scripts/trim_galore ]; then # Check for tsRNAsearch trim_galore
+		curl -fsSL https://github.com/FelixKrueger/TrimGalore/archive/0.4.5.tar.gz -o trim_galore.tar.gz
+		tar xvzf trim_galore.tar.gz
+		mv TrimGalore-0.4.5/trim_galore scripts/
+		sed -i -e 's/trim_galore\ /scripts\/trim_galore\ /g' tsRNAsearch.sh
+	fi
 	#echo "trim_galore downloaded and uncompressed. Please add trim_galore to your path" >> Setup_instructions.txt
 fi
 
@@ -67,10 +69,12 @@ if ! [ -x "$(command -v hisat2)" ]; then
 fi
 
 if ! [ -x "$(command -v featureCounts)" ]; then
-	wget -q https://sourceforge.net/projects/subread/files/subread-1.6.3/subread-1.6.3-Linux-x86_64.tar.gz #featureCounts 1.6.3
-	tar xvfz subread-1.6.3-Linux-x86_64.tar.gz
-	mv subread-1.6.3-Linux-x86_64/bin/featureCounts scripts/
-	sed -i -e 's/featureCounts\ /scripts\/featureCounts\ /g' tsRNAsearch.sh
+	if [ ! -f scripts/featureCounts ]; then
+		wget -q https://sourceforge.net/projects/subread/files/subread-1.6.3/subread-1.6.3-Linux-x86_64.tar.gz #featureCounts 1.6.3
+		tar xvfz subread-1.6.3-Linux-x86_64.tar.gz
+		mv subread-1.6.3-Linux-x86_64/bin/featureCounts scripts/
+		sed -i -e 's/featureCounts\ /scripts\/featureCounts\ /g' tsRNAsearch.sh
+	fi
 	#echo "Subreads (incl. bin/featureCounts) downloaded and uncompressed. Please add featureCounts to your path" >> Setup_instructions.txt
 fi
 
