@@ -15,7 +15,7 @@ MM88MMM  ,adPPYba,  88aaaaaa8P*  88  *8b   88      d8*  *8b      ,adPPYba,   ,ad
   *Y888  **YbbdP**  88      *8b  88      *888  d8*          *8b  **YbbdP**   **Ybbd8**  **8bbdP*Y8  88           **Ybbd8**  88       88                                                                                                                                          
   " 1>&1; }
 usage() { echo "
-	Usage: $0 -p -d Path/To/Input/Files -o OutputDirectory/ -e ExperimentLayout.csv
+	Usage: $0 -d Path/To/Input/Files -o OutputDirectory/ -e ExperimentLayout.csv -t CPU-number
 	" 1>&2; }
 info() { echo "
 Options
@@ -29,16 +29,13 @@ Options
 
 	" 1>&2; }
 
-while getopts ":hTpA:t:d:e:o:" o; do
+while getopts ":hA:t:d:e:o:" o; do
     case "${o}" in
 		h)
 			asciiArt
 			usage
 			info
 			exit
-			;;
-		p)
-			paired="Yes"
 			;;
 		d)
 			inDir="$OPTARG"
@@ -54,9 +51,6 @@ while getopts ":hTpA:t:d:e:o:" o; do
 			;;
 		A)
 			Plots="$OPTARG"
-			;;
-		T)
-			tophat="Yes"
 			;;
 		*)
             echo "Error in input parameters!"
@@ -115,11 +109,11 @@ for f in $inDir/*; do
 	mkdir -p $outDir/Results/Plots
 	file_base=$(basename $f)
 	filename="$( cut -d '.' -f 1 <<< "$file_base" )" 
-	if [ "$tophat" ]; then # Use tophat2
-		./tiRNA-pipeline.sh -s "$f" -o "$outDir/Results/$filename" -p "$CPUs" -T -A "$Plots" #>> "$outDir"/"$filename"_tiRNApipeline.log
-	else # Use HISAT2
-		./tiRNA-pipeline.sh -s "$f" -o "$outDir/Results/$filename" -p "$CPUs" -A "$Plots" #>> "$outDir"/"$filename"_tiRNApipeline.log
-	fi
+	#if [ "$tophat" ]; then # Use tophat2
+	#	./tiRNA-pipeline.sh -s "$f" -o "$outDir/Results/$filename" -p "$CPUs" -T -A "$Plots" #>> "$outDir"/"$filename"_tiRNApipeline.log
+	#else # Use HISAT2
+	./tsRNAsearch.sh -s "$f" -o "$outDir/Results/$filename" -p "$CPUs" -A "$Plots" #>> "$outDir"/"$filename"_tiRNApipeline.log
+	#fi
 	wait
 	cp $outDir/Results/$filename/Data_and_Plots/*pdf $outDir/Results/Plots/
 	cat $outDir/Results/$filename/FCount-count-output/*.count | grep -v ^__ | sort -k1,1 > $outDir/Results/Data/Intermediate-files/$filename.all-features.count	
