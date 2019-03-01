@@ -4,7 +4,8 @@ usage() { echo "Usage: $0 -p CPUs
 " 1>&2; }
 
 if [ $# -eq 0 ]; then
-    echo "No arguments provided"
+    echo "No arguments provided. Defaulting to use 1 CPU. 
+	      Please provide parameter '-p #threads' if you wish to use more than 1."
     CPUs=1
 fi
 
