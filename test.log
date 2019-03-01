@@ -1,0 +1,436 @@
+nohup: ignoring input
+Started analysing /home/paul/Documents/Data/Marion_tiRNA-paper/Subset/Ang_1_ATCACG_L008_R1_001.fastq.gz on Thu Feb 28 17:14:00 GMT 2019
+
+
+	============================
+	Creating directory structure
+	============================
+
+	
+
+
+	================================
+	Trimming reads using Trim Galore
+	================================
+
+	
+
+		Input: single-end read file
+		
+No quality encoding type selected. Assuming that the data provided uses Sanger encoded Phred scores (default)
+
+Path to Cutadapt set as: 'cutadapt' (default)
+1.15
+Cutadapt seems to be working fine (tested command 'cutadapt --version')
+
+
+AUTO-DETECTING ADAPTER TYPE
+===========================
+Attempting to auto-detect adapter type from the first 1 million sequences of the first file (>> /home/paul/Documents/Data/Marion_tiRNA-paper/Subset/Ang_1_ATCACG_L008_R1_001.fastq.gz <<)
+
+Found perfect matches for the following adapter sequences:
+Adapter type	Count	Sequence	Sequences analysed	Percentage
+smallRNA	23503	TGGAATTCTCGG	25000	94.01
+Nextera	0	CTGTCTCTTATA	25000	0.00
+Illumina	0	AGATCGGAAGAGC	25000	0.00
+Using smallRNA adapter for trimming (count: 23503). Second best hit was Nextera (count: 0)
+
+Writing report to 'test/trim_galore_output/Ang_1_ATCACG_L008_R1_001.fastq.gz_trimming_report.txt'
+
+SUMMARISING RUN PARAMETERS
+==========================
+Input filename: /home/paul/Documents/Data/Marion_tiRNA-paper/Subset/Ang_1_ATCACG_L008_R1_001.fastq.gz
+Trimming mode: single-end
+Trim Galore version: 0.4.4_dev
+Cutadapt version: 1.15
+Quality Phred score cutoff: 20
+Quality encoding type selected: ASCII+33
+Adapter sequence: 'TGGAATTCTCGG' (Illumina small RNA adapter; auto-detected)
+Maximum trimming error rate: 0.1 (default)
+Minimum required adapter overlap (stringency): 10 bp
+Minimum required sequence length before a sequence gets removed: 15 bp
+Output file(s) will be GZIP compressed
+
+Writing final adapter and quality trimmed output to Ang_1_ATCACG_L008_R1_001_trimmed.fq.gz
+
+
+  >>> Now performing quality (cutoff 20) and adapter trimming in a single pass for the adapter sequence: 'TGGAATTCTCGG' from file /home/paul/Documents/Data/Marion_tiRNA-paper/Subset/Ang_1_ATCACG_L008_R1_001.fastq.gz <<< 
+This is cutadapt 1.15 with Python 3.6.7
+Command line parameters: -f fastq -e 0.1 -q 20 -O 10 -a TGGAATTCTCGG /home/paul/Documents/Data/Marion_tiRNA-paper/Subset/Ang_1_ATCACG_L008_R1_001.fastq.gz
+Running on 1 core
+Trimming 1 adapter with at most 10.0% errors in single-end mode ...
+Finished in 0.29 s (11 us/read; 5.24 M reads/minute).
+
+=== Summary ===
+
+Total reads processed:                  25,000
+Reads with adapters:                    24,306 (97.2%)
+Reads written (passing filters):        25,000 (100.0%)
+
+Total basepairs processed:     2,500,000 bp
+Quality-trimmed:                  38,639 bp (1.5%)
+Total written (filtered):      1,545,023 bp (61.8%)
+
+=== Adapter 1 ===
+
+Sequence: TGGAATTCTCGG; Type: regular 3'; Length: 12; Trimmed: 24306 times.
+
+No. of allowed errors:
+0-9 bp: 0; 10-12 bp: 1
+
+Bases preceding removed adapters:
+  A: 31.5%
+  C: 18.5%
+  G: 10.3%
+  T: 39.6%
+  none/other: 0.1%
+
+Overview of removed sequences
+length	count	expect	max.err	error counts
+9	246	0.1	0	0 246
+10	189	0.0	1	185 4
+11	303	0.0	1	299 4
+12	191	0.0	1	188 3
+13	157	0.0	1	156 1
+14	124	0.0	1	122 2
+15	216	0.0	1	214 2
+16	162	0.0	1	160 2
+17	338	0.0	1	335 3
+18	413	0.0	1	407 6
+19	265	0.0	1	259 6
+20	138	0.0	1	138
+21	200	0.0	1	194 6
+22	409	0.0	1	405 4
+23	490	0.0	1	486 4
+24	644	0.0	1	639 5
+25	1874	0.0	1	1853 21
+26	1960	0.0	1	1936 24
+27	1490	0.0	1	1470 20
+28	701	0.0	1	692 9
+29	473	0.0	1	465 8
+30	120	0.0	1	116 4
+31	1020	0.0	1	1005 15
+32	846	0.0	1	836 10
+33	699	0.0	1	694 5
+34	904	0.0	1	894 10
+35	515	0.0	1	503 12
+36	218	0.0	1	218
+37	771	0.0	1	763 8
+38	1145	0.0	1	1132 13
+39	605	0.0	1	596 9
+40	172	0.0	1	166 6
+41	76	0.0	1	75 1
+42	170	0.0	1	167 3
+43	36	0.0	1	36
+44	38	0.0	1	38
+45	49	0.0	1	49
+46	24	0.0	1	24
+47	62	0.0	1	60 2
+48	71	0.0	1	71
+49	46	0.0	1	46
+50	99	0.0	1	96 3
+51	252	0.0	1	250 2
+52	238	0.0	1	238
+53	64	0.0	1	63 1
+54	83	0.0	1	83
+55	64	0.0	1	63 1
+56	37	0.0	1	36 1
+57	44	0.0	1	44
+58	80	0.0	1	80
+59	32	0.0	1	32
+60	49	0.0	1	47 2
+61	61	0.0	1	60 1
+62	113	0.0	1	113
+63	82	0.0	1	81 1
+64	80	0.0	1	80
+65	86	0.0	1	86
+66	274	0.0	1	269 5
+67	210	0.0	1	209 1
+68	349	0.0	1	341 8
+69	511	0.0	1	505 6
+70	210	0.0	1	206 4
+71	211	0.0	1	207 4
+72	183	0.0	1	178 5
+73	175	0.0	1	175
+74	170	0.0	1	169 1
+75	136	0.0	1	135 1
+76	439	0.0	1	436 3
+77	414	0.0	1	409 5
+78	758	0.0	1	751 7
+79	107	0.0	1	106 1
+80	38	0.0	1	35 3
+81	23	0.0	1	23
+82	14	0.0	1	14
+83	19	0.0	1	19
+84	13	0.0	1	13
+85	11	0.0	1	11
+86	2	0.0	1	2
+87	1	0.0	1	1
+89	2	0.0	1	2
+90	1	0.0	1	1
+94	1	0.0	1	1
+
+
+RUN STATISTICS FOR INPUT FILE: /home/paul/Documents/Data/Marion_tiRNA-paper/Subset/Ang_1_ATCACG_L008_R1_001.fastq.gz
+=============================================
+25000 sequences processed in total
+Sequences removed because they became shorter than the length cutoff of 15 bp:	188 (0.8%)
+
+
+
+	===============================================
+	Trimming complete. Moving on to FastQC analysis
+	===============================================
+
+	
+Started analysis of Ang_1_ATCACG_L008_R1_001_trimmed.fq.gz
+Approx 5% complete for Ang_1_ATCACG_L008_R1_001_trimmed.fq.gz
+Approx 10% complete for Ang_1_ATCACG_L008_R1_001_trimmed.fq.gz
+Approx 15% complete for Ang_1_ATCACG_L008_R1_001_trimmed.fq.gz
+Approx 20% complete for Ang_1_ATCACG_L008_R1_001_trimmed.fq.gz
+Approx 25% complete for Ang_1_ATCACG_L008_R1_001_trimmed.fq.gz
+Approx 30% complete for Ang_1_ATCACG_L008_R1_001_trimmed.fq.gz
+Approx 35% complete for Ang_1_ATCACG_L008_R1_001_trimmed.fq.gz
+Approx 40% complete for Ang_1_ATCACG_L008_R1_001_trimmed.fq.gz
+Approx 45% complete for Ang_1_ATCACG_L008_R1_001_trimmed.fq.gz
+Approx 50% complete for Ang_1_ATCACG_L008_R1_001_trimmed.fq.gz
+Approx 55% complete for Ang_1_ATCACG_L008_R1_001_trimmed.fq.gz
+Approx 60% complete for Ang_1_ATCACG_L008_R1_001_trimmed.fq.gz
+Approx 65% complete for Ang_1_ATCACG_L008_R1_001_trimmed.fq.gz
+Approx 70% complete for Ang_1_ATCACG_L008_R1_001_trimmed.fq.gz
+Approx 75% complete for Ang_1_ATCACG_L008_R1_001_trimmed.fq.gz
+Approx 80% complete for Ang_1_ATCACG_L008_R1_001_trimmed.fq.gz
+Approx 85% complete for Ang_1_ATCACG_L008_R1_001_trimmed.fq.gz
+Approx 90% complete for Ang_1_ATCACG_L008_R1_001_trimmed.fq.gz
+Approx 95% complete for Ang_1_ATCACG_L008_R1_001_trimmed.fq.gz
+Analysis complete for Ang_1_ATCACG_L008_R1_001_trimmed.fq.gz
+
+
+	===============================================================
+	Finished running FastQC. Moving onto alignment to tRNA database
+	===============================================================
+
+	
+
+
+	=======================================
+	Running tRNA/snomiRNA alignment step...
+	=======================================
+
+	
+24812 reads; of these:
+  24812 (100.00%) were unpaired; of these:
+    12345 (49.75%) aligned 0 times
+    11724 (47.25%) aligned exactly 1 time
+    743 (2.99%) aligned >1 times
+50.25% overall alignment rate
+
+
+	====================================
+	Running mRNA/ncRNA alignment step...
+	====================================
+
+	
+12345 reads; of these:
+  12345 (100.00%) were unpaired; of these:
+    1107 (8.97%) aligned 0 times
+    4493 (36.40%) aligned exactly 1 time
+    6745 (54.64%) aligned >1 times
+91.03% overall alignment rate
+
+
+	=======================================================================
+	Alignment steps complete. Moving on to read-counting using FCount-count
+	=======================================================================
+
+	
+
+	Counting mRNA/ncRNA alignment reads
+	
+
+        ==========     _____ _    _ ____  _____  ______          _____  
+        =====         / ____| |  | |  _ \|  __ \|  ____|   /\   |  __ \ 
+          =====      | (___ | |  | | |_) | |__) | |__     /  \  | |  | |
+            ====      \___ \| |  | |  _ <|  _  /|  __|   / /\ \ | |  | |
+              ====    ____) | |__| | |_) | | \ \| |____ / ____ \| |__| |
+        ==========   |_____/ \____/|____/|_|  \_\______/_/    \_\_____/
+	  v1.6.3
+
+//========================== featureCounts setting ===========================\\
+||                                                                            ||
+||             Input files : 1 BAM file                                       ||
+||                           S accepted_hits.bam                              ||
+||                                                                            ||
+||             Output file : mRNA-ncRNA-alignment.fcount                      ||
+||                 Summary : mRNA-ncRNA-alignment.fcount.summary              ||
+||              Annotation : Homo_sapiens.GRCh37.87.gtf (GTF)                 ||
+||      Dir for temp files : test/FCount-count-output                         ||
+||                                                                            ||
+||                 Threads : 4                                                ||
+||                   Level : meta-feature level                               ||
+||              Paired-end : no                                               ||
+||      Multimapping reads : not counted                                      ||
+|| Multi-overlapping reads : not counted                                      ||
+||   Min overlapping bases : 1                                                ||
+||                                                                            ||
+\\===================== http://subread.sourceforge.net/ ======================//
+
+//================================= Running ==================================\\
+||                                                                            ||
+|| Load annotation file Homo_sapiens.GRCh37.87.gtf ...                        ||
+||    Features : 1195764                                                      ||
+||    Meta-features : 57905                                                   ||
+||    Chromosomes/contigs : 61                                                ||
+||                                                                            ||
+|| Process BAM file accepted_hits.bam...                                      ||
+||    Single-end reads are included.                                          ||
+||    Assign alignments to features...                                        ||
+||    Total alignments : 19738                                                ||
+||    Successfully assigned alignments : 3986 (20.2%)                         ||
+||    Running time : 0.00 minutes                                             ||
+||                                                                            ||
+||                                                                            ||
+|| Summary of counting results can be found in file "test/FCount-count-outpu  ||
+|| t/mRNA-ncRNA-alignment.fcount.summary"                                     ||
+||                                                                            ||
+\\===================== http://subread.sourceforge.net/ ======================//
+
+
+	Counting sno/miRNA alignment reads
+	
+
+        ==========     _____ _    _ ____  _____  ______          _____  
+        =====         / ____| |  | |  _ \|  __ \|  ____|   /\   |  __ \ 
+          =====      | (___ | |  | | |_) | |__) | |__     /  \  | |  | |
+            ====      \___ \| |  | |  _ <|  _  /|  __|   / /\ \ | |  | |
+              ====    ____) | |__| | |_) | | \ \| |____ / ____ \| |__| |
+        ==========   |_____/ \____/|____/|_|  \_\______/_/    \_\_____/
+	  v1.6.3
+
+//========================== featureCounts setting ===========================\\
+||                                                                            ||
+||             Input files : 1 BAM file                                       ||
+||                           S accepted_hits.bam                              ||
+||                                                                            ||
+||             Output file : snomiRNA-alignment.fcount                        ||
+||                 Summary : snomiRNA-alignment.fcount.summary                ||
+||              Annotation : hg19-snomiRNA_cdhit.gtf (GTF)                    ||
+||      Dir for temp files : test/FCount-count-output                         ||
+||                                                                            ||
+||                 Threads : 4                                                ||
+||                   Level : meta-feature level                               ||
+||              Paired-end : no                                               ||
+||      Multimapping reads : not counted                                      ||
+|| Multi-overlapping reads : not counted                                      ||
+||   Min overlapping bases : 1                                                ||
+||                                                                            ||
+\\===================== http://subread.sourceforge.net/ ======================//
+
+//================================= Running ==================================\\
+||                                                                            ||
+|| Load annotation file hg19-snomiRNA_cdhit.gtf ...                           ||
+||    Features : 4536                                                         ||
+||    Meta-features : 4493                                                    ||
+||    Chromosomes/contigs : 4493                                              ||
+||                                                                            ||
+|| Process BAM file accepted_hits.bam...                                      ||
+||    Single-end reads are included.                                          ||
+||    Assign alignments to features...                                        ||
+||    Total alignments : 11998                                                ||
+||    Successfully assigned alignments : 10955 (91.3%)                        ||
+||    Running time : 0.00 minutes                                             ||
+||                                                                            ||
+||                                                                            ||
+|| Summary of counting results can be found in file "test/FCount-count-outpu  ||
+|| t/snomiRNA-alignment.fcount.summary"                                       ||
+||                                                                            ||
+\\===================== http://subread.sourceforge.net/ ======================//
+
+
+	Counting tRNA alignment reads
+	
+
+        ==========     _____ _    _ ____  _____  ______          _____  
+        =====         / ____| |  | |  _ \|  __ \|  ____|   /\   |  __ \ 
+          =====      | (___ | |  | | |_) | |__) | |__     /  \  | |  | |
+            ====      \___ \| |  | |  _ <|  _  /|  __|   / /\ \ | |  | |
+              ====    ____) | |__| | |_) | | \ \| |____ / ____ \| |__| |
+        ==========   |_____/ \____/|____/|_|  \_\______/_/    \_\_____/
+	  v1.6.3
+
+//========================== featureCounts setting ===========================\\
+||                                                                            ||
+||             Input files : 1 BAM file                                       ||
+||                           S accepted_hits.bam                              ||
+||                                                                            ||
+||             Output file : tRNA-alignment.fcount                            ||
+||                 Summary : tRNA-alignment.fcount.summary                    ||
+||              Annotation : hg19-wholetRNA-CCA_cdhit.gtf (GTF)               ||
+||      Dir for temp files : test/FCount-count-output                         ||
+||                                                                            ||
+||                 Threads : 4                                                ||
+||                   Level : meta-feature level                               ||
+||              Paired-end : no                                               ||
+||      Multimapping reads : not counted                                      ||
+|| Multi-overlapping reads : not counted                                      ||
+||   Min overlapping bases : 1                                                ||
+||                                                                            ||
+\\===================== http://subread.sourceforge.net/ ======================//
+
+//================================= Running ==================================\\
+||                                                                            ||
+|| Load annotation file hg19-wholetRNA-CCA_cdhit.gtf ...                      ||
+||    Features : 486                                                          ||
+||    Meta-features : 454                                                     ||
+||    Chromosomes/contigs : 454                                               ||
+||                                                                            ||
+|| Process BAM file accepted_hits.bam...                                      ||
+||    Single-end reads are included.                                          ||
+||    Assign alignments to features...                                        ||
+||    Total alignments : 13947                                                ||
+||    Successfully assigned alignments : 769 (5.5%)                           ||
+||    Running time : 0.00 minutes                                             ||
+||                                                                            ||
+||                                                                            ||
+|| Summary of counting results can be found in file "test/FCount-count-outpu  ||
+|| t/tRNA-alignment.fcount.summary"                                           ||
+||                                                                            ||
+\\===================== http://subread.sourceforge.net/ ======================//
+
+
+
+	================================
+	Get total number of reads mapped
+	================================
+
+	
+Reads mapped: 15710
+
+
+	======================================
+	Generate depth files and plot features
+	======================================
+
+	
+
+
+	==============================
+	Get RPM-normalised read-counts
+	==============================
+
+	
+There were 32 warnings (use warnings() to see them)
+null device 
+          1 
+There were 41 warnings (use warnings() to see them)
+null device 
+          1 
+null device 
+          1 
+There were 50 or more warnings (use warnings() to see the first 50)
+null device 
+          1 
+Finised analysing /home/paul/Documents/Data/Marion_tiRNA-paper/Subset/Ang_1_ATCACG_L008_R1_001.fastq.gz on Thu Feb 28 17:25:51 GMT 2019
+_____________________________________________________________________________________________________________________
+
+
