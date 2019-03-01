@@ -18,7 +18,7 @@ MM88MMM  ,adPPYba,  88aaaaaa8P*  88  *8b   88      d8*  *8b      ,adPPYba,   ,ad
 
 	" 1>&1; }
 usage() { echo "Usage (single-end): $0 -o OutputDirectory/ -s /path/to/SeqFile.fastq.gz
-Usage (paired-end): $0 -o OutputDirectory/ -1 /path/to/SeqFile_1.fastq.gz -2 /path/to/SeqFile_2.fastq.gz" 1>&2; }
+" 1>&2; }
 info() { echo "
 Options:
 
@@ -40,7 +40,7 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts ":hp:s:1:2:o:A:" o; do
+while getopts ":hp:s:o:A:" o; do
     case "${o}" in
 		h)
 			asciiArt
@@ -50,12 +50,6 @@ while getopts ":hp:s:1:2:o:A:" o; do
 			;;
 		s)
 			singleFile="$OPTARG"
-			;;
-		1)
-			file1="$OPTARG"
-			;;
-		2)
-			file2="$OPTARG"
 			;;
 		o)
 			outDir="$OPTARG"
@@ -145,13 +139,13 @@ function bam_to_plots () {  ### Steps for plotting regions with high variation i
 	sort -k1,1 -k2,2n $1/accepted_hits.depth > $1/accepted_hits_sorted.depth
 	### If -A parameter was provided, plot everything
 	if [[ $Plots == "yes" ]]; then # Plot everything
-		### Plot the coverage of all features (arg 3 is mean coverage)
+		### Plot the coverage of all features (arg 3 is mean coverage in RPM)
 		if [[ $3 = "snomiRNA" ]]; then
-			Rscript scripts/Bedgraph_plotter-v4.R $1/accepted_hits_sorted.depth $1/$2_$3_Coverage-plots.pdf 20 DBs/hg19-snomiRNA_cdhit.gtf
+			Rscript scripts/Bedgraph_plotter-v5.R $1/accepted_hits_sorted.depth $1/$2_$3_Coverage-plots.pdf 1 DBs/hg19-snomiRNA_cdhit.gtf
 		elif [[ $3 == "tiRNA" ]]; then
-			Rscript scripts/Bedgraph_plotter-v4.R $1/accepted_hits_sorted.depth $1/$2_$3_Coverage-plots.pdf 0
+			Rscript scripts/Bedgraph_plotter-v5.R $1/accepted_hits_sorted.depth $1/$2_$3_Coverage-plots.pdf 0
 		else
-			Rscript scripts/Bedgraph_plotter-v4.R $1/accepted_hits_sorted.depth $1/$2_$3_Coverage-plots.pdf 1000 DBs/Homo_sapiens.GRCh37.87.gtf
+			Rscript scripts/Bedgraph_plotter-v5.R $1/accepted_hits_sorted.depth $1/$2_$3_Coverage-plots.pdf 1000 DBs/Homo_sapiens.GRCh37.87.gtf
 		fi
 		cp $1/$2_$3_Coverage-plots.pdf $outDir/Data_and_Plots/$2_$3_Coverage-plots.pdf
 	fi
@@ -325,25 +319,25 @@ if [ ! -f $outDir/checkpoints/checkpoint-4.flag ]; then
 			string_padder "Found tRNA/sno/miRNA alignment file. Skipping this step."
 		fi
 
-		#if [ ! -f $outDir/mRNA-ncRNA-alignment/align_summary.txt ]; then # If this file was not generated, try and align the unmapped reads from the tRNA alignment	
-		#	string_padder "Running mRNA/ncRNA alignment step..."
-		#	hisat2 -p $CPUs -x DBs/hisat2_index/Homo_sapiens.GRCh37.dna.primary_assembly $outDir/tRNA-alignment/$trimmedFile -S $outDir/mRNA-ncRNA-alignment/aligned.sam --summary-file $outDir/mRNA-ncRNA-alignment/align_summary.txt --un $outDir/mRNA-ncRNA-alignment/unmapped.fastq
-		#	if [ -f $outDir/mRNA-ncRNA-alignment/aligned.sam ]; then  #If hisat2 successfully mapped reads, convert the unmapped to FASTQ
-		#		samtools view -bS $outDir/mRNA-ncRNA-alignment/aligned.sam > $outDir/mRNA-ncRNA-alignment/accepted_hits_unsorted.bam
-		#		rm $outDir/mRNA-ncRNA-alignment/aligned.sam &
-		#		samtools sort $outDir/mRNA-ncRNA-alignment/accepted_hits_unsorted.bam > $outDir/mRNA-ncRNA-alignment/accepted_hits.bam
-		#		samtools index $outDir/mRNA-ncRNA-alignment/accepted_hits.bam &
-		#		cp $outDir/mRNA-ncRNA-alignment/unmapped.fastq $outDir/mRNA-ncRNA-alignment/UnmappedReads.fq &
-		#	else
-		#		echo "
-		#		mRNA/ncRNA alignment output not found. Reads likely did not map to mRNA/ncRNA reference. 
-		#		"
-		#		cp $outDir/tRNA-alignment/$trimmedFile $outDir/mRNA-ncRNA-alignment/$trimmedFile
-		#		string_padder "$unmappedReadCount"
-		#	fi
-		#else
-		#	string_padder "Found mRNA/ncRNA alignment file. Skipping this step"
-		#fi
+		if [ ! -f $outDir/mRNA-ncRNA-alignment/align_summary.txt ]; then # If this file was not generated, try and align the unmapped reads from the tRNA alignment	
+			string_padder "Running mRNA/ncRNA alignment step..."
+			hisat2 -p $CPUs -x DBs/hisat2_index/Homo_sapiens.GRCh37.dna.primary_assembly $outDir/tRNA-alignment/$trimmedFile -S $outDir/mRNA-ncRNA-alignment/aligned.sam --summary-file $outDir/mRNA-ncRNA-alignment/align_summary.txt --un $outDir/mRNA-ncRNA-alignment/unmapped.fastq
+			if [ -f $outDir/mRNA-ncRNA-alignment/aligned.sam ]; then  #If hisat2 successfully mapped reads, convert the unmapped to FASTQ
+				samtools view -bS $outDir/mRNA-ncRNA-alignment/aligned.sam > $outDir/mRNA-ncRNA-alignment/accepted_hits_unsorted.bam
+				rm $outDir/mRNA-ncRNA-alignment/aligned.sam &
+				samtools sort $outDir/mRNA-ncRNA-alignment/accepted_hits_unsorted.bam > $outDir/mRNA-ncRNA-alignment/accepted_hits.bam
+				samtools index $outDir/mRNA-ncRNA-alignment/accepted_hits.bam &
+				cp $outDir/mRNA-ncRNA-alignment/unmapped.fastq $outDir/mRNA-ncRNA-alignment/UnmappedReads.fq &
+			else
+				echo "
+				mRNA/ncRNA alignment output not found. Reads likely did not map to mRNA/ncRNA reference. 
+				"
+				cp $outDir/tRNA-alignment/$trimmedFile $outDir/mRNA-ncRNA-alignment/$trimmedFile
+				string_padder "$unmappedReadCount"
+			fi
+		else
+			string_padder "Found mRNA/ncRNA alignment file. Skipping this step"
+		fi
 	fi
 	touch $outDir/checkpoints/checkpoint-4.flag
 fi
@@ -354,18 +348,18 @@ string_padder "Alignment steps complete. Moving on to read-counting using FCount
 if [ ! -f $outDir/checkpoints/checkpoint-5.flag ]; then
 	
 	# Count for alignment step 3
-	#if [ ! -f $outDir/mRNA-ncRNA-alignment/accepted_hits.bam ]; then
-	#	echo "
-	#No alignment file found for mRNA/ncRNA alignment. Using blank count file instead
-	#"
-	#	cp additional-files/empty_mRNA-ncRNA.count $outDir/FCount-count-output/mRNA-ncRNA-alignment.count &
-	#else
-	#	echo "
-	#Counting mRNA/ncRNA alignment reads
-	#"
-	#	featureCounts -T $featureCountCPUs -a DBs/Homo_sapiens.GRCh37.87.gtf -o $outDir/FCount-count-output/mRNA-ncRNA-alignment.fcount $outDir/mRNA-ncRNA-alignment/accepted_hits.bam
-	#	grep -v featureCounts $outDir/FCount-count-output/mRNA-ncRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/FCount-count-output/mRNA-ncRNA-alignment.count
-	#fi
+	if [ ! -f $outDir/mRNA-ncRNA-alignment/accepted_hits.bam ]; then
+		echo "
+	No alignment file found for mRNA/ncRNA alignment. Using blank count file instead
+	"
+		cp additional-files/empty_mRNA-ncRNA.count $outDir/FCount-count-output/mRNA-ncRNA-alignment.count &
+	else
+		echo "
+	Counting mRNA/ncRNA alignment reads
+	"
+		featureCounts -T $featureCountCPUs -a DBs/Homo_sapiens.GRCh37.87.gtf -o $outDir/FCount-count-output/mRNA-ncRNA-alignment.fcount $outDir/mRNA-ncRNA-alignment/accepted_hits.bam
+		grep -v featureCounts $outDir/FCount-count-output/mRNA-ncRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/FCount-count-output/mRNA-ncRNA-alignment.count
+	fi
 	
 	# Count for alignment step 2
 	if [ ! -f $outDir/snomiRNA-alignment/accepted_hits.bam ]; then
@@ -423,7 +417,7 @@ string_padder "Get RPM-normalised read-counts"
 python scripts/FCount-to-RPM.py $outDir/FCount-count-output/$singleFile_basename.all-features.count $mapped $outDir/FCount-to-RPM/$singleFile_basename.all-features &
 python scripts/FCount-to-RPM.py $outDir/FCount-count-output/tRNA-alignment.count $mapped $outDir/FCount-to-RPM/tRNA-alignment & 
 python scripts/FCount-to-RPM.py $outDir/FCount-count-output/snomiRNA-alignment.count $mapped $outDir/FCount-to-RPM/snomiRNA-alignment &
-#python scripts/FCount-to-RPM.py $outDir/FCount-count-output/mRNA-ncRNA-alignment.count $mapped $outDir/FCount-to-RPM/mRNA-ncRNA-alignment &
+python scripts/FCount-to-RPM.py $outDir/FCount-count-output/mRNA-ncRNA-alignment.count $mapped $outDir/FCount-to-RPM/mRNA-ncRNA-alignment &
 wait
 
 sleep 5  # Just making sure everything is finished running
@@ -433,7 +427,7 @@ cp $outDir/FCount-to-RPM/$singleFile_basename.all-features.rpm.count $outDir/Dat
 cp $outDir/tRNA-alignment/*Results.* $outDir/Data_and_Plots/
 cp $outDir/snomiRNA-alignment/*Results.* $outDir/Data_and_Plots/
 
-echo "Finised analysing "$singleFile" on $(date)" # Print pipeline start-time
+echo "Finised analysing "$singleFile" on $(date)" # Print pipeline end-time
 echo "_____________________________________________________________________________________________________________________
 
 "

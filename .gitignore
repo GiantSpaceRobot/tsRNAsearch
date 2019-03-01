@@ -1,5 +1,6 @@
 Results/
-DBs/
+DBs/Homo*
+DBs/hisat2_index/Homo*
 to-do.txt
 temp_files/
 New*
