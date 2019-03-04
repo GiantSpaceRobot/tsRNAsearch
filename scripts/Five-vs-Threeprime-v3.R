@@ -17,7 +17,7 @@ if (length(args)==0) {
 
 #### Input file
 input <- read.table(args[1])
-#input <- read.table("/home/paul/Documents/Pipelines/tsRNAsearch/subset13/Results/Ang_1_ATCACG_L008_R1_001/snomiRNA-alignment/accepted_hits_sorted.depth")
+#input <- read.table("/home/paul/Documents/Pipelines/tsRNAsearch/subset13/Results/Ang_1_ATCACG_L008_R1_001/tRNA-alignment/accepted_hits_sorted.depth")
 
 df <- split( input , f = input$V1 )  # Split dataframe based on column 1 elements
 
@@ -84,7 +84,7 @@ for(subset in df) {
 results.df <- results.df[order(-results.df$mean.x.ratio),]
 newdata <- results.df[complete.cases(results.df), ]  # Remove NAs
 newdata <- newdata[!grepl("Inf", newdata$mean.x.ratio),] # Remove Inf
-newdata <- newdata[newdata$`5vs3.ratio.percent` > 135, ] # Get high 5' / 3' ratios
+newdata <- newdata[newdata$`5vs3.ratio.percent` > 200, ] # Get high 5' / 3' ratios
 
 
 write.table(results.df, 
