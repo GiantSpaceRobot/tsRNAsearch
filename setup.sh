@@ -27,6 +27,13 @@ while getopts ":hp:" o; do
 done
 
 # Setup for tsRNAsearch
+echo "
+
+tsRNAsearch setup.
+
+This will take 20-30 mins (downloading and indexing the human genome is slow)...
+
+"
 
 ### Download human genome and GTF file
 echo "Downloading human genome and GTF files..."
