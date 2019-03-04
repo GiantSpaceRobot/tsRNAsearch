@@ -5,18 +5,17 @@
 # Email: pauldonovan@rcsi.com
 # 19-Oct-2018
 
-asciiArt() { echo "
+asciiArt() { echo '
 
-                    88888888ba   888b      88         db                                                                    88           
-  ,d                88      *8b  8888b     88        d88b                                                                   88           
-  88                88      ,8P  88 *8b    88       d8**8b                                                                  88           
-MM88MMM  ,adPPYba,  88aaaaaa8P*  88  *8b   88      d8*  *8b      ,adPPYba,   ,adPPYba,  ,adPPYYba,  8b,dPPYba,   ,adPPYba,  88,dPPYba,   
-  88     I8[    **  88****88*    88   *8b  88     d8YaaaaY8b     I8[    **  a8P_____88  **     *Y8  88P*   *Y8  a8*     **  88P*    *8a  
-  88      **Y8ba,   88    *8b    88    *8b 88    d8********8b     **Y8ba,   8PP*******  ,adPPPPP88  88          8b          88       88  
-  88,    aa    ]8I  88     *8b   88     *8888   d8*        *8b   aa    ]8I  *8b,   ,aa  88,    ,88  88          *8a,   ,aa  88       88  
-  *Y888  **YbbdP**  88      *8b  88      *888  d8*          *8b  **YbbdP**   **Ybbd8**  **8bbdP*Y8  88           **Ybbd8**  88       88                                                                                                                                          
+ _       ______ _   _   ___                          _     
+| |      | ___ \ \ | | / _ \                        | |    
+| |_ ___ | |_/ /  \| |/ /_\ \___  ___  __ _ _ __ ___| |__  
+| __/ __||    /| . ` ||  _  / __|/ _ \/ _` | `__/ __| `_ \ 
+| |_\__ \| |\ \| |\  || | | \__ \  __/ (_| | | | (__| | | |
+ \__|___/\_| \_\_| \_/\_| |_/___/\___|\__,_|_|  \___|_| |_|
+                                                          
 
-	" 1>&1; }
+	' 1>&1; }
 usage() { echo "Usage (single-end): $0 -o OutputDirectory/ -s /path/to/SeqFile.fastq.gz
 " 1>&2; }
 info() { echo "
