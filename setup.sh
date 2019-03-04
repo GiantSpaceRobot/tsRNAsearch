@@ -31,7 +31,7 @@ echo "
 
 tsRNAsearch setup.
 
-This will take 20-30 mins (downloading and indexing the human genome is slow)...
+This will take approx. 1 hour (downloading and indexing the human genome is slow)...
 
 "
 
