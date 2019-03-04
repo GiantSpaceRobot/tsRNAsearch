@@ -15,13 +15,13 @@ if (length(args)==0) {
 
 if (length(args)==4) {
   GTF <- read.table(args[4], sep = "\t")
-  #GTF <- read.table("/home/paul/Documents/Pipelines/tirna-pipeline/DBs/hg19-snomiRNA.gtf", sep = "\t")
+  #GTF <- read.table("/home/paul/Documents/Pipelines/tsRNAsearch/DBs/hg19-snomiRNA_cdhit.gtf", sep = "\t")
 } 
 
 ### Change this if you want only to plot features with a higher mean coverage
 ### (e.g. mean coverage of 100 reads is 'mean.cutoff <- 100')
 mean.cutoff <- as.integer(args[3])  
-#mean.cutoff <- 0
+#mean.cutoff <- 20
 
 ### Input file
 fileData <- read.table(args[1], 
