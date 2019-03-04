@@ -135,7 +135,7 @@ mv $outDir/Results/Data/Intermediate-files/FCount.all-features $outDir/Results/D
 myPath=$(pwd) #Get working dir to recreate full path for R script execution
 if [ ! "$expFile" ]; then
     echo "No experiment layout plan provided. This will now be created prior to the formal DESeq2 analysis."
-    Rscript --vanilla scripts/DESeq2_tiRNA-pipeline.R "$myPath/$outDir/Results/Data/Intermediate-files/"
+    Rscript --vanilla scripts/DESeq2_tiRNA-pipeline-v2.R "$myPath/$outDir/Results/Data/Intermediate-files/"
     condition1=$( awk -F ',' 'NR == 1 {print $2}' $myPath/$outDir/Results/Data/Intermediate-files/predicted_exp_layout.csv ) # Get element in first row second column (condition)
     grep $condition1 $myPath/$outDir/Results/Data/Intermediate-files/predicted_exp_layout.csv > $myPath/$outDir/Results/Data/Intermediate-files/predicted_exp_layout_cond1.csv
     condition2=$( grep -v $condition1 $myPath/$outDir/Results/Data/Intermediate-files/predicted_exp_layout.csv | awk -F ',' 'NR == 1 {print $2}') # Get the second condition using the inverse of the first one
@@ -143,7 +143,7 @@ if [ ! "$expFile" ]; then
 	expFile="$myPath/$outDir/Results/Data/Intermediate-files/predicted_exp_layout.csv"
 else
     echo "An experiment layout plan was provided. Carrying out DESeq2 analysis now."
-    Rscript --vanilla scripts/DESeq2_tiRNA-pipeline.R "$expFile" "$myPath/$outDir/Results/Data/Intermediate-files/"
+    Rscript --vanilla scripts/DESeq2_tiRNA-pipeline-v2.R "$expFile" "$myPath/$outDir/Results/Data/Intermediate-files/"
     condition1=$( awk -F ',' 'NR == 1 {print $2}' "$expFile" ) # Get element in first row second column (condition)
     grep $condition1 "$expFile" > $myPath/$outDir/Results/Data/Intermediate-files/predicted_exp_layout_cond1.csv
     condition2=$( grep -v $condition1 "$expFile" | awk -F ',' 'NR == 1 {print $2}') # Get the second condition using the inverse of the first one
