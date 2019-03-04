@@ -150,7 +150,7 @@ function bam_to_plots () {  ### Steps for plotting regions with high variation i
 		cp $1/$2_$3_Coverage-plots.pdf $outDir/Data_and_Plots/$2_$3_Coverage-plots.pdf
 	fi
 	### Create plot and txt file describing relationship between 5' and 3' regions of feature
-	Rscript scripts/Five-vs-Threeprime.R $1/accepted_hits_sorted.depth $1/$2_$3_Results &
+	Rscript scripts/Five-vs-Threeprime-v3.R $1/accepted_hits_sorted.depth $1/$2_$3_Results &
 	### Output the mean, standard deviation and coefficient of variance of each ncRNA/gene
 	python scripts/Bedgraph-analyser.py $1/accepted_hits_sorted.depth $1/accepted_hits_sorted.tsv
 	### Gather all ncRNAs/genes with at least a mean coverage of 10
