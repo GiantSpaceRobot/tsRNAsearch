@@ -5,7 +5,7 @@
 
 asciiArt() { echo '
   
- _       ______ _   _   ___                          _     
+ _        _____ _   _   ___                          _     
 | |      | ___ \ \ | | / _ \                        | |    
 | |_ ___ | |_/ /  \| |/ /_\ \___  ___  __ _ _ __ ___| |__  
 | __/ __||    /| . ` ||  _  / __|/ _ \/ _` | `__/ __| `_ \ 
@@ -15,12 +15,13 @@ asciiArt() { echo '
    
    ' 1>&1; }
 usage() { echo "
-	Usage: $0 -d Path/To/Input/Files -o OutputDirectory/ -e ExperimentLayout.csv -t CPU-number
+	Usage: $0 -g human/mouse -d Path/To/Input/Files -o OutputDirectory/ -e ExperimentLayout.csv -t CPU-number
 	" 1>&2; }
 info() { echo "
 Options
 
 	-h	Print the usage and options information
+	-g	Analyse datasets against 'human' or 'mouse'? {default: human}
 	-d	Directory containing the files for analysis. Directory should have no other contents.
 	-o	Output directory for the results and log files
 	-e	Optional (but recommended) CSV file containing file names and file groups (see examples in ./additional-files/)
@@ -29,13 +30,16 @@ Options
 
 	" 1>&2; }
 
-while getopts ":hA:t:d:e:o:" o; do
+while getopts ":hg:A:t:d:e:o:" o; do
     case "${o}" in
 		h)
 			asciiArt
 			usage
 			info
 			exit
+			;;
+		g)
+			genome="$OPTARG"
 			;;
 		d)
 			inDir="$OPTARG"
@@ -61,6 +65,7 @@ while getopts ":hA:t:d:e:o:" o; do
     esac
 done
 
+
 ### If no command line arguments provided, quit
 if [ -z "$*" ] ; then
     echo "No command line parameters provided!"
@@ -71,10 +76,10 @@ if [ -z "$*" ] ; then
 fi
 
 ### If the pathname specified by $inDir does not begin with a slash, quit (we need full path name)
-if [[ ! $inDir = /* ]]; then
-	echo "Error: File paths must absolute. Please specify the full path for the input directory."
-	exit 1
-fi
+#if [[ ! $inDir = /* ]]; then
+#	echo "Error: File paths must absolute. Please specify the full path for the input directory."
+#	exit 1
+#fi
 
 ### If the pathname specified by $outDir does not begin with a slash, quit (we need full path name)
 #if [[ ! $outDir = /* ]]; then
@@ -83,17 +88,29 @@ fi
 #fi
 
 ### If the pathname specified by $expFile does not begin with a slash, quit (we need full path name)
-if [ "$expFile" ]; then
-    if [[ ! $expFile = /* ]]; then
-        echo "Error: File paths must absolute. Please specify the full path for the experiment layout file."
-        exit 1
-    fi
-fi
+#if [ "$expFile" ]; then
+#    if [[ ! $expFile = /* ]]; then
+#        echo "Error: File paths must absolute. Please specify the full path for the experiment layout file."
+#        exit 1
+#    fi
+#fi
 
 
 ##### Start of pipeline #####
 echo "Started project analysis on $(date)"
 StartTime="Pipeline initiated at $(date)"
+
+### Are we analysing Human or Mouse? -g parameter
+if [ "$genome" ]; then
+	if [[ $genome == "human" ]]; then
+		snomiRNAGTF="DBs/hg19-snomiRNA_cdhit.gtf"
+	elif [[ $genome == "mouse" ]]; then
+		snomiRNAGTF="DBs/mouse_snomiRNAs_relative_cdhit.gtf"
+	fi
+else
+	snomiRNAGTF="DBs/hg19-snomiRNA_cdhit.gtf"
+	genome="human"
+fi
 
 ### If -A parameter was not provided, default is to only plot differentially expressed features
 if [ ! "$Plots" ]; then
@@ -112,7 +129,7 @@ for f in $inDir/*; do
 	#if [ "$tophat" ]; then # Use tophat2
 	#	./tiRNA-pipeline.sh -s "$f" -o "$outDir/Results/$filename" -p "$CPUs" -T -A "$Plots" #>> "$outDir"/"$filename"_tiRNApipeline.log
 	#else # Use HISAT2
-	./tsRNAsearch.sh -s "$f" -o "$outDir/Results/$filename" -p "$CPUs" -A "$Plots" #>> "$outDir"/"$filename"_tiRNApipeline.log
+	./tsRNAsearch.sh -g "$genome" -s "$f" -o "$outDir/Results/$filename" -p "$CPUs" -A "$Plots" #>> "$outDir"/"$filename"_tiRNApipeline.log
 	#fi
 	wait
 	cp $outDir/Results/$filename/Data_and_Plots/*pdf $outDir/Results/Plots/
@@ -258,8 +275,8 @@ wait
 
 ### Get names of differentially expressed features
 cat $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/*regulated.csv | grep -v ^,base | awk -F ',' '{print $1}' > $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt
-grep ENSG $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt > $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_ENSGs.txt
-grep -v ENSG $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt | awk -F '-' '{print $2}' | sort | uniq > $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_tRNAs.txt 
+grep ENS $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt > $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_ENSGs.txt
+grep -v ENS $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt | awk -F '-' '{print $2}' | sort | uniq > $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_tRNAs.txt 
 cat $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_ENSGs.txt $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_tRNAs.txt > $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_short-names.txt
 ### Get names of features with highest distribution scores 
 cat $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/*different-distributions.sorted.txt | grep -v ^feat | awk '{print $1}' > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/High-distribution-scores_feature-names.txt 
@@ -279,9 +296,9 @@ if [[ $(wc -l < $myPath/$outDir/Results/Data/${condition1}_vs_${condition2}.all.
 	Rscript scripts/Bedgraph_plotter_DEGs-v4.R $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.tiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.tiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/High-distribution-scores_feature-names.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_High-distribution-tiRNAs.pdf 0 &
 	Rscript scripts/Bedgraph_plotter_DEGs-v4.R $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.tiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.tiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_Potentially-cleaved-tiRNAs.pdf 0 &
 	# snomiRNAs
-	Rscript scripts/Bedgraph_plotter_DEGs-v4.R $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_Differentially-expressed-snomiRNAs.pdf 0 DBs/hg19-snomiRNA_cdhit.gtf &
-	Rscript scripts/Bedgraph_plotter_DEGs-v4.R $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/High-distribution-scores_feature-names.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_High-distribution-snomiRNAs.pdf 0 DBs/hg19-snomiRNA_cdhit.gtf &
-	Rscript scripts/Bedgraph_plotter_DEGs-v4.R $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_Potentially-cleaved-snomiRNAs.pdf 0 DBs/hg19-snomiRNA_cdhit.gtf &
+	Rscript scripts/Bedgraph_plotter_DEGs-v4.R $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_Differentially-expressed-snomiRNAs.pdf 0 $snomiRNAGTF &
+	Rscript scripts/Bedgraph_plotter_DEGs-v4.R $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/High-distribution-scores_feature-names.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_High-distribution-snomiRNAs.pdf 0 $snomiRNAGTF &
+	Rscript scripts/Bedgraph_plotter_DEGs-v4.R $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_Potentially-cleaved-snomiRNAs.pdf 0 $snomiRNAGTF &
 	# Venn diagram
 	Rscript scripts/VennDiagram.R $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_short-names.txt $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/High-distribution-scores_feature-names.txt $myPath/$outDir/Results/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}
 	mv $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}.intersect*txt $myPath/$outDir/Results/Data/
