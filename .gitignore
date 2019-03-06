@@ -1,6 +1,8 @@
 Results/
 DBs/Homo*
+DBs/Mus*
 DBs/hisat2_index/Homo*
+DBs/hisat2_index/Mus*
 predicted*
 samtool*
 to-do.txt

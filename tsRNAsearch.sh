@@ -7,7 +7,7 @@
 
 asciiArt() { echo '
 
- _       ______ _   _   ___                          _     
+ _        _____ _   _   ___                          _     
 | |      | ___ \ \ | | / _ \                        | |    
 | |_ ___ | |_/ /  \| |/ /_\ \___  ___  __ _ _ __ ___| |__  
 | __/ __||    /| . ` ||  _  / __|/ _ \/ _` | `__/ __| `_ \ 
@@ -22,6 +22,7 @@ info() { echo "
 Options:
 
 	-h	Print the usage and options information
+	-g	Analyse data against 'human' or 'mouse'? {default: human}
 	-s	Single-end file for analysis
 	-o	Output directory for the results and log files
 	-A	Plot all features? yes/no {default: yes}
@@ -39,13 +40,16 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts ":hp:s:o:A:" o; do
+while getopts ":hg:p:s:o:A:" o; do
     case "${o}" in
 		h)
 			asciiArt
 			usage
 			info
 			exit
+			;;
+		g)
+			genome="$OPTARG"
 			;;
 		s)
 			singleFile="$OPTARG"
@@ -74,31 +78,57 @@ done
 #    echo "Error: File paths must absolute. Please specify the full path for the output directory."
 #    exit 1
 #fi
+
 ### If the pathname specified by $expFile does not begin with a slash, quit (we need full path name)
-if [ "$singleFile" ]; then
-    if [[ ! $singleFile = /* ]]; then
-        echo "Error: File paths must absolute. Please specify the full path for the FASTQ input file."
-        exit 1
-    fi
-fi
-### If the pathname specified by $expFile does not begin with a slash, quit (we need full path name)
-if [ "$file1" ]; then
-    if [[ ! $file1 = /* ]]; then
-        echo "Error: File paths must absolute. Please specify the full path for the FASTQ input files."
-        exit 1
-    fi
-fi
-### If the pathname specified by $expFile does not begin with a slash, quit (we need full path name)
-if [ "$file2" ]; then
-    if [[ ! $file2 = /* ]]; then
-        echo "Error: File paths must absolute. Please specify the full path for the FASTQ input files."
-        exit 1
-    fi
-fi
+#if [ "$singleFile" ]; then
+#    if [[ ! $singleFile = /* ]]; then
+#        echo "Error: File paths must absolute. Please specify the full path for the FASTQ input file."
+#        exit 1
+#    fi
+#fi
 #########
 
 echo "Started analysing "$singleFile" on $(date)" # Print pipeline start-time
 
+### Are we analysing Human or Mouse? -g parameter
+if [ "$genome" ]; then
+    if [[ $genome == "human" ]]; then
+        #echo "Error: File paths must absolute. Please specify the full path for the FASTQ input file."
+		genomeDB="DBs/hisat2_index/Homo_sapiens.GRCh37.dna.primary_assembly"
+		ncRNADB="DBs/hisat2_index/hg19-combined_tiRNAs_snomiRNAs"
+		genomeGTF="DBs/Homo_sapiens.GRCh37.87.gtf"
+		tRNAGTF="DBs/hg19-wholetRNA-CCA_cdhit.gtf"
+		snomiRNAGTF="DBs/hg19-snomiRNA_cdhit.gtf"
+		tRNA_introns="additional-files/tRNA-introns-for-removal_hg19.tsv"
+		empty_tRNAs="additional-files/hg19_empty_tRNA.count"
+		empty_snomiRNAs="additional-files/hg19_empty_snomiRNA.count"
+		empty_mRNAs="additional-files/hg19_empty_mRNA-ncRNA.count"
+	elif [[ $genome == "mouse" ]]; then
+		#echo "something"
+		genomeDB="DBs/hisat2_index/Mus_musculus.GRCm38.dna.primary_assembly"
+		ncRNADB="DBs/hisat2_index/GRCm38-combined_tiRNAs_snomiRNAs"
+		genomeGTF="DBs/Mus_musculus.GRCm38.95.gtf"
+		tRNAGTF="DBs/mm10-tRNAs_renamed_cdhit.gtf"
+		snomiRNAGTF="DBs/mouse_snomiRNAs_relative_cdhit.gtf"
+		tRNA_introns="additional-files/tRNA-introns-for-removal_mm10.tsv"
+		empty_tRNAs="additional-files/mm10_empty_tRNA.count"
+		empty_snomiRNAs="additional-files/mm10_empty_snomiRNA.count"
+		empty_mRNAs="additional-files/mm10_empty_mRNA-ncRNA.count"
+	fi
+else # If genome was not specified, default to use human genome/files
+	genome="human"
+	genomeDB="DBs/hisat2_index/Homo_sapiens.GRCh37.dna.primary_assembly"
+	ncRNADB="DBs/hisat2_index/hg19-combined_tiRNAs_snomiRNAs"
+	genomeGTF="DBs/Homo_sapiens.GRCh37.87.gtf"
+	tRNAGTF="DBs/hg19-wholetRNA-CCA_cdhit.gtf"
+	snomiRNAGTF="DBs/hg19-snomiRNA_cdhit.gtf"
+	tRNA_introns="additional-files/tRNA-introns-for-removal_hg19.tsv"
+	empty_tRNAs="additional-files/hg19_empty_tRNA.count"
+	empty_snomiRNAs="additional-files/hg19_empty_snomiRNA.count"
+	empty_mRNAs="additional-files/hg19_empty_mRNA-ncRNA.count"
+fi
+
+### Define functions
 # Function to pad text with characters to make sentences stand out more
 function string_padder () {
 	string=$1
@@ -124,9 +154,9 @@ function bam_to_plots () {  ### Steps for plotting regions with high variation i
 	### If we are working with tRNAs, collapse all tRNAs based on same isoacceptor
 	if [[ $3 = "tiRNA" ]]; then
 		### Remove introns from tRNA counts (as these will interfere with the read counts of collapsed tRNAs)
-		Rscript scripts/Remove-introns.R $1/accepted_hits.depth additional-files/tRNA-introns-for-removal_hg19.tsv $1/accepted_hits_intron-removed.depth 
+		Rscript scripts/Remove-introns.R $1/accepted_hits.depth $tRNA_introns $1/accepted_hits_intron-removed.depth 
 		### Flip the read coverage of tRNAs that are in the minus orientation
-		Rscript scripts/Coverage-flipper.R $1/accepted_hits_intron-removed.depth DBs/hg19-wholetRNA-CCA_cdhit.gtf $1/accepted_hits_flipped.depth	
+		Rscript scripts/Coverage-flipper.R $1/accepted_hits_intron-removed.depth $tRNAGTF $1/accepted_hits_flipped.depth	
 		### Collapse tRNAs from the same tRNA species
 		python scripts/Bedgraph_collapse-tRNAs.py $1/accepted_hits_flipped.depth $1/accepted_hits_collapsed.depth
 		### Rename input depth file
@@ -140,11 +170,11 @@ function bam_to_plots () {  ### Steps for plotting regions with high variation i
 	if [[ $Plots == "yes" ]]; then # Plot everything
 		### Plot the coverage of all features (arg 3 is mean coverage in RPM)
 		if [[ $3 = "snomiRNA" ]]; then
-			Rscript scripts/Bedgraph_plotter-v5.R $1/accepted_hits_sorted.depth $1/$2_$3_Coverage-plots.pdf 1 DBs/hg19-snomiRNA_cdhit.gtf
+			Rscript scripts/Bedgraph_plotter-v5.R $1/accepted_hits_sorted.depth $1/$2_$3_Coverage-plots.pdf 1 $snomiRNAGTF
 		elif [[ $3 == "tiRNA" ]]; then
 			Rscript scripts/Bedgraph_plotter-v5.R $1/accepted_hits_sorted.depth $1/$2_$3_Coverage-plots.pdf 0
 		else
-			Rscript scripts/Bedgraph_plotter-v5.R $1/accepted_hits_sorted.depth $1/$2_$3_Coverage-plots.pdf 1000 DBs/Homo_sapiens.GRCh37.87.gtf
+			Rscript scripts/Bedgraph_plotter-v5.R $1/accepted_hits_sorted.depth $1/$2_$3_Coverage-plots.pdf 1000 $genomeGTF
 		fi
 		cp $1/$2_$3_Coverage-plots.pdf $outDir/Data_and_Plots/$2_$3_Coverage-plots.pdf
 	fi
@@ -184,10 +214,11 @@ fi
 
 # The documentation for featureCounts says to use 4 threads max.
 # This if statement ensures this.
-if (( $CPUs > 4 )); then 
-	featureCountCPUs=4
+## On revisiting this, I cannot find any such documentation. To be cautious, I'll go for a max of 8 threads
+if (( $CPUs > 8 )); then 
+	featureCountCPUs=8
 else
-	featureCountCPUs=1
+	featureCountCPUs=$CPUs
 fi
 
 # Determine if paired-end or single-end files were provided as input
@@ -288,13 +319,13 @@ if [ ! -f $outDir/checkpoints/checkpoint-4.flag ]; then
 		
 		if [ ! -f $outDir/tRNA-alignment/align_summary.txt ]; then
 			string_padder "Running tRNA/snomiRNA alignment step..."
-			hisat2 -p $CPUs -x DBs/hisat2_index/hg19-combined_tiRNAs_snomiRNAs -U $outDir/trim_galore_output/$trimmedFile -S $outDir/tRNA-alignment/aligned_tRNAdb.sam --summary-file $outDir/tRNA-alignment/align_summary.txt --un $outDir/tRNA-alignment/unmapped.fastq
-			grep "reads" $outDir/tRNA-alignment/align_summary.txt > $outDir/Stats.log	
+			hisat2 -p $CPUs -x $ncRNADB -U $outDir/trim_galore_output/$trimmedFile -S $outDir/tRNA-alignment/aligned_tRNAdb.sam --summary-file $outDir/tRNA-alignment/align_summary.txt --un $outDir/tRNA-alignment/unmapped.fastq
+			grep "reads" $outDir/tRNA-alignment/align_summary.txt > $outDir/Stats.log
 			if [ -f $outDir/tRNA-alignment/aligned_tRNAdb.sam ]; then  #If hisat2 successfully mapped reads, convert to bam and index
 				### Split the resulting SAM file into reads aligned to tRNAs and snomiRNAs
 				grep ^@ $outDir/tRNA-alignment/aligned_tRNAdb.sam > $outDir/tRNA-alignment/SamHeader.sam &
-				grep ENSG $outDir/tRNA-alignment/aligned_tRNAdb.sam > $outDir/tRNA-alignment/snomiRNAs.sam &
-				grep -v ENSG $outDir/tRNA-alignment/aligned_tRNAdb.sam > $outDir/tRNA-alignment/tiRNAs_aligned.sam &
+				grep ENS $outDir/tRNA-alignment/aligned_tRNAdb.sam > $outDir/tRNA-alignment/snomiRNAs.sam &
+				grep -v ENS $outDir/tRNA-alignment/aligned_tRNAdb.sam > $outDir/tRNA-alignment/tiRNAs_aligned.sam &
 				wait
 				cat $outDir/tRNA-alignment/SamHeader.sam $outDir/tRNA-alignment/snomiRNAs.sam > $outDir/tRNA-alignment/snomiRNAs_aligned.sam
 				wait
@@ -320,7 +351,7 @@ if [ ! -f $outDir/checkpoints/checkpoint-4.flag ]; then
 
 		if [ ! -f $outDir/mRNA-ncRNA-alignment/align_summary.txt ]; then # If this file was not generated, try and align the unmapped reads from the tRNA alignment	
 			string_padder "Running mRNA/ncRNA alignment step..."
-			hisat2 -p $CPUs -x DBs/hisat2_index/Homo_sapiens.GRCh37.dna.primary_assembly $outDir/tRNA-alignment/$trimmedFile -S $outDir/mRNA-ncRNA-alignment/aligned.sam --summary-file $outDir/mRNA-ncRNA-alignment/align_summary.txt --un $outDir/mRNA-ncRNA-alignment/unmapped.fastq
+			hisat2 -p $CPUs -x $genomeDB $outDir/tRNA-alignment/$trimmedFile -S $outDir/mRNA-ncRNA-alignment/aligned.sam --summary-file $outDir/mRNA-ncRNA-alignment/align_summary.txt --un $outDir/mRNA-ncRNA-alignment/unmapped.fastq
 			if [ -f $outDir/mRNA-ncRNA-alignment/aligned.sam ]; then  #If hisat2 successfully mapped reads, convert the unmapped to FASTQ
 				samtools view -bS $outDir/mRNA-ncRNA-alignment/aligned.sam > $outDir/mRNA-ncRNA-alignment/accepted_hits_unsorted.bam
 				rm $outDir/mRNA-ncRNA-alignment/aligned.sam &
@@ -351,12 +382,12 @@ if [ ! -f $outDir/checkpoints/checkpoint-5.flag ]; then
 		echo "
 	No alignment file found for mRNA/ncRNA alignment. Using blank count file instead
 	"
-		cp additional-files/empty_mRNA-ncRNA.count $outDir/FCount-count-output/mRNA-ncRNA-alignment.count &
+		cp $empty_mRNAs $outDir/FCount-count-output/mRNA-ncRNA-alignment.count &
 	else
 		echo "
 	Counting mRNA/ncRNA alignment reads
 	"
-		featureCounts -T $featureCountCPUs -a DBs/Homo_sapiens.GRCh37.87.gtf -o $outDir/FCount-count-output/mRNA-ncRNA-alignment.fcount $outDir/mRNA-ncRNA-alignment/accepted_hits.bam
+		featureCounts -T $featureCountCPUs -a $genomeGTF -o $outDir/FCount-count-output/mRNA-ncRNA-alignment.fcount $outDir/mRNA-ncRNA-alignment/accepted_hits.bam
 		grep -v featureCounts $outDir/FCount-count-output/mRNA-ncRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/FCount-count-output/mRNA-ncRNA-alignment.count
 	fi
 	
@@ -365,12 +396,12 @@ if [ ! -f $outDir/checkpoints/checkpoint-5.flag ]; then
 		echo "
 	No alignment file found for sno/miRNA alignment. Using blank count file instead
 	"
-		cp additional-files/empty_snomiRNA.count $outDir/FCount-count-output/snomiRNA-alignment.count &
+		cp $empty_snomiRNAs $outDir/FCount-count-output/snomiRNA-alignment.count &
 	else
 		echo "
 	Counting sno/miRNA alignment reads
 	"
-		featureCounts -T $featureCountCPUs -a DBs/hg19-snomiRNA_cdhit.gtf -o $outDir/FCount-count-output/snomiRNA-alignment.fcount $outDir/snomiRNA-alignment/accepted_hits.bam
+		featureCounts -T $featureCountCPUs -a $snomiRNAGTF -o $outDir/FCount-count-output/snomiRNA-alignment.fcount $outDir/snomiRNA-alignment/accepted_hits.bam
 		grep -v featureCounts $outDir/FCount-count-output/snomiRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/FCount-count-output/snomiRNA-alignment.count
 	fi
 	
@@ -379,12 +410,12 @@ if [ ! -f $outDir/checkpoints/checkpoint-5.flag ]; then
 		echo "
 	No alignment file found for tRNA alignment. Using blank count file instead
 	"
-		cp additional-files/empty_tRNA.count $outDir/FCount-count-output/tRNA-alignment.count &
+		cp $empty_tRNAs $outDir/FCount-count-output/tRNA-alignment.count &
 	else
 		echo "
 	Counting tRNA alignment reads
 	"
-		featureCounts -T $featureCountCPUs -a DBs/hg19-wholetRNA-CCA_cdhit.gtf -o $outDir/FCount-count-output/tRNA-alignment.fcount $outDir/tRNA-alignment/accepted_hits.bam
+		featureCounts -T $featureCountCPUs -a $tRNAGTF -o $outDir/FCount-count-output/tRNA-alignment.fcount $outDir/tRNA-alignment/accepted_hits.bam
 		grep -v featureCounts $outDir/FCount-count-output/tRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/FCount-count-output/tRNA-alignment.count	
 	fi
 
