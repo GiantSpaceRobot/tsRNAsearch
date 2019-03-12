@@ -50,8 +50,8 @@ for(subset in df) {
     five.distribution <- fiveprime$V3
     threeprime <- subset[(half.length+1):subset.length,]
     three.distribution <- threeprime$V3
-    fiveprime.avg <- mean(threeprime$V3)
-    threeprime.avg <- mean(fiveprime$V3)
+    fiveprime.avg <- mean(fiveprime$V3)
+    threeprime.avg <- mean(threeprime$V3)
     if(fiveprime.avg=="NaN"){
       fiveprime.avg <- 0
     } 
