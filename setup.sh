@@ -70,6 +70,14 @@ function mouse_genome () {
 	hisat2-build -p $CPUs Mus_musculus.GRCm38.dna.primary_assembly.fa DBs/hisat2_index/Mus_musculus.GRCm38.dna.primary_assembly
 }
 
+# HISAT2
+echo "Looking for hisat2..."
+if ! [ -x "$(command -v hisat2)" ]; then
+	sudo apt install hisat2 #2.1.0
+else
+	echo "hisat2 already installed"
+fi
+
 ### Download genomes
 if [ $genome = "human" ]; then
 	### Download human genome and GTF file
@@ -123,7 +131,7 @@ else
 	echo "Rscript already installed"
 fi
 
-### Install necessary R libraries
+# Install necessary R libraries
 echo "Installing R libraries..."
 sudo Rscript scripts/InstallLibs.R
 
@@ -154,13 +162,7 @@ else
 	echo "Trim_Galore aleady installed"
 fi
 
-echo "Looking for hisat2..."
-if ! [ -x "$(command -v hisat2)" ]; then
-	sudo apt install hisat2 #2.1.0
-else
-	echo "hisat2 already installed"
-fi
-
+# FeatureCounts
 echo "Looking for featureCounts..."
 if ! [ -x "$(command -v featureCounts)" ]; then
 	if [ ! -f scripts/featureCounts ]; then
