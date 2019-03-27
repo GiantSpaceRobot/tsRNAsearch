@@ -3,17 +3,32 @@
 usage() { echo "Usage: $0 -p CPUs
 " 1>&2; }
 
-if [ $# -eq 0 ]; then
-    echo "No arguments provided. Defaulting to use 1 CPU. 
-	      Please provide parameter '-p #threads' if you wish to use more than 1."
-    CPUs=1
-fi
+#if [ $# -eq 0 ]; then
+#    echo "No arguments provided. Defaulting to use 1 CPU. 
+#	      Please provide parameter '-p #threads' if you wish to use more than 1."
+#    CPUs=1
+#fi
+CPUs=1 # Default CPU number unless overwritten by parameters provided
 
-while getopts ":hp:" o; do
+while getopts ":hg:p:" o; do
     case "${o}" in
 		h)
 			usage
 			exit
+			;;
+		g)
+			g_option="$OPTARG"
+			if [ $g_option = "human" ]; then
+				genome="human"
+			elif [ $g_option = "mouse" ]; then
+				genome="mouse"
+			elif [ $g_option = "both" ]; then
+				genome="both"
+			else
+				usage
+				echo "Error: the acceptable arguments for the -g parameter are 'human', 'mouse', 'both'"
+				exit
+			fi
 			;;
 		p)
 			CPUs="$OPTARG"
@@ -26,19 +41,71 @@ while getopts ":hp:" o; do
     esac
 done
 
+### Define functions
+function human_genome () {
+	### Download human genome
+	wget -q http://ftp.ensembl.org/pub/grch37/release-87/gtf/homo_sapiens/Homo_sapiens.GRCh37.87.gtf.gz ./ &
+	wget -q http://ftp.ensembl.org/pub/grch37/release-87/fasta/homo_sapiens/dna/Homo_sapiens.GRCh37.dna.primary_assembly.fa.gz ./ &
+	wait
+	echo "Gunzipping human genome files..."
+	gunzip Homo_sapiens.GRCh37.87.gtf.gz &  # Gunzip GTF file
+	gunzip Homo_sapiens.GRCh37.dna.primary_assembly.fa.gz &
+	wait
+	mv Homo_sapiens.GRCh37.87.gtf DBs/
+	echo "Building human genome index..."
+	hisat2-build -p $CPUs Homo_sapiens.GRCh37.dna.primary_assembly.fa DBs/hisat2_index/Homo_sapiens.GRCh37.dna.primary_assembly
+}
+
+function mouse_genome () {
+	### Download mouse genome
+	wget -q ftp://ftp.ensembl.org/pub/release-95/fasta/mus_musculus/dna/Mus_musculus.GRCm38.dna.primary_assembly.fasta.gz ./ &
+	wget -q ftp://ftp.ensembl.org/pub/release-95/gtf/mus_musculus/Mus_musculus.GRCm38.95.gtf.gz ./ &
+	wait
+	echo "Gunzipping mouse genome files..."
+	gunzip Mus_musculus.GRCm38.95.gtf.gz &  # Gunzip GTF file
+	gunzip Mus_musculus.GRCm38.dna.primary_assembly.fa.gz &
+	wait
+	mv Mus_musculus.GRCm38.95.gtf DBs/
+	echo "Building mouse genome index..."
+	hisat2-build -p $CPUs Mus_musculus.GRCm38.dna.primary_assembly.fa DBs/hisat2_index/Mus_musculus.GRCm38.dna.primary_assembly
+}
+
+### Download genomes
+if [ $genome = "human" ]; then
+	### Download human genome and GTF file
+	echo "Downloading human genome and GTF files..."
+	human_genome &
+elif [ $genome = "mouse" ]; then
+	### Download mouse genome and GTF file
+	echo "Downloading mouse genome and GTF files..."
+	mouse_genome &
+elif [ $genome = "both" ]; then
+	### Download human and mouse genomes and GTF files
+	echo "Downloading human and mouse genomes and GTF files..."
+	human_genome &
+	mouse_genome &
+elif [ -z $genome ]; then
+	### The genome variable is unset
+	echo "Please use the -g option with 'human', 'mouse', or 'both' depending on the type of analyses you intend to run"
+	exit 1	
+fi
+
 # Setup for tsRNAsearch
 echo "
 
 tsRNAsearch setup.
 
-This will take approx. 1 hour (downloading and indexing the human genome is slow)...
+This will take approx. 1 hour per genome (downloading and indexing genomes is a slow process)...
 
 "
 
-### Download human genome and GTF file
-echo "Downloading human genome and GTF files..."
-wget -q http://ftp.ensembl.org/pub/grch37/release-87/gtf/homo_sapiens/Homo_sapiens.GRCh37.87.gtf.gz ./ &
-wget -q http://ftp.ensembl.org/pub/grch37/release-87/fasta/homo_sapiens/dna/Homo_sapiens.GRCh37.dna.primary_assembly.fa.gz ./ &
+# curl
+echo "Looking for Curl..."
+if ! [ -x "$(command -v curl)" ]; then
+	sudo apt install curl
+else
+	echo "Curl already installed"
+fi
 
 # python 2.7.15rc1 
 echo "Looking for Python..."
@@ -107,14 +174,6 @@ else
 	echo "featureCounts already installed"
 fi
 
-wait # Wait for genome to download
+wait # Wait for things to finish (genome download and database setup)
 
-### Build genome index
-echo "Gunzipping human genome files..."
-gunzip Homo_sapiens.GRCh37.87.gtf.gz &  # Gunzip GTF file
-gunzip Homo_sapiens.GRCh37.dna.primary_assembly.fa.gz &
-wait
-mv Homo_sapiens.GRCh37.87.gtf DBs/
-echo "Building human genome index..."
-hisat2-build -p $CPUs Homo_sapiens.GRCh37.dna.primary_assembly.fa DBs/hisat2_index/Homo_sapiens.GRCh37.dna.primary_assembly
 echo "Done"
