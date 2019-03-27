@@ -2,6 +2,10 @@ Results/
 DBs/Homo*
 DBs/Mus*
 SRR*
+Control*
+Mouse*
+Hep*
+test*
 DBs/hisat2_index/Homo*
 DBs/hisat2_index/Mus*
 predicted*
