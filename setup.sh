@@ -58,8 +58,8 @@ function human_genome () {
 
 function mouse_genome () {
 	### Download mouse genome
-	wget -q ftp://ftp.ensembl.org/pub/release-95/fasta/mus_musculus/dna/Mus_musculus.GRCm38.dna.primary_assembly.fasta.gz ./ &
-	wget -q ftp://ftp.ensembl.org/pub/release-95/gtf/mus_musculus/Mus_musculus.GRCm38.95.gtf.gz ./ &
+	wget -q http://ftp.ensembl.org/pub/release-95/fasta/mus_musculus/dna/Mus_musculus.GRCm38.dna.primary_assembly.fa.gz ./ &
+	wget -q http://ftp.ensembl.org/pub/release-95/gtf/mus_musculus/Mus_musculus.GRCm38.95.gtf.gz ./ &
 	wait
 	echo "Gunzipping mouse genome files..."
 	gunzip Mus_musculus.GRCm38.95.gtf.gz &  # Gunzip GTF file
