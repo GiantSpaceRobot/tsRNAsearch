@@ -25,7 +25,7 @@ Options
 	-d	Directory containing the files for analysis. Directory should have no other contents.
 	-o	Output directory for the results and log files
 	-e	Optional (but recommended) CSV file containing file names and file groups (see examples in ./additional-files/)
-	-t	Number of threads/CPUs to use {default is to calculate the number of processors and use 75%}
+	-t	Number of threads to use {default is to calculate the number of processors and use 75%}
 	-A	Plot all features? yes/no {default: no (only plot differentially expressed features)}
 
 	" 1>&2; }
@@ -51,7 +51,7 @@ while getopts ":hg:A:t:d:e:o:" o; do
 			outDir="$OPTARG"
 			;;
 		t)
-			CPUs="$OPTARG"
+			threads="$OPTARG"
 			;;
 		A)
 			Plots="$OPTARG"
@@ -127,9 +127,9 @@ for f in $inDir/*; do
 	file_base=$(basename $f)
 	filename="$( cut -d '.' -f 1 <<< "$file_base" )" 
 	#if [ "$tophat" ]; then # Use tophat2
-	#	./tiRNA-pipeline.sh -s "$f" -o "$outDir/Results/$filename" -p "$CPUs" -T -A "$Plots" #>> "$outDir"/"$filename"_tiRNApipeline.log
+	#	./tiRNA-pipeline.sh -s "$f" -o "$outDir/Results/$filename" -p "$threads" -T -A "$Plots" #>> "$outDir"/"$filename"_tiRNApipeline.log
 	#else # Use HISAT2
-	./tsRNAsearch.sh -g "$genome" -s "$f" -o "$outDir/Results/$filename" -p "$CPUs" -A "$Plots" #>> "$outDir"/"$filename"_tiRNApipeline.log
+	./tsRNAsearch.sh -g "$genome" -s "$f" -o "$outDir/Results/$filename" -p "$threads" -A "$Plots" #>> "$outDir"/"$filename"_tiRNApipeline.log
 	#fi
 	wait
 	#cp $outDir/Results/$filename/Data_and_Plots/*pdf $outDir/Results/Plots/
