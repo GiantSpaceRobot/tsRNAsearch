@@ -132,7 +132,7 @@ for f in $inDir/*; do
 	./tsRNAsearch.sh -g "$genome" -s "$f" -o "$outDir/Results/$filename" -p "$CPUs" -A "$Plots" #>> "$outDir"/"$filename"_tiRNApipeline.log
 	#fi
 	wait
-	cp $outDir/Results/$filename/Data_and_Plots/*pdf $outDir/Results/Plots/
+	#cp $outDir/Results/$filename/Data_and_Plots/*pdf $outDir/Results/Plots/
 	cat $outDir/Results/$filename/FCount-count-output/*.count | grep -v ^__ | sort -k1,1 > $outDir/Results/Data/Intermediate-files/$filename.all-features.count	
 	readsMapped=$(awk '{sum+=$2} END{print sum;}' $outDir/Results/Data/Intermediate-files/$filename.all-features.count)
 	cp $outDir/Results/$filename/Data_and_Plots/$filename.all-features.rpm.count $outDir/Results/Data/	
@@ -284,11 +284,11 @@ cat $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/*differen
 cat $myPath/$outDir/Results/Data/Intermediate-files/*potentially-cleaved-features.txt | grep -v ^feat | awk '{print $1}' > $myPath/$outDir/Results/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt
 
 ### Get unique set of differentially expressed features and features with high distribution scores
-echo -e "#This is a collection of features that are differentially expressed, have large differences in distribution between the conditions, or are likely cleaved. Ordered alphanumerically." > $myPath/$outDir/Results/Data/${condition1}_vs_${condition2}.all.txt
-cat $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_short-names.txt $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/High-distribution-scores_feature-names.txt $myPath/$outDir/Results/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt | sort | uniq >> $myPath/$outDir/Results/Data/${condition1}_vs_${condition2}.all.txt
+echo -e "#This is a collection of features that are differentially expressed, have large differences in distribution between the conditions, or are likely cleaved. Ordered alphanumerically." > $myPath/$outDir/Results/Data/All-Features-Identified.txt
+cat $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_short-names.txt $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/High-distribution-scores_feature-names.txt $myPath/$outDir/Results/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt | sort | uniq >> $myPath/$outDir/Results/Data/All-Features-Identified.txt
 
 ### If there are differentially expressed/high distribution features, plot these:
-if [[ $(wc -l < $myPath/$outDir/Results/Data/${condition1}_vs_${condition2}.all.txt) -ge 2 ]]; then
+if [[ $(wc -l < $myPath/$outDir/Results/Data/All-Features-Identified.txt) -ge 2 ]]; then
 	### Plot DEGs arg1 and 2 are inputs, arg 3 is list of differentially expressed genes, arg 4 is output pdf, 
 	### arg 5 is mean coverage cutoff (plot features with coverage above this), arg 5 is GTF file for snomiRNAs (arg 5 is not given to tiRNA data)
 	# tiRNAs
