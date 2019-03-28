@@ -51,7 +51,9 @@ function human_genome () {
 	gunzip Homo_sapiens.GRCh37.87.gtf.gz &  # Gunzip GTF file
 	gunzip Homo_sapiens.GRCh37.dna.primary_assembly.fa.gz &
 	wait
-	mv Homo_sapiens.GRCh37.87.gtf DBs/
+	python scripts/GTF_DuplicateRemover.py additional-files/Homo-sapiens_All-ncRNAs.txt Homo_sapiens.GRCh37.87.gtf Homo_sapiens.GRCh37.87.NoDuplicates.gtf
+	rm Homo_sapiens.GRCh37.87.gtf &
+	mv Homo_sapiens.GRCh37.87.NoDuplicates.gtf DBs/Homo_sapiens.GRCh37.87.gtf
 	echo "Building human genome index..."
 	hisat2-build -p $CPUs Homo_sapiens.GRCh37.dna.primary_assembly.fa DBs/hisat2_index/Homo_sapiens.GRCh37.dna.primary_assembly
 }
