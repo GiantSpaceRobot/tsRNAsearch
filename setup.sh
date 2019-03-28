@@ -124,7 +124,9 @@ else
 	echo "Python already installed"
 fi
 
-echo "Looking for Rscript..."
+echo "Looking for R and Rscript..."
+### Check for libcurl4-openssl-dev
+sudo apt install libcurl4-openssl-dev libssl-dev libxml2-dev
 if ! [ -x "$(command -v Rscript)" ]; then
 	sudo apt install r-base  #Rscript 3.4.4 
 else
