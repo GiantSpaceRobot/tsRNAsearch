@@ -26,7 +26,7 @@ Options:
 	-s	Single-end file for analysis
 	-o	Output directory for the results and log files
 	-A	Plot all features? yes/no {default: yes}
-	-p	Number of CPUs to use {default is to calculate the number of processors and use 75%}
+	-p	Number of threads to use {default is to calculate the number of processors and use 75%}
 	
 
 	Input file format should be FASTQ (.fq/.fastq) or gzipped FASTQ (.gz)
@@ -58,7 +58,7 @@ while getopts ":hg:p:s:o:A:" o; do
 			outDir="$OPTARG"
 			;;
 		p)
-			CPUs="$OPTARG"
+			threads="$OPTARG"
 			;;
 		A)
 			Plots="$OPTARG"
@@ -199,26 +199,26 @@ if [ ! "$Plots" ]; then
     Plots="yes"
 fi
 
-# Estimate CPUs to use if a number has no been provided
-if [ -z "$CPUs" ]; then 
-	# Determine max number of CPUs available
-	maxCPUs=$(grep -c ^processor /proc/cpuinfo)
-	# If the variable "CPUs" is not an integer, default to use a value of 1
+# Estimate threads to use if a number has no been provided
+if [ -z "$threads" ]; then 
+	# Determine max number of threads available
+	maxthreads=$(grep -c ^processor /proc/cpuinfo)
+	# If the variable "threads" is not an integer, default to use a value of 1
 	re='^[0-9]+$'
-	if ! [[ $maxCPUs =~ $re ]] ; then
-		echo "Error: Variable 'maxCPUs' is not an integer" >&2
-		maxCPUs=1
+	if ! [[ $maxthreads =~ $re ]] ; then
+		echo "Error: Variable 'maxthreads' is not an integer" >&2
+		maxthreads=1
 	fi
-	CPUs=$(echo "$maxCPUs * 0.75" | bc | awk '{print int($1+0.5)}') # Use 75% of max CPU number
+	threads=$(echo "$maxthreads * 0.75" | bc | awk '{print int($1+0.5)}') # Use 75% of max CPU number
 fi
 
 # The documentation for featureCounts says to use 4 threads max.
 # This if statement ensures this.
 ## On revisiting this, I cannot find any such documentation. To be cautious, I'll go for a max of 8 threads
-if (( $CPUs > 8 )); then 
-	featureCountCPUs=8
+if (( $threads > 8 )); then 
+	featureCountthreads=8
 else
-	featureCountCPUs=$CPUs
+	featureCountthreads=$threads
 fi
 
 # Determine if paired-end or single-end files were provided as input
@@ -273,13 +273,13 @@ if [ ! -f $outDir/checkpoints/checkpoint-4.flag ]; then
 
 		# Align trimmed reads to tRNA database using HISAT2/Tophat2
 		#if [[ $oldAligner = "yes" ]]; then
-		#	tophat2 -p $CPUs -x 1 -o $outDir/tRNA-alignment/ DBs/bowtie2_index/hg19-wholetRNA-CCA_cdhit $outDir/trim_galore_output/$trimmedFile1 $outDir/trim_galore_output/$trimmedFile2
+		#	tophat2 -p $threads -x 1 -o $outDir/tRNA-alignment/ DBs/bowtie2_index/hg19-wholetRNA-CCA_cdhit $outDir/trim_galore_output/$trimmedFile1 $outDir/trim_galore_output/$trimmedFile2
 			# Tophat2 using HG38 genome below:
-			#tophat2 -p $CPUs -x 1 -o $outDir/tRNA-alignment/ DBs/bowtie2_index/hg38-tRNAs_CCA $outDir/trim_galore_output/$trimmedFile1 $outDir/trim_galore_output/$trimmedFile2
+			#tophat2 -p $threads -x 1 -o $outDir/tRNA-alignment/ DBs/bowtie2_index/hg38-tRNAs_CCA $outDir/trim_galore_output/$trimmedFile1 $outDir/trim_galore_output/$trimmedFile2
 		#	bedtools bamtofastq -i $outDir/tRNA-alignment/unmapped.bam -fq $outDir/tRNA-alignment/unmapped_1.fastq -fq2 $outDir/tRNA-alignment/unmapped_2.fastq
 		#else
 		#	echo $trimmedFile1
-			#hisat2 -p $CPUs -x DBs/hisat2_index/hg19-wholetRNA-CCA_cdhit -1 $outDir/trim_galore_output/$trimmedFile1 -2 $outDir/trim_galore_output/$trimmedFile2 -S $outDir/tRNA-alignment/aligned_tRNAdb.sam
+			#hisat2 -p $threads -x DBs/hisat2_index/hg19-wholetRNA-CCA_cdhit -1 $outDir/trim_galore_output/$trimmedFile1 -2 $outDir/trim_galore_output/$trimmedFile2 -S $outDir/tRNA-alignment/aligned_tRNAdb.sam
 		#fi
 
 	elif [[ $pairedEnd = "False" ]]; then
@@ -319,7 +319,7 @@ if [ ! -f $outDir/checkpoints/checkpoint-4.flag ]; then
 		
 		if [ ! -f $outDir/tRNA-alignment/align_summary.txt ]; then
 			string_padder "Running tRNA/snomiRNA alignment step..."
-			hisat2 -p $CPUs -x $ncRNADB -U $outDir/trim_galore_output/$trimmedFile -S $outDir/tRNA-alignment/aligned_tRNAdb.sam --summary-file $outDir/tRNA-alignment/align_summary.txt --un $outDir/tRNA-alignment/unmapped.fastq
+			hisat2 -p $threads -x $ncRNADB -U $outDir/trim_galore_output/$trimmedFile -S $outDir/tRNA-alignment/aligned_tRNAdb.sam --summary-file $outDir/tRNA-alignment/align_summary.txt --un $outDir/tRNA-alignment/unmapped.fastq
 			grep "reads" $outDir/tRNA-alignment/align_summary.txt > $outDir/Stats.log
 			if [ -f $outDir/tRNA-alignment/aligned_tRNAdb.sam ]; then  #If hisat2 successfully mapped reads, convert to bam and index
 				### Split the resulting SAM file into reads aligned to tRNAs and snomiRNAs
@@ -351,7 +351,7 @@ if [ ! -f $outDir/checkpoints/checkpoint-4.flag ]; then
 
 		if [ ! -f $outDir/mRNA-ncRNA-alignment/align_summary.txt ]; then # If this file was not generated, try and align the unmapped reads from the tRNA alignment	
 			string_padder "Running mRNA/ncRNA alignment step..."
-			hisat2 -p $CPUs -x $genomeDB $outDir/tRNA-alignment/$trimmedFile -S $outDir/mRNA-ncRNA-alignment/aligned.sam --summary-file $outDir/mRNA-ncRNA-alignment/align_summary.txt --un $outDir/mRNA-ncRNA-alignment/unmapped.fastq
+			hisat2 -p $threads -x $genomeDB $outDir/tRNA-alignment/$trimmedFile -S $outDir/mRNA-ncRNA-alignment/aligned.sam --summary-file $outDir/mRNA-ncRNA-alignment/align_summary.txt --un $outDir/mRNA-ncRNA-alignment/unmapped.fastq
 			if [ -f $outDir/mRNA-ncRNA-alignment/aligned.sam ]; then  #If hisat2 successfully mapped reads, convert the unmapped to FASTQ
 				samtools view -bS $outDir/mRNA-ncRNA-alignment/aligned.sam > $outDir/mRNA-ncRNA-alignment/accepted_hits_unsorted.bam
 				rm $outDir/mRNA-ncRNA-alignment/aligned.sam &
@@ -387,7 +387,7 @@ if [ ! -f $outDir/checkpoints/checkpoint-5.flag ]; then
 		echo "
 	Counting mRNA/ncRNA alignment reads
 	"
-		featureCounts -T $featureCountCPUs -a $genomeGTF -o $outDir/FCount-count-output/mRNA-ncRNA-alignment.fcount $outDir/mRNA-ncRNA-alignment/accepted_hits.bam
+		featureCounts -T $featureCountthreads -a $genomeGTF -o $outDir/FCount-count-output/mRNA-ncRNA-alignment.fcount $outDir/mRNA-ncRNA-alignment/accepted_hits.bam
 		grep -v featureCounts $outDir/FCount-count-output/mRNA-ncRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/FCount-count-output/mRNA-ncRNA-alignment.count
 	fi
 	
@@ -401,7 +401,7 @@ if [ ! -f $outDir/checkpoints/checkpoint-5.flag ]; then
 		echo "
 	Counting sno/miRNA alignment reads
 	"
-		featureCounts -T $featureCountCPUs -a $snomiRNAGTF -o $outDir/FCount-count-output/snomiRNA-alignment.fcount $outDir/snomiRNA-alignment/accepted_hits.bam
+		featureCounts -T $featureCountthreads -a $snomiRNAGTF -o $outDir/FCount-count-output/snomiRNA-alignment.fcount $outDir/snomiRNA-alignment/accepted_hits.bam
 		grep -v featureCounts $outDir/FCount-count-output/snomiRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/FCount-count-output/snomiRNA-alignment.count
 	fi
 	
@@ -415,7 +415,7 @@ if [ ! -f $outDir/checkpoints/checkpoint-5.flag ]; then
 		echo "
 	Counting tRNA alignment reads
 	"
-		featureCounts -T $featureCountCPUs -a $tRNAGTF -o $outDir/FCount-count-output/tRNA-alignment.fcount $outDir/tRNA-alignment/accepted_hits.bam
+		featureCounts -T $featureCountthreads -a $tRNAGTF -o $outDir/FCount-count-output/tRNA-alignment.fcount $outDir/tRNA-alignment/accepted_hits.bam
 		grep -v featureCounts $outDir/FCount-count-output/tRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/FCount-count-output/tRNA-alignment.count	
 	fi
 
