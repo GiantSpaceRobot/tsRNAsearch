@@ -115,7 +115,7 @@ else
 	echo "Curl already installed"
 fi
 
-# python 2.7.15rc1 
+# python 
 echo "Looking for Python..."
 if ! [ -x "$(command -v python)" ]; then
 	sudo apt install python
@@ -123,6 +123,17 @@ else
 	#PyVersion=$(python -V) # Get python version
 	echo "Python already installed"
 fi
+
+# pip
+echo "Looking for Pip..."
+if ! [ -x "$(command -v pip)" ]; then
+	sudo apt-get install python-pip
+else
+	echo "Pip already installed"
+fi
+
+# python module numpy
+pip install numpy
 
 echo "Looking for R and Rscript..."
 ### Check for libcurl4-openssl-dev
