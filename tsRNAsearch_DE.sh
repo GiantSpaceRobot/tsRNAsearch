@@ -88,12 +88,12 @@ fi
 #fi
 
 ### If the pathname specified by $expFile does not begin with a slash, quit (we need full path name)
-#if [ "$expFile" ]; then
-#    if [[ ! $expFile = /* ]]; then
-#        echo "Error: File paths must absolute. Please specify the full path for the experiment layout file."
-#        exit 1
-#    fi
-#fi
+if [ "$expFile" ]; then
+    if [[ ! $expFile = /* ]]; then
+        echo "Error: File path must absolute. Please specify the full path for the experiment layout file."
+        exit 1
+    fi
+fi
 
 
 ##### Start of pipeline #####
