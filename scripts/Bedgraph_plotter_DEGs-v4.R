@@ -121,7 +121,8 @@ if (file.size(args[3]) == 0) { # Check if features file contains any lines
     p = ggplot(new.df2, aes(x=coord, y=mean, fill=Conditions), show.legend = FALSE) +
         geom_ribbon(aes(ymin=mean-std, ymax=mean+std, colour=Conditions),
                     alpha=0.3) +
-        geom_line(size=0.8) +
+        geom_line(aes(linetype=Conditions)) + # Different linetypes
+        #geom_line(size=0.8) +
         xlab('Nucleotide position') +
         ylab('Coverage (reads per million)') +
         scale_fill_manual(values=c("red", "blue")) +
