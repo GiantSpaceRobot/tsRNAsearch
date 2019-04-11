@@ -229,9 +229,9 @@ paste $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_
 ### Calculate StdDev
 python scripts/Mean-to-RelativeDifference.py $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.mean $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.stddev
 ### Calculate distribution scores
-Rscript scripts/Distribution-score-v2.R $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.stddev $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2
+Rscript scripts/Distribution-score-v3.R $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.stddev $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2
 ### Sort the output but not the header
-cat $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.different-distributions.txt | awk 'NR<2{print $0;next}{print $0| "sort -k11,11nr"}' > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.different-distributions.sorted.txt
+cat $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.high-distribution-score.txt | awk 'NR<2{print $0;next}{print $0| "sort -k11,11nr"}' > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.high-distribution-score.sorted.txt
 cat $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.all-features.txt | awk 'NR<2{print $0;next}{print $0| "sort -k11,11nr"}' > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.all-features.sorted.txt
 
 ### snomiRNAs
@@ -248,23 +248,23 @@ paste $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_
 ### Calculate StdDev
 python scripts/Mean-to-RelativeDifference.py $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.mean $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.stddev
 ### Calculate distribution score
-Rscript scripts/Distribution-score-v2.R $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.stddev $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2
+Rscript scripts/Distribution-score-v3.R $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.stddev $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2 $snomiRNAGTF
 ### Sort the output but not the header
-cat $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.different-distributions.txt | awk 'NR<2{print $0;next}{print $0| "sort -k11,11nr"}' > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.different-distributions.sorted.txt
+cat $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.high-distribution-score.txt | awk 'NR<2{print $0;next}{print $0| "sort -k11,11nr"}' > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.high-distribution-score.sorted.txt
 cat $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.all-features.txt | awk 'NR<2{print $0;next}{print $0| "sort -k11,11nr"}' > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.all-features.sorted.txt
 
 ### Copy txt files illustrating features with very different distributions to the Results directory:
-cp $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.different-distributions.sorted.txt $myPath/$outDir/Results/Data/${condition1}_vs_${condition2}_High-distribution-tiRNAs.txt 
-cp $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.different-distributions.sorted.txt $myPath/$outDir/Results/Data/${condition1}_vs_${condition2}_High-distribution-snomiRNAs.txt
+cp $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.high-distribution-score.sorted.txt $myPath/$outDir/Results/Data/${condition1}_vs_${condition2}_High-distribution-tiRNAs.txt 
+cp $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.high-distribution-score.sorted.txt $myPath/$outDir/Results/Data/${condition1}_vs_${condition2}_High-distribution-snomiRNAs.txt
 
 ### Test whether certain features are cleaved in one condition vs the other
-Rscript scripts/FeatureCleavageScore.R $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_tiRNA.condition1_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_tiRNA.condition2_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_tiRNAs &
-Rscript scripts/FeatureCleavageScore.R $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_snomiRNA.condition1_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_snomiRNA.condition2_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_snomiRNAs &
+Rscript scripts/FeatureCleavageScore-v2.R $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_tiRNA.condition1_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_tiRNA.condition2_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_tiRNAs &
+Rscript scripts/FeatureCleavageScore-v2.R $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_snomiRNA.condition1_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_snomiRNA.condition2_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_snomiRNAs &
 wait
-cp $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_tiRNAs.potentially-cleaved-features.txt $myPath/$outDir/Results/Data/
-cp $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_snomiRNAs.potentially-cleaved-features.txt $myPath/$outDir/Results/Data/
-cp $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_tiRNAs.potentially-cleaved-features.pdf $myPath/$outDir/Results/Plots/
-cp $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_snomiRNAs.potentially-cleaved-features.pdf $myPath/$outDir/Results/Plots/
+cp $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_tiRNAs.high-cleavage-score.txt $myPath/$outDir/Results/Data/
+cp $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_snomiRNAs.high-cleavage-score.txt $myPath/$outDir/Results/Data/
+cp $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_tiRNAs.high-cleavage-score.pdf $myPath/$outDir/Results/Plots/
+cp $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_snomiRNAs.high-cleavage-score.pdf $myPath/$outDir/Results/Plots/
 
 ### Get mean and standard deviation
 Rscript scripts/Mean_Stdev.R $myPath/$outDir/Results/Data/Intermediate-files/tiRNA.condition1_concatenated.depth $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.tiRNA.depth &
@@ -279,9 +279,9 @@ grep ENS $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_
 grep -v ENS $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt | awk -F '-' '{print $2}' | sort | uniq > $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_tRNAs.txt 
 cat $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_ENSGs.txt $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_tRNAs.txt > $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_short-names.txt
 ### Get names of features with highest distribution scores 
-cat $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/*different-distributions.sorted.txt | grep -v ^feat | awk '{print $1}' > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/High-distribution-scores_feature-names.txt 
+cat $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/*high-distribution-score.sorted.txt | grep -v ^feat | awk '{print $1}' > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/High-distribution-scores_feature-names.txt 
 ### Get names of features that are likely cleaved
-cat $myPath/$outDir/Results/Data/Intermediate-files/*potentially-cleaved-features.txt | grep -v ^feat | awk '{print $1}' > $myPath/$outDir/Results/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt
+cat $myPath/$outDir/Results/Data/Intermediate-files/*high-cleavage-score.txt | grep -v ^feat | awk '{print $1}' > $myPath/$outDir/Results/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt
 
 ### Get unique set of differentially expressed features and features with high distribution scores
 echo -e "#This is a collection of features that are differentially expressed, have large differences in distribution between the conditions, or are likely cleaved. Ordered alphanumerically." > $myPath/$outDir/Results/Data/All-Features-Identified.txt
