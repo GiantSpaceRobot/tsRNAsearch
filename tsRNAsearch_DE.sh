@@ -95,10 +95,38 @@ if [ "$expFile" ]; then
     fi
 fi
 
+### Define functions
+# Function to pad text with characters to make sentences stand out more
+function string_padder () {
+	string=$1
+	count=${#string}
+	v=$(printf "%-${count}s" "=")
+	padding="${v// /=}"
+	echo "
 
-##### Start of pipeline #####
-echo "Started project analysis on $(date)"
+	$padding
+	$string
+	$padding
+
+	"
+}
+
+
+                 #############################
+                 ##### Start of pipeline #####
+                 #############################
+
+pipeline_start="Started project analysis on $date"
+string_padder $pipeline_start
 StartTime="Pipeline initiated at $(date)"
+
+echo -e "Parameters:
+	Genome (-g): $genome
+	Input directory containing fastq/fastq.gz files (-d): $indir
+	Experiment layout file (-e): $expFile
+	Output directory that tsRNAsearch will create and populate with results (-o): $outDir
+	Number of threads to use for the analysis (-t): $threads
+	"
 
 ### Are we analysing Human or Mouse? -g parameter
 if [ "$genome" ]; then
@@ -129,6 +157,8 @@ for f in $inDir/*; do
 	#if [ "$tophat" ]; then # Use tophat2
 	#	./tiRNA-pipeline.sh -s "$f" -o "$outDir/Results/$filename" -p "$threads" -T -A "$Plots" #>> "$outDir"/"$filename"_tiRNApipeline.log
 	#else # Use HISAT2
+	analysis="Beginning analysis of $filename using tsRNAsearch"
+	string_padder $analysis
 	./tsRNAsearch.sh -g "$genome" -s "$f" -o "$outDir/Results/$filename" -p "$threads" -A "$Plots" #>> "$outDir"/"$filename"_tiRNApipeline.log
 	#fi
 	wait
@@ -151,7 +181,7 @@ mv $outDir/Results/Data/Intermediate-files/FCount.all-features $outDir/Results/D
 ### Determine if experiment layout file was provided or not. If not, try and figure out which files group together using R.
 myPath=$(pwd) #Get working dir to recreate full path for R script execution
 if [ ! "$expFile" ]; then
-    echo "No experiment layout plan provided. This will now be created prior to the formal DESeq2 analysis."
+    string_padder "No experiment layout plan provided. This will now be created prior to the formal DESeq2 analysis."
     Rscript --vanilla scripts/DESeq2_tiRNA-pipeline-v3.R "$myPath/$outDir/Results/Data/Intermediate-files/"
     condition1=$( awk -F ',' 'NR == 1 {print $2}' $myPath/$outDir/Results/Data/Intermediate-files/predicted_exp_layout.csv ) # Get element in first row second column (condition)
     grep $condition1 $myPath/$outDir/Results/Data/Intermediate-files/predicted_exp_layout.csv > $myPath/$outDir/Results/Data/Intermediate-files/predicted_exp_layout_cond1.csv
@@ -159,7 +189,7 @@ if [ ! "$expFile" ]; then
     grep $condition2 $myPath/$outDir/Results/Data/Intermediate-files/predicted_exp_layout.csv > $myPath/$outDir/Results/Data/Intermediate-files/predicted_exp_layout_cond2.csv
 	expFile="$myPath/$outDir/Results/Data/Intermediate-files/predicted_exp_layout.csv"
 else
-    echo "An experiment layout plan was provided. Carrying out DESeq2 analysis now."
+    string_padder "An experiment layout plan was provided. Carrying out DESeq2 analysis now."
     Rscript --vanilla scripts/DESeq2_tiRNA-pipeline-v3.R "$expFile" "$myPath/$outDir/Results/Data/Intermediate-files/"
     condition1=$( awk -F ',' 'NR == 1 {print $2}' "$expFile" ) # Get element in first row second column (condition)
     grep $condition1 "$expFile" > $myPath/$outDir/Results/Data/Intermediate-files/predicted_exp_layout_cond1.csv
@@ -168,19 +198,23 @@ else
 fi
 
 ### Concatenate the depth files for the replicates of condition 1
+string_padder "Concatenating samtools depth files for condition 1..."
 count=0
 for fname in $(cat $myPath/$outDir/Results/Data/Intermediate-files/predicted_exp_layout_cond1.csv); do
 	count=$((count + 1))
 	cond1="$(cut -d ',' -f1 <<< $fname)"
 	cond1base="$(cut -d '.' -f1 <<< $cond1)"
+	echo "Finding file for $fname ($cond1base)..."
 	find $myPath/$outDir/ -type f -name "$cond1base*tiRNA.depth" -exec cp {} $myPath/$outDir/Results/Data/Intermediate-files/condition1_file$count.tiRNA.depth \; & # Gather tiRNAs 
 	find $myPath/$outDir/ -type f -name "$cond1base*snomiRNA.depth" -exec cp {} $myPath/$outDir/Results/Data/Intermediate-files/condition1_file$count.snomiRNA.depth \; & # Gather sno/miRNAs
 	wait
 	mapped=$(grep "mapped" $myPath/$outDir/Results/$cond1base/Stats.log | awk '{print $3}')
+	echo "Converting raw counts to RPM..."
 	python scripts/Depth-to-Depth_RPM.py "$myPath/$outDir/Results/Data/Intermediate-files/condition1_file$count.tiRNA.depth" "$mapped" "$myPath/$outDir/Results/Data/Intermediate-files/condition1_file$count.tiRNA.depth.readspermil" &
 	python scripts/Depth-to-Depth_RPM.py "$myPath/$outDir/Results/Data/Intermediate-files/condition1_file$count.snomiRNA.depth" "$mapped" "$myPath/$outDir/Results/Data/Intermediate-files/condition1_file$count.snomiRNA.depth.readspermil" &
 done
 wait
+echo "Transforming depth data to horizontal and vertical formats..."
 ### Concatenate data horizontally
 paste $myPath/$outDir/Results/Data/Intermediate-files/condition1_file*.tiRNA.depth.readspermil > $myPath/$outDir/Results/Data/Intermediate-files/tiRNA.condition1_concatenated.depth &
 paste $myPath/$outDir/Results/Data/Intermediate-files/condition1_file*.snomiRNA.depth.readspermil > $myPath/$outDir/Results/Data/Intermediate-files/snomiRNA.condition1_concatenated.depth &
@@ -190,19 +224,23 @@ cat $myPath/$outDir/Results/Data/Intermediate-files/condition1_file*.snomiRNA.de
 wait
  
 ### Concatenate the depth files for the replicates of condition 2 
+string_padder "Concatenating samtools depth files for condition 2..."
 count=0
 for fname in $(cat $myPath/$outDir/Results/Data/Intermediate-files/predicted_exp_layout_cond2.csv); do
 	count=$((count + 1))
 	cond2="$(cut -d ',' -f1 <<< $fname)"
 	cond2base="$(cut -d '.' -f1 <<< $cond2)"
+	echo "Finding file for $fname ($cond2base)..."
 	find $myPath/$outDir/ -type f -name "$cond2base*tiRNA.depth" -exec cp {} $myPath/$outDir/Results/Data/Intermediate-files/condition2_file$count.tiRNA.depth \; & # Gather tiRNAs
 	find $myPath/$outDir/ -type f -name "$cond2base*snomiRNA.depth" -exec cp {} $myPath/$outDir/Results/Data/Intermediate-files/condition2_file$count.snomiRNA.depth \; & # Gather snomiRNAs
 	wait
 	mapped=$(grep "mapped" $myPath/$outDir/Results/$cond2base/Stats.log | awk '{print $3}')
+	echo "Converting raw counts to RPM..."
 	python scripts/Depth-to-Depth_RPM.py "$myPath/$outDir/Results/Data/Intermediate-files/condition2_file$count.tiRNA.depth" "$mapped" "$myPath/$outDir/Results/Data/Intermediate-files/condition2_file$count.tiRNA.depth.readspermil" &
 	python scripts/Depth-to-Depth_RPM.py "$myPath/$outDir/Results/Data/Intermediate-files/condition2_file$count.snomiRNA.depth" "$mapped" "$myPath/$outDir/Results/Data/Intermediate-files/condition2_file$count.snomiRNA.depth.readspermil" &
 done
 wait
+echo "Transforming depth data to horizontal and vertical formats..."
 ### Concatenate data horizontally
 paste $myPath/$outDir/Results/Data/Intermediate-files/condition2_file*.tiRNA.depth.readspermil > $myPath/$outDir/Results/Data/Intermediate-files/tiRNA.condition2_concatenated.depth &
 paste $myPath/$outDir/Results/Data/Intermediate-files/condition2_file*.snomiRNA.depth.readspermil > $myPath/$outDir/Results/Data/Intermediate-files/snomiRNA.condition2_concatenated.depth &
@@ -215,6 +253,7 @@ wait
 ### by standard deviation of percent difference between samples, divided by 1000) of the features
 mkdir -p $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score
 
+string_padder "tiRNAs: Generating Distribution Scores..."
 ### tiRNAs
 ### Calculate mean
 python scripts/MeanCalculator.py $myPath/$outDir/Results/Data/Intermediate-files/tiRNA.condition1_concatenated.depth $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.condition1_concatenated.depth.mean & 
@@ -229,11 +268,12 @@ paste $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_
 ### Calculate StdDev
 python scripts/Mean-to-RelativeDifference.py $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.mean $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.stddev
 ### Calculate distribution scores
-Rscript scripts/Distribution-score-v3.R $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.stddev $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2
+Rscript scripts/Distribution-score-v3.R $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.stddev $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2 $snomiRNAGTF
 ### Sort the output but not the header
 cat $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.high-distribution-score.txt | awk 'NR<2{print $0;next}{print $0| "sort -k11,11nr"}' > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.high-distribution-score.sorted.txt
 cat $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.all-features.txt | awk 'NR<2{print $0;next}{print $0| "sort -k11,11nr"}' > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.all-features.sorted.txt
 
+string_padder "snoRNAs/miRNAs: Generating Distribution Scores..."
 ### snomiRNAs
 ### Calculate mean
 python scripts/MeanCalculator.py $myPath/$outDir/Results/Data/Intermediate-files/snomiRNA.condition1_concatenated.depth $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.condition1_concatenated.depth.mean &
@@ -257,6 +297,8 @@ cat $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.
 cp $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.high-distribution-score.sorted.txt $myPath/$outDir/Results/Data/${condition1}_vs_${condition2}_High-distribution-tiRNAs.txt 
 cp $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.high-distribution-score.sorted.txt $myPath/$outDir/Results/Data/${condition1}_vs_${condition2}_High-distribution-snomiRNAs.txt
 
+
+string_padder "Generating Cleavage Scores..." 
 ### Test whether certain features are cleaved in one condition vs the other
 Rscript scripts/FeatureCleavageScore-v2.R $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_tiRNA.condition1_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_tiRNA.condition2_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_tiRNAs &
 Rscript scripts/FeatureCleavageScore-v2.R $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_snomiRNA.condition1_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_snomiRNA.condition2_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_snomiRNAs &
@@ -283,10 +325,11 @@ cat $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/*high-dis
 ### Get names of features that are likely cleaved
 cat $myPath/$outDir/Results/Data/Intermediate-files/*high-cleavage-score.txt | grep -v ^feat | awk '{print $1}' > $myPath/$outDir/Results/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt
 
-### Get unique set of differentially expressed features and features with high distribution scores
+### Get unique set of differentially expressed features, features with high distribution scores, and high cleavage scores...
 echo -e "#This is a collection of features that are differentially expressed, have large differences in distribution between the conditions, or are likely cleaved. Ordered alphanumerically." > $myPath/$outDir/Results/Data/All-Features-Identified.txt
 cat $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_short-names.txt $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/High-distribution-scores_feature-names.txt $myPath/$outDir/Results/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt | sort | uniq >> $myPath/$outDir/Results/Data/All-Features-Identified.txt
 
+string_padder "Plotting any features identified in the analysis..."
 ### If there are differentially expressed/high distribution features, plot these:
 if [[ $(wc -l < $myPath/$outDir/Results/Data/All-Features-Identified.txt) -ge 2 ]]; then
 	### Plot DEGs arg1 and 2 are inputs, arg 3 is list of differentially expressed genes, arg 4 is output pdf, 
@@ -303,10 +346,12 @@ if [[ $(wc -l < $myPath/$outDir/Results/Data/All-Features-Identified.txt) -ge 2 
 	Rscript scripts/VennDiagram.R $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_short-names.txt $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/High-distribution-scores_feature-names.txt $myPath/$outDir/Results/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}
 	mv $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}.intersect*txt $myPath/$outDir/Results/Data/
 else
-	echo "There were no differentially expressed features. No plots were generated." >> $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_no-features-to-plot.txt
+	string_padder "No features of interest were identified."
+	echo "There were no features identified. No plots were generated." >> $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_no-features-to-plot.txt
 fi
 wait
 
+string_padder "Gathering RPM count files and cleaning up..."
 ### Gather RPM count files
 awk '{print $1}' $outDir/Results/Data/$filename.all-features.rpm.count > $outDir/Results/Data/Intermediate-files/FCount.rpm.all-features # Get feature names
 for f in $outDir/Results/Data/*rpm.count; do
@@ -320,5 +365,5 @@ mv $outDir/Results/Data/Intermediate-files/FCount.rpm.all-features $outDir/Resul
 mv $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/ $myPath/$outDir/Results/Data/
 cp $myPath/$outDir/Results/Data/DE_Results/*pdf $myPath/$outDir/Results/Plots/
 
-echo "Finished project analysis on $(date)"
-
+finished="Finished project analysis on $(date)"
+string_padder $finished
