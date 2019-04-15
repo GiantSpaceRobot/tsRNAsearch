@@ -117,16 +117,8 @@ function string_padder () {
                  #############################
 
 pipeline_start="Started project analysis on $date"
-string_padder $pipeline_start
+string_padder "$pipeline_start"
 StartTime="Pipeline initiated at $(date)"
-
-echo -e "Parameters:
-	Genome (-g): $genome
-	Input directory containing fastq/fastq.gz files (-d): $indir
-	Experiment layout file (-e): $expFile
-	Output directory that tsRNAsearch will create and populate with results (-o): $outDir
-	Number of threads to use for the analysis (-t): $threads
-	"
 
 ### Are we analysing Human or Mouse? -g parameter
 if [ "$genome" ]; then
@@ -139,6 +131,15 @@ else
 	snomiRNAGTF="DBs/hg19-snomiRNA_cdhit.gtf"
 	genome="human"
 fi
+
+### Print parameters used
+echo -e "Parameters:
+	Genome (-g): $genome
+	Input directory containing fastq/fastq.gz files (-d): $indir
+	Experiment layout file (-e): $expFile
+	Output directory that tsRNAsearch will create and populate with results (-o): $outDir
+	Number of threads to use for the analysis (-t): $threads
+	"
 
 ### If -A parameter was not provided, default is to only plot differentially expressed features
 if [ ! "$Plots" ]; then
@@ -300,8 +301,8 @@ cp $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.c
 
 string_padder "Generating Cleavage Scores..." 
 ### Test whether certain features are cleaved in one condition vs the other
-Rscript scripts/FeatureCleavageScore-v2.R $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_tiRNA.condition1_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_tiRNA.condition2_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_tiRNAs &
-Rscript scripts/FeatureCleavageScore-v2.R $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_snomiRNA.condition1_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_snomiRNA.condition2_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_snomiRNAs &
+Rscript scripts/FeatureCleavageScore-v2.R $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_tiRNA.condition1_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_tiRNA.condition2_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_tiRNAs $snomiRNAGTF &
+Rscript scripts/FeatureCleavageScore-v2.R $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_snomiRNA.condition1_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_snomiRNA.condition2_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_snomiRNAs $snomiRNAGTF &
 wait
 cp $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_tiRNAs.high-cleavage-score.txt $myPath/$outDir/Results/Data/
 cp $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_snomiRNAs.high-cleavage-score.txt $myPath/$outDir/Results/Data/
@@ -366,4 +367,4 @@ mv $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/ $myPath/$outDir/R
 cp $myPath/$outDir/Results/Data/DE_Results/*pdf $myPath/$outDir/Results/Plots/
 
 finished="Finished project analysis on $(date)"
-string_padder $finished
+string_padder "$finished"
