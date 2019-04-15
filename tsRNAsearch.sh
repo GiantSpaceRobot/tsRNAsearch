@@ -454,7 +454,7 @@ python scripts/FCount-to-RPM.py $outDir/FCount-count-output/snomiRNA-alignment.c
 python scripts/FCount-to-RPM.py $outDir/FCount-count-output/mRNA-ncRNA-alignment.count $mapped $outDir/FCount-to-RPM/mRNA-ncRNA-alignment &
 wait
 
-sleep 5  # Just making sure everything is finished running
+sleep 10  # Just making sure everything is finished running
 
 ### Move results to Data_and_Plots
 cp $outDir/FCount-to-RPM/$singleFile_basename.all-features.rpm.count $outDir/Data_and_Plots/
