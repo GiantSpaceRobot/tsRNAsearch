@@ -305,7 +305,15 @@ string_padder "Generating Cleavage Scores..."
 ### Test whether certain features are cleaved in one condition vs the other
 Rscript scripts/FeatureCleavageScore-v2.R $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_tiRNA.condition1_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_tiRNA.condition2_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_tiRNAs $snomiRNAGTF &
 Rscript scripts/FeatureCleavageScore-v2.R $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_snomiRNA.condition1_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_snomiRNA.condition2_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_snomiRNAs $snomiRNAGTF &
+######
+echo "Should be two PIDs:"
+jobs -p
 wait
+echo "Should be no PIDs:"
+jobs -p
+string_padder "Mookala: Look here to see if snomiRNA PDF was generated:"
+ls -lrt $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_snomiRNAs*
+######
 cp $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_tiRNAs.high-cleavage-score.txt $myPath/$outDir/Results/Data/
 cp $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_snomiRNAs.high-cleavage-score.txt $myPath/$outDir/Results/Data/
 cp $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_tiRNAs.high-cleavage-score.pdf $myPath/$outDir/Results/Plots/

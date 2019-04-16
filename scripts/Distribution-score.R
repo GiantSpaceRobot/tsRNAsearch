@@ -45,7 +45,7 @@ my.list = list("feature",
                "distribution.score",
                #"ks.test_p.value",
                #"chi.square.test_p.value",
-               "more.reads.in: (experimental)")
+               "more.reads.in:")
 write.table(my.list, 
             file = paste0(args[2], ".all-features.txt"),
             quote = FALSE, 
@@ -59,7 +59,7 @@ results.df <- setNames(data.frame(matrix(ncol = 6, nrow = 0)), c("feature",
                                                                  "stddev.of.percent.relative.difference",
                                                                  "area.difference",
                                                                  "distribution.score",
-                                                                 "more.reads.in: (experimental)"))  # Initialise empty dataframe with column headers
+                                                                 "more.reads.in:"))  # Initialise empty dataframe with column headers
 
 for(subset in df) {
 #for (feature in featuresUnion){
@@ -96,6 +96,8 @@ for(subset in df) {
     coef.of.var.of.difference <- "NA"
     condition <- "NA"
     area.diff <- "NA"
+    distribution.score.raw <- "NA"
+    relative.penalty <- "NA"
     distribution.score <- "NA"
   } else {
     mean1 <- mean(subset$V2)
@@ -129,14 +131,21 @@ for(subset in df) {
     std2.sum <- sum(subset$V6)
     std2.size <-
       (std2.sum / mean2.sum)  # Calculate the relationship between sum of mean and sum of standard deviation
-    ### Average both cond1 and cond2 std/mean relationships:
+    
+    ##### Average both cond1 and cond2 std/mean relationships:
+    ### Linear penalty function
     penalty <- mean(c(std1.size, std2.size)) # The amount that the distribution score will be penalised 
     relative.penalty <- distribution.score.raw*penalty
+    ### Exponential penalty function
+    #penalty <- (mean(c(std1.size, std2.size)))*10 # The amount that the distribution score will be penalised 
+    #penalty <- (penalty^2)/100 
+    #relative.penalty <- distribution.score.raw*penalty
+    ### Distribution score with penalty applied:
     distribution.score <- distribution.score.raw - relative.penalty
     
     ### 
-    sum.of.percent.no.abs <- sum(subset$V4, na.rm = TRUE)
-    if (sum.of.percent.no.abs > 0) {
+    #sum.of.percent.no.abs <- sum(subset$V4, na.rm = TRUE)
+    if (mean.of.difference > 0) {
       condition <- "Condition 1"
     } else {
       condition <- "Condition 2"
