@@ -95,6 +95,9 @@ if [ "$expFile" ]; then
     fi
 fi
 
+### Get working dir to recreate full path for R script execution
+myPath=$(pwd) 
+
 ### Define functions
 # Function to pad text with characters to make sentences stand out more
 function string_padder () {
@@ -180,7 +183,6 @@ mv $outDir/Results/Data/Intermediate-files/FCount.all-features $outDir/Results/D
 
 
 ### Determine if experiment layout file was provided or not. If not, try and figure out which files group together using R.
-myPath=$(pwd) #Get working dir to recreate full path for R script execution
 if [ ! "$expFile" ]; then
     string_padder "No experiment layout plan provided. This will now be created prior to the formal DESeq2 analysis."
     Rscript --vanilla scripts/DESeq2_tiRNA-pipeline-v3.R "$myPath/$outDir/Results/Data/Intermediate-files/"
@@ -269,7 +271,7 @@ paste $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_
 ### Calculate StdDev
 python scripts/Mean-to-RelativeDifference.py $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.mean $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.stddev
 ### Calculate distribution scores
-Rscript scripts/Distribution-score-v3.R $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.stddev $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2 $snomiRNAGTF
+Rscript scripts/Distribution-score.R $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.stddev $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2 $snomiRNAGTF
 ### Sort the output but not the header
 cat $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.high-distribution-score.txt | awk 'NR<2{print $0;next}{print $0| "sort -k11,11nr"}' > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.high-distribution-score.sorted.txt
 cat $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.all-features.txt | awk 'NR<2{print $0;next}{print $0| "sort -k11,11nr"}' > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.all-features.sorted.txt
@@ -289,7 +291,7 @@ paste $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_
 ### Calculate StdDev
 python scripts/Mean-to-RelativeDifference.py $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.mean $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.stddev
 ### Calculate distribution score
-Rscript scripts/Distribution-score-v3.R $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.stddev $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2 $snomiRNAGTF
+Rscript scripts/Distribution-score.R $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.stddev $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2 $snomiRNAGTF
 ### Sort the output but not the header
 cat $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.high-distribution-score.txt | awk 'NR<2{print $0;next}{print $0| "sort -k11,11nr"}' > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.high-distribution-score.sorted.txt
 cat $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.all-features.txt | awk 'NR<2{print $0;next}{print $0| "sort -k11,11nr"}' > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.all-features.sorted.txt
