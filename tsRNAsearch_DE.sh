@@ -185,7 +185,7 @@ mv $outDir/Results/Data/Intermediate-files/FCount.all-features $outDir/Results/D
 ### Determine if experiment layout file was provided or not. If not, try and figure out which files group together using R.
 if [ ! "$expFile" ]; then
     string_padder "No experiment layout plan provided. This will now be created prior to the formal DESeq2 analysis."
-    Rscript --vanilla scripts/DESeq2_tiRNA-pipeline-v3.R "$myPath/$outDir/Results/Data/Intermediate-files/"
+    Rscript --vanilla scripts/DESeq2_tiRNA-pipeline.R "$myPath/$outDir/Results/Data/Intermediate-files/"
     condition1=$( awk -F ',' 'NR == 1 {print $2}' $myPath/$outDir/Results/Data/Intermediate-files/predicted_exp_layout.csv ) # Get element in first row second column (condition)
     grep $condition1 $myPath/$outDir/Results/Data/Intermediate-files/predicted_exp_layout.csv > $myPath/$outDir/Results/Data/Intermediate-files/predicted_exp_layout_cond1.csv
     condition2=$( grep -v $condition1 $myPath/$outDir/Results/Data/Intermediate-files/predicted_exp_layout.csv | awk -F ',' 'NR == 1 {print $2}') # Get the second condition using the inverse of the first one
@@ -193,7 +193,7 @@ if [ ! "$expFile" ]; then
 	expFile="$myPath/$outDir/Results/Data/Intermediate-files/predicted_exp_layout.csv"
 else
     string_padder "An experiment layout plan was provided. Carrying out DESeq2 analysis now."
-    Rscript --vanilla scripts/DESeq2_tiRNA-pipeline-v3.R "$expFile" "$myPath/$outDir/Results/Data/Intermediate-files/"
+    Rscript --vanilla scripts/DESeq2_tiRNA-pipeline.R "$expFile" "$myPath/$outDir/Results/Data/Intermediate-files/"
     condition1=$( awk -F ',' 'NR == 1 {print $2}' "$expFile" ) # Get element in first row second column (condition)
     grep $condition1 "$expFile" > $myPath/$outDir/Results/Data/Intermediate-files/predicted_exp_layout_cond1.csv
     condition2=$( grep -v $condition1 "$expFile" | awk -F ',' 'NR == 1 {print $2}') # Get the second condition using the inverse of the first one
@@ -303,16 +303,16 @@ cp $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.c
 
 string_padder "Generating Cleavage Scores..." 
 ### Test whether certain features are cleaved in one condition vs the other
-Rscript scripts/FeatureCleavageScore-v2.R $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_tiRNA.condition1_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_tiRNA.condition2_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_tiRNAs $snomiRNAGTF &
-Rscript scripts/FeatureCleavageScore-v2.R $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_snomiRNA.condition1_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_snomiRNA.condition2_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_snomiRNAs $snomiRNAGTF &
+Rscript scripts/FeatureCleavageScore.R $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_tiRNA.condition1_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_tiRNA.condition2_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_tiRNAs $snomiRNAGTF &
+Rscript scripts/FeatureCleavageScore.R $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_snomiRNA.condition1_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_snomiRNA.condition2_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_snomiRNAs $snomiRNAGTF &
 ######
-echo "Should be two PIDs:"
-jobs -p
-wait
-echo "Should be no PIDs:"
-jobs -p
-string_padder "Mookala: Look here to see if snomiRNA PDF was generated:"
-ls -lrt $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_snomiRNAs*
+#echo "Should be two PIDs:"
+#jobs -p
+#wait
+#echo "Should be no PIDs:"
+#jobs -p
+#string_padder "Look here to see if snomiRNA PDF was generated:"
+#ls -lrt $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_snomiRNAs*
 ######
 cp $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_tiRNAs.high-cleavage-score.txt $myPath/$outDir/Results/Data/
 cp $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_snomiRNAs.high-cleavage-score.txt $myPath/$outDir/Results/Data/
@@ -346,13 +346,13 @@ if [[ $(wc -l < $myPath/$outDir/Results/Data/All-Features-Identified.txt) -ge 2 
 	### Plot DEGs arg1 and 2 are inputs, arg 3 is list of differentially expressed genes, arg 4 is output pdf, 
 	### arg 5 is mean coverage cutoff (plot features with coverage above this), arg 5 is GTF file for snomiRNAs (arg 5 is not given to tiRNA data)
 	# tiRNAs
-	Rscript scripts/Bedgraph_plotter_DEGs-v4.R $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.tiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.tiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-tiRNAs.pdf 0 &
-	Rscript scripts/Bedgraph_plotter_DEGs-v4.R $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.tiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.tiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/High-distribution-scores_feature-names.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_Features_High-distribution-tiRNAs.pdf 0 &
-	Rscript scripts/Bedgraph_plotter_DEGs-v4.R $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.tiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.tiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-tiRNAs.pdf 0 &
+	Rscript scripts/Bedgraph_plotter_DEGs.R $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.tiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.tiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-tiRNAs.pdf 0 &
+	Rscript scripts/Bedgraph_plotter_DEGs.R $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.tiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.tiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/High-distribution-scores_feature-names.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_Features_High-distribution-tiRNAs.pdf 0 &
+	Rscript scripts/Bedgraph_plotter_DEGs.R $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.tiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.tiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-tiRNAs.pdf 0 &
 	# snomiRNAs
-	Rscript scripts/Bedgraph_plotter_DEGs-v4.R $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-snomiRNAs.pdf 0 $snomiRNAGTF &
-	Rscript scripts/Bedgraph_plotter_DEGs-v4.R $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/High-distribution-scores_feature-names.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_Features_High-distribution-snomiRNAs.pdf 0 $snomiRNAGTF &
-	Rscript scripts/Bedgraph_plotter_DEGs-v4.R $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-snomiRNAs.pdf 0 $snomiRNAGTF &
+	Rscript scripts/Bedgraph_plotter_DEGs.R $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-snomiRNAs.pdf 0 $snomiRNAGTF &
+	Rscript scripts/Bedgraph_plotter_DEGs.R $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/High-distribution-scores_feature-names.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_Features_High-distribution-snomiRNAs.pdf 0 $snomiRNAGTF &
+	Rscript scripts/Bedgraph_plotter_DEGs.R $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Results/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-snomiRNAs.pdf 0 $snomiRNAGTF &
 	# Venn diagram
 	Rscript scripts/VennDiagram.R $myPath/$outDir/Results/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_short-names.txt $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/High-distribution-scores_feature-names.txt $myPath/$outDir/Results/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}
 	mv $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}.intersect*txt $myPath/$outDir/Results/Data/
