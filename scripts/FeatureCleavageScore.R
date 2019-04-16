@@ -19,8 +19,13 @@ if (length(args)==0) {
 input1 <- read.table(args[1])
 input2 <- read.table(args[2])
 
-#input1 <- read.table("/home/paul/Documents/Pipelines/tsRNAsearch/Full_Ang-vs-Veh/Results/Data/Intermediate-files/Edit_1.depth.mean")
-#input2 <- read.table("/home/paul/Documents/Pipelines/tsRNAsearch/Full_Ang-vs-Veh/Results/Data/Intermediate-files/Edit_2.depth.mean")
+#input1 <- read.table("/home/paul/Documents/Pipelines/tsRNAsearch/Full_Ang-vs-Veh/Results/Data/Intermediate-files/Distribution-score/sorted_tiRNA.condition1_concatenated.depth.mean")
+#input2 <- read.table("/home/paul/Documents/Pipelines/tsRNAsearch/Full_Ang-vs-Veh/Results/Data/Intermediate-files/Distribution-score/sorted_tiRNA.condition2_concatenated.depth.mean")
+
+if (length(args)==4) {
+  GTF <- read.table(args[4], sep = "\t")
+  #GTF <- read.table("/home/paul/Documents/Pipelines/tsRNAsearch/DBs/hg19-snomiRNA_cdhit.gtf", sep = "\t")
+} 
 
 df1 <- split( input1 , f = input1$V1 )  # Split dataframe based on column 1 elements
 df2 <- split( input2 , f = input2$V1 )  # Split dataframe based on column 1 elements
@@ -30,7 +35,7 @@ results.df <- setNames(data.frame(matrix(ncol = 6, nrow = 0)), c("feature",
                                                                  "ratio.5prime",
                                                                  "ratio.3prime",
                                                                  "5vs3.ratio.percent",
-                                                                 "mean.x.ratio")) # Initialise empty dataframe with column headers
+                                                                 "cleavage.score")) # Initialise empty dataframe with column headers
 count <- 1
 for(subset1 in df1) {
   subset2 <- df2[[count]]  # Get the corresponding subset from the second file
@@ -43,6 +48,13 @@ for(subset1 in df1) {
   feature <- as.character(subset1[1,1])
   subset1.length <- nrow(subset1)
   half.length <- as.integer(subset1.length/2)
+  ### Get gene name for sno/miRNAs
+  if(startsWith(feature, "ENS")) {
+    featureRows <- GTF[grep(feature, GTF$V9),]
+    featureRows <- featureRows[1,]
+    geneName <- as.character(sub(".*gene_name *(.*?) *; gene_source.*", "\\1", featureRows$V9))
+    feature <- paste0(feature," (",geneName,")")
+  } 
   ### Normalise by reads mapped to each condition:
   #subset1$V3 <- subset1$V3/subset1.sum
   #subset2$V3 <- subset2$V3/subset2.sum
@@ -90,13 +102,13 @@ for(subset1 in df1) {
   } else {
     ratio5vs3 <- (ratio3prime/ratio5prime)*100
   }
-  mean.x.ratio <- mean.coverage*ratio5vs3
+  cleavage.score <- mean.coverage*ratio5vs3
     results.df[nrow(results.df) + 1,] = list(feature,
                                            mean.coverage,
                                            ratio5prime,
                                            ratio3prime,
                                            ratio5vs3,
-                                           mean.x.ratio)
+                                           cleavage.score)
   #}
   
 
@@ -112,6 +124,7 @@ newdata <- newdata[newdata$`5vs3.ratio.percent` > 135, ] # Get high 5' / 3' rati
 #low.ratio.df <- low.ratio.df[low.ratio.df$`5vs3.ratio.percent` > 0, ] # Remove ratios of 0
 #newdata <- rbind(high.ratio.df, low.ratio.df) # Combine high and low dataframes
 newdata <- newdata[ which(newdata$mean.coverage > 1), ] # Mean RPM must be 10 or more across both conditions for each feature 
+newdata <- newdata[order(-newdata$cleavage.score),]
 
 
 write.table(results.df, 
@@ -127,6 +140,13 @@ write.table(newdata,
             row.names = FALSE,
             col.names = TRUE)
 
+# If there are more than 50 features, show top 50
+if(nrow(newdata) > 20){
+  newdata.subset <- head(newdata, n = 20)
+} else {
+  newdata.subset <- newdata
+}
+
 pdf.width <- nrow(newdata)*0.2 + 3
 pdf(file = paste0(args[3], ".high-cleavage-score.pdf"), width = pdf.width, height = 5)
 #ggplot(data = newdata, mapping = aes(feature, newdata$`5vs3.ratio.percent`, color=newdata$`5vs3.ratio.percent`)) +
@@ -139,16 +159,22 @@ pdf(file = paste0(args[3], ".high-cleavage-score.pdf"), width = pdf.width, heigh
 #       y = "Difference between 5' and 3' ratios (%)", 
 #       subtitle = NULL)
 
-ggplot(data = newdata, mapping = aes(feature, newdata$mean.x.ratio, color=newdata$mean.x.ratio)) +
+#rownames(newdata.subset) <- seq(length=nrow(newdata.subset))
+
+
+ggplot(data = newdata.subset, mapping = aes(feature, 
+                                            newdata.subset$cleavage.score, 
+                                            color=newdata.subset$cleavage.score)) +
   geom_point() +
   ggtitle("Feature cleavage analysis") +
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size=7)) +
   scale_color_gradient(low="blue", high="red") +
   #scale_y_continuous(trans='log2') +   # Change y axis to log scale
+  scale_x_discrete(limits = (levels(newdata.subset$cleavage.score))) +
   labs(colour = "Cleavage\nscore", 
        x = "ncRNA/gene", 
        y = "Cleavage score", 
-       subtitle = "Cleavage score = 5' to 3' ratio (%) multiplied by mean coverage (RPM)")
+       subtitle = "Cleavage score = Ratio between 5' ratio (condition 1 vs 2) and\n3' ratio (condition 1 vs 2) multiplied by mean coverage (RPM)\nMax number of features shown is 20")
 dev.off()
 
 

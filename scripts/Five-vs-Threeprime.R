@@ -17,56 +17,111 @@ if (length(args)==0) {
 
 #### Input file
 input <- read.table(args[1])
-#input <- read.table("/home/paul/Documents/Pipelines/tirna-pipeline/subset/Results/Ang_1_ATCACG_L008_R1_001/snomiRNA-alignment/accepted_hits_sorted.depth")
+#input <- read.table("/home/paul/Documents/Pipelines/tsRNAsearch/Full_SRR8114385/snomiRNA-alignment/accepted_hits_sorted.depth")
+
+#### Read in GTF for name conversions
+if (length(args)==3) {
+  GTF <- read.table(args[3], sep = "\t")
+  #GTF <- read.table("/home/paul/Documents/Pipelines/tsRNAsearch/DBs/hg19-snomiRNA_cdhit.gtf", sep = "\t")
+} 
 
 df <- split( input , f = input$V1 )  # Split dataframe based on column 1 elements
 
-results.df <- setNames(data.frame(matrix(ncol = 5, nrow = 0)), c("feature",
-                                                                 "Mean of 5prime",
-                                                                 "Mean of 3prime",
-                                                                 #"Wilcox p-value",
-                                                                 "Kolmogorov-smirnov p-value",
-                                                                 "-Log10 of KS p-value")) # Initialise empty dataframe with column headers
+results.df <- setNames(data.frame(matrix(ncol = 7, nrow = 0)), c("feature",
+                                                                 "mean.coverage",
+                                                                 "mean.fiveprime",
+                                                                 "mean.3prime",
+                                                                 "5vs3.ratio.percent",
+                                                                 "cleavage.score",
+                                                                 "note"))  # Initialise empty dataframe with column headers
 
 for(subset in df) {
   feature <- as.character(subset[1,1])
   subset.length <- nrow(subset)
+  mean.coverage <- mean(subset$V3)
   half.length <- as.integer(subset.length/2)
-  if (half.length < 150) {
-    length.penalty <- half.length/150###
+  note <- ""
+  if (length(args)==3) {
+    featureRows <- GTF[grep(feature, GTF$V9),]
+    featureRows <- featureRows[1,]
+    geneName <- as.character(sub(".*gene_name *(.*?) *; gene_source.*", "\\1", featureRows$V9))
+    feature <- paste0(feature," (",geneName,")")
+  } 
+  #if (half.length < 150) {
+  #  length.penalty <- half.length/150###
+  #} else {
+  #  length.penalty <- 1
+  #}
+  ### Count no. of zeros in subset. If over 3/4 values are zero, do not calculate ratios.
+  zero.percent <- (sum(subset$V3==0)/subset.length)*100
+  if(zero.percent >= 75) {
+    fiveprime.avg <- 0
+    threeprime.avg <- 0
+    ratio5vs3 <- 0
+    cleavage.score <- 0
   } else {
-    length.penalty <- 1
-  }
-  fiveprime <- subset[1:half.length,]
-  five.distribution <- fiveprime$V3
-  threeprime <- subset[(half.length+1):subset.length,]
-  three.distribution <- threeprime$V3
-  mean1 <- mean(threeprime$V3)
-  mean2 <- mean(fiveprime$V3)
-  ### If neither mean1 nor mean2 have a mean coverage over 10, default the KS p-value to 0
-  if (mean1 > 10 | mean2 > 10){
-    ks.output <- ks.test(five.distribution, three.distribution)
-    ks.pvalue <- ks.output$p.value
-    #wilcox.output <- wilcox.test(five.distribution, three.distribution)
-    #wilcox.pvalue <- wilcox.output$p.value
-    if (ks.pvalue == 0) {   # If the ks p-value is 0 (and subsequently the -Log10 is also 0), artificially insert a very low value
-      ks.pvalue <- 1e-20
+    fiveprime <- subset[1:half.length,]
+    five.distribution <- fiveprime$V3
+    threeprime <- subset[(half.length+1):subset.length,]
+    three.distribution <- threeprime$V3
+    fiveprime.avg <- mean(fiveprime$V3)
+    threeprime.avg <- mean(threeprime$V3)
+    ### Convert NaNs into zeros
+    if(fiveprime.avg=="NaN"){
+      fiveprime.avg <- 0
+    } 
+    if(threeprime.avg=="NaN"){
+      threeprime.avg <- 0
+    } 
+    ### Generate a ratio number of zero if it is not possible to generate a real one
+    if(fiveprime.avg=="0"){
+      if(threeprime.avg=="0"){
+        ratio5vs3 <- 0
+      } else {
+        ### Fiveprime average is 0, but threeprime average is a real number
+        ratio5vs3 <- threeprime.avg
+        note <- "Real 5' to 3' ratio could not be calculated. Using 3' mean coverage as proxy."
+      }
+    } else if(threeprime.avg=="0"){
+      if(fiveprime.avg=="0"){
+      ratio5vs3 <- 0
+      } else {
+        ### Threeprime average is 0, but fiveprime average is a real number
+        ratio5vs3 <- fiveprime.avg
+        note <- "Real 5' to 3' ratio could not be calculated. Using 5' mean coverage as proxy."
+      }
+    } else if(fiveprime.avg >= threeprime.avg){
+      ratio5vs3 <- (fiveprime.avg/threeprime.avg)*100
+    } else {
+      ratio5vs3 <- (threeprime.avg/fiveprime.avg)*100
     }
-    #minusLogKS <- -log10(ks.pvalue)
-    minusLogKS <- (-log10(ks.pvalue))*length.penalty
-  } else {
-    wilcox.pvalue <- "NA"
-    ks.pvalue <- 0
-    minusLogKS <- 0
+    #if(ratio5vs3=="NaN"){
+    #  ratio5vs3 <- 0
+    #} 
+    cleavage.score <- mean.coverage*ratio5vs3
   }
-  results.df[nrow(results.df) + 1,] = list(feature, mean1, mean2, ks.pvalue, minusLogKS)
+  results.df[nrow(results.df) + 1,] = list(feature,
+                                           mean.coverage,
+                                           fiveprime.avg,
+                                           threeprime.avg,
+                                           ratio5vs3,
+                                           cleavage.score,
+                                           note)
 
 }
 
-results.df <- results.df[order(-results.df$`-Log10 of KS p-value`),]
-#newdata <- results.df[ which(results.df$`-Log10 of KS p-value` > 1.30103), ]
-newdata <- results.df[ which(results.df$`-Log10 of KS p-value` > 3), ] # Equivalent to p-value of 0.001. More stringent than 0.05
+results.df <- results.df[order(-results.df$cleavage.score),]
+newdata <- results.df[complete.cases(results.df), ]  # Remove NAs
+newdata <- newdata[!grepl("Inf", newdata$cleavage.score),] # Remove Inf
+newdata <- newdata[newdata$`5vs3.ratio.percent` > 200, ] # Get high 5' / 3' ratios
+newdata <- newdata[newdata$mean.coverage > 10, ] # Get high 5' / 3' ratios
 
+# If there are more than 50 features, show top 50
+if(nrow(newdata) > 20){
+  newdata.subset <- head(newdata, n = 20)
+} else {
+  newdata.subset <- newdata
+}
 
 write.table(results.df, 
             file = paste0(args[2], ".all-features.txt"),
@@ -75,7 +130,7 @@ write.table(results.df,
             row.names = FALSE,
             col.names = TRUE)
 write.table(newdata, 
-            file = paste0(args[2], ".potentially-cleaved-features.txt"),
+            file = paste0(args[2], ".high-cleavage-score.txt"),
             quote = FALSE, 
             sep = "\t",
             row.names = FALSE,
@@ -90,13 +145,18 @@ write.table(newdata,
 #  scale_color_gradient(low="blue", high="red")
 #dev.off()
 
-pdf.width <- nrow(newdata)*0.2 + 3
-pdf(file = paste0(args[2], ".potentially-cleaved-features.pdf"), width = pdf.width, height = 5)
-ggplot(data = newdata, mapping = aes(feature, `-Log10 of KS p-value`, color=`-Log10 of KS p-value`)) +
+pdf.width <- nrow(newdata.subset)*0.2 + 3
+pdf(file = paste0(args[2], ".high-cleavage-score.pdf"), width = pdf.width, height = 5)
+ggplot(data = newdata.subset, mapping = aes(feature, `cleavage.score`, color=`cleavage.score`)) +
   geom_point() +
-  ggtitle("Feature cleavage likelihood (-Log10 cutoff = 3)") +
+  scale_y_continuous(trans='log2') +
+  ggtitle("Feature Cleavage Score") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
-  scale_color_gradient(low="blue", high="red")
+  scale_color_gradient(low="blue", high="red") +
+  labs(colour = "Cleavage\nscore", 
+       x = "ncRNA/gene", 
+       y = "Cleavage score", 
+       subtitle = "Cleavage score = 5' to 3' ratio (%) multiplied by mean coverage (RPM)\nMax number of features shown is 20")
 dev.off()
 
 

@@ -59,8 +59,10 @@ if (length(args)==0) {
   }
 } else if (length(args)==2) {     # If a .csv and file path were provided:
   experiment <- args[1]
+  #experiment <- "/home/paul/Documents/predicted_exp_layout.csv"
   exp.file <- read.csv(experiment, header=FALSE)
   setwd(args[2])
+  #setwd("/home/paul/Documents/Pipelines/tsRNAsearch/Full-SimData/Results/Data/Intermediate-files/")
   
   ### Count the number of factor levels in the provided .csv file (this should be 2)
   lvls <- levels(exp.file$V2)
@@ -77,12 +79,14 @@ if (length(args)==0) {
     dir.create("DE_Results")
   }
   file.CSV <- read.csv(args[1], header=FALSE)
+  #file.CSV <- read.csv("/home/paul/Documents/Data/Marion_Epilepsy-data/Control_vs_PreSeizure/Layout2.csv", header=FALSE)
   lvls.df <- as.data.frame(table(file.CSV$V2))
   ReplicateNumber1 <- lvls.df[1,2]
   Condition1 <- toString(lvls.df[1,1])
   ReplicateNumber2 <- lvls.df[2,2]
   Condition2 <- toString(lvls.df[2,1])
   myPath <- args[2]
+  #myPath <- "/home/paul/Documents/Pipelines/tsRNAsearch/Full_Marion_Epilepsy/Results/Data/Intermediate-files/"
   message("A .csv file was provided, and the directory provided exists.")
 }
 
@@ -100,6 +104,20 @@ if (substring(myPath, nchar(myPath)) == "/") {
 ### A variable that will act as a prefix to all output files
 ResultsFile <- paste0(Condition1,"-vs-",Condition2)
 
+### Directory for writing DESeq2 results to file
+if (file.exists("DE_Results/DESeq2")){
+} else {
+  dir.create("DE_Results/DESeq2")
+}
+
+### If replicate number = 1, stop analysis
+if(ReplicateNumber1==1) {
+  file.create("DE_Results/DESeq2/upregulated.csv")
+  file.create("DE_Results/DESeq2/downregulated.csv")
+  quit.message <- "Replicate number is 1, cannot continue DESeq2 analysis"
+  #print(quit.message)
+  stop(quit.message)
+}
 
 #-----------------#
 #    Libraries    #
@@ -127,6 +145,7 @@ DESeq2.function <- function(path.to.files){
   print(paste0("Checkpoint ", count))
   
   ### Read files
+  path.to.files <- myPath
   file.names <- dir(path.to.files, pattern =".count")
   cDataAll <- NULL
   for (i in 1:length(file.names)){
@@ -184,7 +203,8 @@ DESeq2.function <- function(path.to.files){
   print(paste0("Checkpoint ", count))
 
   ### Carry out a log transformation of the DESeq2 data set
-  rld <- rlogTransformation(dds)
+  #rld <- rlogTransformation(dds)
+  rld <- varianceStabilizingTransformation(dds)   # I hit an error with simulated data and rlog transformation. Michael Love (author) recommended VST https://support.bioconductor.org/p/100927/
 
   ### Create a histogram
   pdf(paste0("DE_Results/", ResultsFile, "_Histogram.pdf"),
@@ -263,12 +283,6 @@ DESeq2.function <- function(path.to.files){
   #  ylab(paste0("PC2: ",percentVar[2],"% variance")) +
   #  coord_fixed()
   #garbage <- dev.off()
-  
-  ### Write DESeq2 results to file
-  if (file.exists("DE_Results/DESeq2")){
-  } else {
-    dir.create("DE_Results/DESeq2")
-  }
   
   ### checkpoint
   count <- count + 1
