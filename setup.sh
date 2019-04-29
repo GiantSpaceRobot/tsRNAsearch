@@ -51,7 +51,7 @@ function human_genome () {
 	gunzip Homo_sapiens.GRCh37.87.gtf.gz &  # Gunzip GTF file
 	gunzip Homo_sapiens.GRCh37.dna.primary_assembly.fa.gz &
 	wait
-	python scripts/GTF_DuplicateRemover.py additional-files/Homo-sapiens_All-ncRNAs.txt Homo_sapiens.GRCh37.87.gtf Homo_sapiens.GRCh37.87.NoDuplicates.gtf
+	python bin/GTF_DuplicateRemover.py additional-files/Homo-sapiens_All-ncRNAs.txt Homo_sapiens.GRCh37.87.gtf Homo_sapiens.GRCh37.87.NoDuplicates.gtf
 	rm Homo_sapiens.GRCh37.87.gtf &
 	mv Homo_sapiens.GRCh37.87.NoDuplicates.gtf DBs/Homo_sapiens.GRCh37.87.gtf
 	echo "Building human genome index..."
@@ -122,7 +122,6 @@ echo "Looking for Python..."
 if ! [ -x "$(command -v python)" ]; then
 	sudo apt install python
 else
-	#PyVersion=$(python -V) # Get python version
 	echo "Python already installed"
 fi
 
@@ -141,18 +140,18 @@ echo "Looking for R and Rscript..."
 ### Check for libcurl4-openssl-dev
 sudo apt install libcurl4-openssl-dev libssl-dev libxml2-dev
 if ! [ -x "$(command -v Rscript)" ]; then
-	sudo apt install r-base  #Rscript 3.4.4 
+	sudo apt install r-base  
 else
 	echo "Rscript already installed"
 fi
 
 # Install necessary R libraries
 echo "Installing R libraries..."
-sudo Rscript scripts/InstallLibs.R
+sudo Rscript bin/InstallLibs.R
 
 echo "Looking for samtools..."
 if ! [ -x "$(command -v samtools)" ]; then
-	sudo apt install samtools  #1.7 # Requires htslib 1.7-2
+	sudo apt install samtools  # Requires htslib 1.7-2
 else
 	echo "samtools already installed"
 fi
@@ -166,12 +165,12 @@ if ! [ -x "$(command -v fastqc)" ]; then
 	sudo apt install fastqc
 fi
 if ! [ -x "$(command -v trim_galore)" ]; then # Check for global trim_galore
-	if [ ! -f scripts/trim_galore ]; then # Check for tsRNAsearch trim_galore
-		### Download trim_galore and move it to scripts Dir. Edit tsRNAsearch to point to new trim_galore location
-		curl -fsSL https://github.com/FelixKrueger/TrimGalore/archive/0.4.5.tar.gz -o trim_galore.tar.gz
-		tar xvzf trim_galore.tar.gz
-		mv TrimGalore-0.4.5/trim_galore scripts/
-		sed -i -e 's/trim_galore\ /scripts\/trim_galore\ /g' tsRNAsearch.sh
+	if [ ! -f bin/trim_galore ]; then # Check for tsRNAsearch trim_galore
+		### Download trim_galore and move it to bin Dir. Edit tsRNAsearch to point to new trim_galore location
+		#curl -fsSL https://github.com/FelixKrueger/TrimGalore/archive/0.4.5.tar.gz -o trim_galore.tar.gz
+		#tar xvzf trim_galore.tar.gz
+		#mv TrimGalore-0.4.5/trim_galore bin/
+		sed -i -e 's/trim_galore\ /bin\/trim_galore\ /g' tsRNAsearch.sh
 	fi
 else
 	echo "Trim_Galore aleady installed"
@@ -180,12 +179,12 @@ fi
 # FeatureCounts
 echo "Looking for featureCounts..."
 if ! [ -x "$(command -v featureCounts)" ]; then
-	if [ ! -f scripts/featureCounts ]; then
-		### Download featureCounts and move it to scripts Dir. Edit tsRNAsearch to point to new featureCounts location
-		wget -q https://sourceforge.net/projects/subread/files/subread-1.6.3/subread-1.6.3-Linux-x86_64.tar.gz ./ #featureCounts 1.6.3
-		tar xvfz subread-1.6.3-Linux-x86_64.tar.gz
-		mv subread-1.6.3-Linux-x86_64/bin/featureCounts scripts/
-		sed -i -e 's/featureCounts\ /scripts\/featureCounts\ /g' tsRNAsearch.sh
+	if [ ! -f bin/featureCounts ]; then
+		### Download featureCounts and move it to bin Dir. Edit tsRNAsearch to point to new featureCounts location
+		#wget -q https://sourceforge.net/projects/subread/files/subread-1.6.3/subread-1.6.3-Linux-x86_64.tar.gz ./ #featureCounts 1.6.3
+		#tar xvfz subread-1.6.3-Linux-x86_64.tar.gz
+		#mv subread-1.6.3-Linux-x86_64/bin/featureCounts bin/
+		sed -i -e 's/featureCounts\ /bin\/featureCounts\ /g' tsRNAsearch.sh
 	fi
 else
 	echo "featureCounts already installed"

@@ -150,15 +150,15 @@ function bam_to_plots () {  ### Steps for plotting regions with high variation i
 	samtools depth -aa $1/accepted_hits.bam > $1/accepted_hits.depth   # A lot faster than bedtools genomecov
 	cp $1/accepted_hits.depth $1/accepted_hits_raw.depth
 	### Normalise by reads per million (RPM)
-	python scripts/Depth-to-Depth_RPM.py $1/accepted_hits_raw.depth $mapped $1/accepted_hits.depth 
+	python bin/Depth-to-Depth_RPM.py $1/accepted_hits_raw.depth $mapped $1/accepted_hits.depth 
 	### If we are working with tRNAs, collapse all tRNAs based on same isoacceptor
 	if [[ $3 = "tiRNA" ]]; then
 		### Remove introns from tRNA counts (as these will interfere with the read counts of collapsed tRNAs)
-		Rscript scripts/Remove-introns.R $1/accepted_hits.depth $tRNA_introns $1/accepted_hits_intron-removed.depth 
+		Rscript bin/Remove-introns.R $1/accepted_hits.depth $tRNA_introns $1/accepted_hits_intron-removed.depth 
 		### Flip the read coverage of tRNAs that are in the minus orientation
-		Rscript scripts/Coverage-flipper.R $1/accepted_hits_intron-removed.depth $tRNAGTF $1/accepted_hits_flipped.depth	
+		Rscript bin/Coverage-flipper.R $1/accepted_hits_intron-removed.depth $tRNAGTF $1/accepted_hits_flipped.depth	
 		### Collapse tRNAs from the same tRNA species
-		python scripts/Bedgraph_collapse-tRNAs.py $1/accepted_hits_flipped.depth $1/accepted_hits_collapsed.depth
+		python bin/Bedgraph_collapse-tRNAs.py $1/accepted_hits_flipped.depth $1/accepted_hits_collapsed.depth
 		### Rename input depth file
 		mv $1/accepted_hits.depth $1/accepted_hits_original.depth 
 		### Copy the collapsed depth file and name it so that the remaining steps below do not have errors
@@ -171,19 +171,19 @@ function bam_to_plots () {  ### Steps for plotting regions with high variation i
 		### Plot the coverage of all features (arg 3 is mean coverage in RPM) and
 		### Create plot and txt file describing relationship between 5' and 3' regions of feature
 		if [[ $3 = "snomiRNA" ]]; then
-			Rscript scripts/Bedgraph_plotter.R $1/accepted_hits_sorted.depth $1/$2_$3_Coverage-plots.pdf 1 $snomiRNAGTF
-			Rscript scripts/Five-vs-Threeprime.R $1/accepted_hits_sorted.depth $1/$2_$3_Results $snomiRNAGTF &
+			Rscript bin/Bedgraph_plotter.R $1/accepted_hits_sorted.depth $1/$2_$3_Coverage-plots.pdf 1 $snomiRNAGTF
+			Rscript bin/Five-vs-Threeprime.R $1/accepted_hits_sorted.depth $1/$2_$3_Results $snomiRNAGTF &
 		elif [[ $3 == "tiRNA" ]]; then
-			Rscript scripts/Bedgraph_plotter.R $1/accepted_hits_sorted.depth $1/$2_$3_Coverage-plots.pdf 0
-			Rscript scripts/Five-vs-Threeprime.R $1/accepted_hits_sorted.depth $1/$2_$3_Results &
+			Rscript bin/Bedgraph_plotter.R $1/accepted_hits_sorted.depth $1/$2_$3_Coverage-plots.pdf 0
+			Rscript bin/Five-vs-Threeprime.R $1/accepted_hits_sorted.depth $1/$2_$3_Results &
 		else
-			Rscript scripts/Bedgraph_plotter.R $1/accepted_hits_sorted.depth $1/$2_$3_Coverage-plots.pdf 1000 $genomeGTF
-			Rscript scripts/Five-vs-Threeprime.R $1/accepted_hits_sorted.depth $1/$2_$3_Results &
+			Rscript bin/Bedgraph_plotter.R $1/accepted_hits_sorted.depth $1/$2_$3_Coverage-plots.pdf 1000 $genomeGTF
+			Rscript bin/Five-vs-Threeprime.R $1/accepted_hits_sorted.depth $1/$2_$3_Results &
 		fi
 		cp $1/$2_$3_Coverage-plots.pdf $outDir/Data_and_Plots/$2_$3_Coverage-plots.pdf
 	fi
 	### Output the mean, standard deviation and coefficient of variance of each ncRNA/gene
-	python scripts/Bedgraph-analyser.py $1/accepted_hits_sorted.depth $1/accepted_hits_sorted.tsv
+	python bin/Bedgraph-analyser.py $1/accepted_hits_sorted.depth $1/accepted_hits_sorted.tsv
 	### Gather all ncRNAs/genes with at least a mean coverage of 10
 	awk '$2>10' $1/accepted_hits_sorted.tsv > $1/accepted_hits_sorted_mean-std.tsv
 	### Sort the remaining ncRNAs/genes by coef. of variance
@@ -447,10 +447,10 @@ bam_to_plots $outDir/snomiRNA-alignment $singleFile_basename snomiRNA &
 
 ### Get RPM-normalised FCount count data
 string_padder "Get RPM-normalised read-counts"
-python scripts/FCount-to-RPM.py $outDir/FCount-count-output/$singleFile_basename.all-features.count $mapped $outDir/FCount-to-RPM/$singleFile_basename.all-features &
-python scripts/FCount-to-RPM.py $outDir/FCount-count-output/tRNA-alignment.count $mapped $outDir/FCount-to-RPM/tRNA-alignment & 
-python scripts/FCount-to-RPM.py $outDir/FCount-count-output/snomiRNA-alignment.count $mapped $outDir/FCount-to-RPM/snomiRNA-alignment &
-python scripts/FCount-to-RPM.py $outDir/FCount-count-output/mRNA-ncRNA-alignment.count $mapped $outDir/FCount-to-RPM/mRNA-ncRNA-alignment &
+python bin/FCount-to-RPM.py $outDir/FCount-count-output/$singleFile_basename.all-features.count $mapped $outDir/FCount-to-RPM/$singleFile_basename.all-features &
+python bin/FCount-to-RPM.py $outDir/FCount-count-output/tRNA-alignment.count $mapped $outDir/FCount-to-RPM/tRNA-alignment & 
+python bin/FCount-to-RPM.py $outDir/FCount-count-output/snomiRNA-alignment.count $mapped $outDir/FCount-to-RPM/snomiRNA-alignment &
+python bin/FCount-to-RPM.py $outDir/FCount-count-output/mRNA-ncRNA-alignment.count $mapped $outDir/FCount-to-RPM/mRNA-ncRNA-alignment &
 wait
 sleep 5  # Make sure everything is finished running
 
