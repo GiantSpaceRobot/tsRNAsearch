@@ -303,7 +303,7 @@ if [ ! -f $outDir/checkpoints/checkpoint-4.flag ]; then
 		
 		# Run Trim_Galore on single read file
 		if [ ! -f $outDir/trim_galore_output/$trimmedFile ]; then
-			trim_galore --stringency 10 --length 15 -o $outDir/trim_galore_output/ $singleFile
+			bin/trim_galore --stringency 10 --length 15 -o $outDir/trim_galore_output/ $singleFile
 			string_padder "Trimming complete. Moving on to FastQC analysis"
 		else
 			string_padder "Found trimmed file. Skipping this step"
@@ -390,7 +390,7 @@ if [ ! -f $outDir/checkpoints/checkpoint-5.flag ]; then
 		echo "
 	Counting mRNA/ncRNA alignment reads
 	"
-		featureCounts -T $featureCountthreads -a $genomeGTF -o $outDir/FCount-count-output/mRNA-ncRNA-alignment.fcount $outDir/mRNA-ncRNA-alignment/accepted_hits.bam
+		bin/featureCounts -T $featureCountthreads -a $genomeGTF -o $outDir/FCount-count-output/mRNA-ncRNA-alignment.fcount $outDir/mRNA-ncRNA-alignment/accepted_hits.bam
 		grep -v featureCounts $outDir/FCount-count-output/mRNA-ncRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/FCount-count-output/mRNA-ncRNA-alignment.count
 	fi
 	
@@ -404,7 +404,7 @@ if [ ! -f $outDir/checkpoints/checkpoint-5.flag ]; then
 		echo "
 	Counting sno/miRNA alignment reads
 	"
-		featureCounts -T $featureCountthreads -a $snomiRNAGTF -o $outDir/FCount-count-output/snomiRNA-alignment.fcount $outDir/snomiRNA-alignment/accepted_hits.bam
+		bin/featureCounts -T $featureCountthreads -a $snomiRNAGTF -o $outDir/FCount-count-output/snomiRNA-alignment.fcount $outDir/snomiRNA-alignment/accepted_hits.bam
 		grep -v featureCounts $outDir/FCount-count-output/snomiRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/FCount-count-output/snomiRNA-alignment.count
 	fi
 	
@@ -418,7 +418,7 @@ if [ ! -f $outDir/checkpoints/checkpoint-5.flag ]; then
 		echo "
 	Counting tRNA alignment reads
 	"
-		featureCounts -T $featureCountthreads -a $tRNAGTF -o $outDir/FCount-count-output/tRNA-alignment.fcount $outDir/tRNA-alignment/accepted_hits.bam
+		bin/featureCounts -T $featureCountthreads -a $tRNAGTF -o $outDir/FCount-count-output/tRNA-alignment.fcount $outDir/tRNA-alignment/accepted_hits.bam
 		grep -v featureCounts $outDir/FCount-count-output/tRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/FCount-count-output/tRNA-alignment.count	
 	fi
 

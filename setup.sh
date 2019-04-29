@@ -164,34 +164,34 @@ fi
 if ! [ -x "$(command -v fastqc)" ]; then
 	sudo apt install fastqc
 fi
-if ! [ -x "$(command -v trim_galore)" ]; then # Check for global trim_galore
-	if [ ! -f bin/trim_galore ]; then # Check for tsRNAsearch trim_galore
+#if ! [ -x "$(command -v trim_galore)" ]; then # Check for global trim_galore
+#	if [ ! -f bin/trim_galore ]; then # Check for tsRNAsearch trim_galore
 		### Download trim_galore and move it to bin Dir. Edit tsRNAsearch to point to new trim_galore location
 		#curl -fsSL https://github.com/FelixKrueger/TrimGalore/archive/0.4.5.tar.gz -o trim_galore.tar.gz
 		#tar xvzf trim_galore.tar.gz
 		#mv TrimGalore-0.4.5/trim_galore bin/
-		sed -i -e 's/trim_galore\ /bin\/trim_galore\ /g' tsRNAsearch.sh
-	fi
-else
-	echo "Trim_Galore aleady installed"
-fi
+#		sed -i -e 's/trim_galore\ /bin\/trim_galore\ /g' tsRNAsearch.sh
+#	fi
+#else
+#	echo "Trim_Galore aleady installed"
+#fi
 
 # FeatureCounts
-echo "Looking for featureCounts..."
-if ! [ -x "$(command -v featureCounts)" ]; then
-	if [ ! -f bin/featureCounts ]; then
+#echo "Looking for featureCounts..."
+#if ! [ -x "$(command -v featureCounts)" ]; then
+#	if [ ! -f bin/featureCounts ]; then
 		### Download featureCounts and move it to bin Dir. Edit tsRNAsearch to point to new featureCounts location
 		#wget -q https://sourceforge.net/projects/subread/files/subread-1.6.3/subread-1.6.3-Linux-x86_64.tar.gz ./ #featureCounts 1.6.3
 		#tar xvfz subread-1.6.3-Linux-x86_64.tar.gz
 		#mv subread-1.6.3-Linux-x86_64/bin/featureCounts bin/
-		sed -i -e 's/featureCounts\ /bin\/featureCounts\ /g' tsRNAsearch.sh
-	fi
-else
-	echo "featureCounts already installed"
-fi
+#		sed -i -e 's/featureCounts\ /bin\/featureCounts\ /g' tsRNAsearch.sh
+#	fi
+#else
+#	echo "featureCounts already installed"
+#fi
 
 # Create absolute path for bin files
-echo "Creating absolute path for tsRNAsearch bin scripts/programs"
+echo "Creating absolute path for tsRNAsearch 'bin' and 'DBs'"
 myPath=$(pwd)
 sed -i -e "s~ bin~ ${myPath}\/bin~g" tsRNAsearch.sh # using tilde as delimiter here instead of slash as myPath variable contains slashes
 sed -i -e "s~ bin~ ${myPath}\/bin~g" tsRNAsearch_DE.sh
