@@ -28,7 +28,8 @@ for line in readlines:
         splitline = line.strip().split("\t")
         featureID = splitline[8].split('"')[1]
         if featureID in d:
-            print (featureID)
+            pass
+            #print (featureID)
         else:
             #gff = (featureID[1], splitline[1], splitline[2], "1", str((int(splitline[4]) + 1) - int(splitline[3])), splitline[5], splitline[6], splitline[7], splitline[8])
             #newgff.write("\t".join(gff) + "\n")
