@@ -190,6 +190,14 @@ else
 	echo "featureCounts already installed"
 fi
 
+# Create absolute path for bin files
+echo "Creating absolute path for tsRNAsearch bin scripts/programs"
+myPath=$(pwd)
+sed -i -e "s~ bin~ ${myPath}\/bin~g" tsRNAsearch.sh # using tilde as delimiter here instead of slash as myPath variable contains slashes
+sed -i -e "s~ bin~ ${myPath}\/bin~g" tsRNAsearch_DE.sh
+sed -i -e "s~ DBs~ ${myPath}\/DBs~g" tsRNAsearch.sh
+sed -i -e "s~ DBs~ ${myPath}\/DBs~g" tsRNAsearch_DE.sh
+
 wait # Wait for things to finish (genome download and database setup)
 
 echo "Done"
