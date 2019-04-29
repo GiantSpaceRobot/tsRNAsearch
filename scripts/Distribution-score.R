@@ -17,7 +17,7 @@ if (length(args)==0) {
 
 #### Input file
 input <- read.table(args[1])
-#input <- read.table("/home/paul/Documents/Pipelines/tsRNAsearch/Subset_Marion_Ang-vs-Veh/Results/Data/Intermediate-files/test/ENSG00000199004.test")
+#input <- read.table("/home/paul/Documents/Pipelines/tsRNAsearch/Full_SimulenceReads/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.stddev")
 
 #### Read in GTF for name conversions
 if (length(args)==3) {
@@ -111,6 +111,9 @@ for(subset in df) {
     #chi.output <- chisq.test(subset$V2, subset$V3)
     #chi.pvalue <- chi.output$p.value
     stddev.of.percent <- sd(subset$V4, na.rm = TRUE)
+    if(is.na(stddev.of.percent)) {
+      stddev.of.percent = 0
+    }
     mean.of.difference <- mean(subset$V7)
     stddev.of.difference <- sd(subset$V7)
     coef.of.variation <- ((abs(stddev.of.percent)/mean.of.percent) * 100)
@@ -135,6 +138,9 @@ for(subset in df) {
     ##### Average both cond1 and cond2 std/mean relationships:
     ### Linear penalty function
     penalty <- mean(c(std1.size, std2.size)) # The amount that the distribution score will be penalised 
+    ifelse(std1.size > 0.9 || std2.size > 0.9, 
+           penalty <- 1, 
+           penalty <- penalty) # If either condition have a stdev over 90% of mean, increase penalty to max (1)
     relative.penalty <- distribution.score.raw*penalty
     ### Exponential penalty function
     #penalty <- (mean(c(std1.size, std2.size)))*10 # The amount that the distribution score will be penalised 
@@ -168,13 +174,13 @@ for(subset in df) {
                   #ks.pvalue,
                   #chi.pvalue,
                   condition)
-  write.table(my.list, 
-              file = paste0(args[2], ".all-features.txt"),
-              append = TRUE, 
-              quote = FALSE, 
-              sep = "\t",
-              row.names = FALSE,
-              col.names = FALSE)
+  #write.table(my.list, 
+  #            file = paste0(args[2], ".all-features.txt"),
+  #            append = TRUE, 
+  #            quote = FALSE, 
+  #            sep = "\t",
+  #            row.names = FALSE,
+  #            col.names = FALSE)
   if (mean.coverage > 10) {  # Mean coverage must be over 10
     if (distribution.score > 500) { # Distribution score must be over 500 to be plotted
       results.df[nrow(results.df) + 1,] = list(feature,

@@ -1,6 +1,6 @@
-Condition1_file1.fastq.gz,Treated
-Condition1_file2.fastq.gz,Treated
-Condition1_file3.fastq.gz,Treated
-Condition2_file1.fastq.gz,Control
-Condition2_file2.fastq.gz,Control
-Condition2_file3.fastq.gz,Control
+CytC_IP1.fastq.gz,CytC
+CytC_IP2.fastq.gz,CytC
+CytC_IP3.fastq.gz,CytC
+TotalRNA1.fastq.gz,TotalRNA
+TotalRNA2.fastq.gz,TotalRNA
+TotalRNA3.fastq.gz,TotalRNA
