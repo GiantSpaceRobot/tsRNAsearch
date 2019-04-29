@@ -273,7 +273,7 @@ python scripts/Mean-to-RelativeDifference.py $myPath/$outDir/Results/Data/Interm
 ### Calculate distribution scores
 Rscript scripts/Distribution-score.R $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.stddev $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2 $snomiRNAGTF
 ### Sort the output but not the header
-cat $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.high-distribution-score.txt | awk 'NR<2{print $0;next}{print $0| "sort -k11,11nr"}' > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.high-distribution-score.sorted.txt
+cat $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.high-distribution-score.txt | awk 'NR<2{print $0;next}{print $0| "sort -k5,5nr"}' > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.high-distribution-score.sorted.txt
 cat $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.all-features.txt | awk 'NR<2{print $0;next}{print $0| "sort -k11,11nr"}' > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.all-features.sorted.txt
 
 string_padder "snoRNAs/miRNAs: Generating Distribution Scores..."
@@ -293,8 +293,8 @@ python scripts/Mean-to-RelativeDifference.py $myPath/$outDir/Results/Data/Interm
 ### Calculate distribution score
 Rscript scripts/Distribution-score.R $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.stddev $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2 $snomiRNAGTF
 ### Sort the output but not the header
-cat $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.high-distribution-score.txt | awk 'NR<2{print $0;next}{print $0| "sort -k11,11nr"}' > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.high-distribution-score.sorted.txt
-cat $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.all-features.txt | awk 'NR<2{print $0;next}{print $0| "sort -k11,11nr"}' > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.all-features.sorted.txt
+cat $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.high-distribution-score.txt | awk 'NR<2{print $0;next}{print $0| "sort -k6,6nr"}' > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.high-distribution-score.sorted.txt
+#cat $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.all-features.txt | awk 'NR<2{print $0;next}{print $0| "sort -k14,14nr"}' > $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/snomiRNA.cond1-vs-cond2.all-features.sorted.txt
 
 ### Copy txt files illustrating features with very different distributions to the Results directory:
 cp $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.high-distribution-score.sorted.txt $myPath/$outDir/Results/Data/${condition1}_vs_${condition2}_High-distribution-tiRNAs.txt 
@@ -305,19 +305,16 @@ string_padder "Generating Cleavage Scores..."
 ### Test whether certain features are cleaved in one condition vs the other
 Rscript scripts/FeatureCleavageScore.R $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_tiRNA.condition1_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_tiRNA.condition2_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_tiRNAs $snomiRNAGTF &
 Rscript scripts/FeatureCleavageScore.R $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_snomiRNA.condition1_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/sorted_snomiRNA.condition2_concatenated.depth.mean $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_snomiRNAs $snomiRNAGTF &
-######
-#echo "Should be two PIDs:"
-#jobs -p
-#wait
-#echo "Should be no PIDs:"
-#jobs -p
-#string_padder "Look here to see if snomiRNA PDF was generated:"
-#ls -lrt $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_snomiRNAs*
-######
-cp $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_tiRNAs.high-cleavage-score.txt $myPath/$outDir/Results/Data/
-cp $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_snomiRNAs.high-cleavage-score.txt $myPath/$outDir/Results/Data/
-cp $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_tiRNAs.high-cleavage-score.pdf $myPath/$outDir/Results/Plots/
-cp $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_snomiRNAs.high-cleavage-score.pdf $myPath/$outDir/Results/Plots/
+wait
+### Sort the output but not the header
+cat $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_tiRNAs.high-cleavage-score.txt | awk 'NR<2{print $0;next}{print $0| "sort -k9,9nr"}' > $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_High-cleavage-tiRNAs.txt
+cat $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_snomiRNAs.high-cleavage-score.txt | awk 'NR<2{print $0;next}{print $0| "sort -k10,10nr"}' > $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_High-cleavage-snomiRNAs.txt
+### Copy sorted high distribution files to the Data dir
+cp $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_High-cleavage-snomiRNAs.txt $myPath/$outDir/Results/Data/
+cp $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2}_High-cleavage-tiRNAs.txt $myPath/$outDir/Results/Data/
+### Copy PDF files to Plots dir
+cp $myPath/$outDir/Results/Data/Intermediate-files/*.pdf $myPath/$outDir/Results/Plots/
+cp $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/*.pdf $myPath/$outDir/Results/Plots/
 
 ### Get mean and standard deviation
 Rscript scripts/Mean_Stdev.R $myPath/$outDir/Results/Data/Intermediate-files/tiRNA.condition1_concatenated.depth $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.tiRNA.depth &

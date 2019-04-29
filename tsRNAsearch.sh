@@ -168,21 +168,19 @@ function bam_to_plots () {  ### Steps for plotting regions with high variation i
 	sort -k1,1 -k2,2n $1/accepted_hits.depth > $1/accepted_hits_sorted.depth
 	### If -A parameter was provided, plot everything
 	if [[ $Plots == "yes" ]]; then # Plot everything
-		### Plot the coverage of all features (arg 3 is mean coverage in RPM)
+		### Plot the coverage of all features (arg 3 is mean coverage in RPM) and
+		### Create plot and txt file describing relationship between 5' and 3' regions of feature
 		if [[ $3 = "snomiRNA" ]]; then
 			Rscript scripts/Bedgraph_plotter.R $1/accepted_hits_sorted.depth $1/$2_$3_Coverage-plots.pdf 1 $snomiRNAGTF
+			Rscript scripts/Five-vs-Threeprime.R $1/accepted_hits_sorted.depth $1/$2_$3_Results $snomiRNAGTF &
 		elif [[ $3 == "tiRNA" ]]; then
 			Rscript scripts/Bedgraph_plotter.R $1/accepted_hits_sorted.depth $1/$2_$3_Coverage-plots.pdf 0
+			Rscript scripts/Five-vs-Threeprime.R $1/accepted_hits_sorted.depth $1/$2_$3_Results &
 		else
 			Rscript scripts/Bedgraph_plotter.R $1/accepted_hits_sorted.depth $1/$2_$3_Coverage-plots.pdf 1000 $genomeGTF
+			Rscript scripts/Five-vs-Threeprime.R $1/accepted_hits_sorted.depth $1/$2_$3_Results &
 		fi
 		cp $1/$2_$3_Coverage-plots.pdf $outDir/Data_and_Plots/$2_$3_Coverage-plots.pdf
-	fi
-	### Create plot and txt file describing relationship between 5' and 3' regions of feature
-	if [[ $3 = "snomiRNA" ]]; then
-		Rscript scripts/Five-vs-Threeprime.R $1/accepted_hits_sorted.depth $1/$2_$3_Results $snomiRNAGTF &
-	else
-		Rscript scripts/Five-vs-Threeprime.R $1/accepted_hits_sorted.depth $1/$2_$3_Results &
 	fi
 	### Output the mean, standard deviation and coefficient of variance of each ncRNA/gene
 	python scripts/Bedgraph-analyser.py $1/accepted_hits_sorted.depth $1/accepted_hits_sorted.tsv
@@ -458,9 +456,11 @@ sleep 5  # Make sure everything is finished running
 
 ### Move results to Data_and_Plots
 cp $outDir/FCount-to-RPM/$singleFile_basename.all-features.rpm.count $outDir/Data_and_Plots/
-cp $outDir/tRNA-alignment/*Results.* $outDir/Data_and_Plots/
-cp $outDir/snomiRNA-alignment/*Results.* $outDir/Data_and_Plots/
-
+if [[ $Plots == "yes" ]]; then
+	### If additional plotting parameter (-A) was selected, copy these files 
+	cp $outDir/tRNA-alignment/*Results.* $outDir/Data_and_Plots/
+	cp $outDir/snomiRNA-alignment/*Results.* $outDir/Data_and_Plots/
+fi
 echo "Finised analysing "$singleFile" on $(date)" # Print pipeline end-time
 echo "_____________________________________________________________________________________________________________________
 
