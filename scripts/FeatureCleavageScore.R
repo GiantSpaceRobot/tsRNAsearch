@@ -19,12 +19,8 @@ if (length(args)==0) {
 input1 <- read.table(args[1])
 input2 <- read.table(args[2])
 
-#input1 <- read.table("/home/paul/Documents/Pipelines/tsRNAsearch/Subset_Ang-vs-Veh/Results/Data/Intermediate-files/Distribution-score/sorted_snomiRNA.condition1_concatenated.depth.mean")
-#input2 <- read.table("/home/paul/Documents/Pipelines/tsRNAsearch/Subset_Ang-vs-Veh/Results/Data/Intermediate-files/Distribution-score/sorted_snomiRNA.condition2_concatenated.depth.mean")
-
 if (length(args)==4) {
   GTF <- read.table(args[4], sep = "\t")
-  #GTF <- read.table("/home/paul/Documents/Pipelines/tsRNAsearch/DBs/hg19-snomiRNA_cdhit.gtf", sep = "\t")
 } 
 
 df1 <- split( input1 , f = input1$V1 )  # Split dataframe based on column 1 elements
@@ -137,12 +133,8 @@ newdata <- results.df[complete.cases(results.df), ]  # Remove NAs
 newdata <- newdata[!grepl("Inf", newdata$`5vs3.ratio.percent`),] # Remove Inf
 newdata <- newdata[newdata$`5vs3.ratio.percent` > 125, ] # Get high 5' / 3' ratios
 newdata <- newdata[newdata$`penalty (%)` < 75, ] # Remove features with high penalty
-#low.ratio.df <- newdata[newdata$`5vs3.ratio.percent` < 66.667, ] # Get low 5' / 3' ratios
-#low.ratio.df <- low.ratio.df[low.ratio.df$`5vs3.ratio.percent` > 0, ] # Remove ratios of 0
-#newdata <- rbind(high.ratio.df, low.ratio.df) # Combine high and low dataframes
 newdata <- newdata[ which(newdata$mean.coverage > 1), ] # Mean RPM must be 10 or more across both conditions for each feature 
 newdata <- newdata[order(-newdata$cleavage.score),]
-
 
 write.table(results.df, 
             file = paste0(args[3], ".all-features.txt"),

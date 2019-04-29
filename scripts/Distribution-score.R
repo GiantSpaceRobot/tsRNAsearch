@@ -17,17 +17,13 @@ if (length(args)==0) {
 
 #### Input file
 input <- read.table(args[1])
-#input <- read.table("/home/paul/Documents/Pipelines/tsRNAsearch/Full_SimulenceReads/Results/Data/Intermediate-files/Distribution-score/tiRNA.cond1-vs-cond2.stddev")
 
 #### Read in GTF for name conversions
 if (length(args)==3) {
   GTF <- read.table(args[3], sep = "\t")
-  #GTF <- read.table("/home/paul/Documents/Pipelines/tsRNAsearch/DBs/hg19-snomiRNA_cdhit.gtf", sep = "\t")
 } 
 
 df <- split( input , f = input$V1 )  # Split dataframe based on column 1 elements
-#features <- input$V1   # Group features by name
-#featuresUnion <- union(features, features) 
 
 my.list = list("feature",
                "mean.coverage",
@@ -62,8 +58,6 @@ results.df <- setNames(data.frame(matrix(ncol = 6, nrow = 0)), c("feature",
                                                                  "more.reads.in:"))  # Initialise empty dataframe with column headers
 
 for(subset in df) {
-#for (feature in featuresUnion){
-  #feature <- "ValCAC"
   feature <- as.character(subset[1,1])
   ### If feature is a sno/miRNA, get gene name
   if(startsWith(feature, "ENS")) {
@@ -72,14 +66,9 @@ for(subset in df) {
     geneName <- as.character(sub(".*gene_name *(.*?) *; gene_source.*", "\\1", featureRows$V9))
     feature <- paste0(feature," (",geneName,")")
   } 
-  #subset <- input[grep(feature, input$V1),]
-  #sum.total <- sum(subset$V2, subset$V3)
-  #subset$V2 <- subset$V2/normalise.factor
-  #subset$V3 <- subset$V3/normalise.factor
   subset$V7 <- (subset$V2-subset$V3)
   subset$V8 <- do.call(pmax, subset[2:3]) # Get a column with max read coverage per nucleotide
   sum.total <- sum(subset$V8)
-  #subset$V6 <- abs(subset$V5)
   if(all(is.na(subset$V4))) {  # If all values for the percent of relative difference ar NA, do not calculate values
     mean1 <- 0
     mean2 <- 0
@@ -174,13 +163,13 @@ for(subset in df) {
                   #ks.pvalue,
                   #chi.pvalue,
                   condition)
-  #write.table(my.list, 
-  #            file = paste0(args[2], ".all-features.txt"),
-  #            append = TRUE, 
-  #            quote = FALSE, 
-  #            sep = "\t",
-  #            row.names = FALSE,
-  #            col.names = FALSE)
+  write.table(my.list, 
+              file = paste0(args[2], ".all-features.txt"),
+              append = TRUE, 
+              quote = FALSE, 
+              sep = "\t",
+              row.names = FALSE,
+              col.names = FALSE)
   if (mean.coverage > 10) {  # Mean coverage must be over 10
     if (distribution.score > 500) { # Distribution score must be over 500 to be plotted
       results.df[nrow(results.df) + 1,] = list(feature,
