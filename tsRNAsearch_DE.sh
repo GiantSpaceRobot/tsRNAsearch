@@ -315,6 +315,8 @@ cp $myPath/$outDir/Results/Data/Intermediate-files/${condition1}_vs_${condition2
 ### Copy PDF files to Plots dir
 cp $myPath/$outDir/Results/Data/Intermediate-files/*.pdf $myPath/$outDir/Results/Plots/
 cp $myPath/$outDir/Results/Data/Intermediate-files/Distribution-score/*.pdf $myPath/$outDir/Results/Plots/
+mv $myPath/$outDir/Results/Plots/tiRNA.cond1-vs-cond2.high-distribution-score.pdf $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_tiRNAs.high-distribution-score.pdf
+mv $myPath/$outDir/Results/Plots/snomiRNA.cond1-vs-cond2.high-distribution-score.pdf $myPath/$outDir/Results/Plots/${condition1}_vs_${condition2}_snomiRNAs.high-distribution-score.pdf
 
 ### Get mean and standard deviation
 Rscript scripts/Mean_Stdev.R $myPath/$outDir/Results/Data/Intermediate-files/tiRNA.condition1_concatenated.depth $myPath/$outDir/Results/Data/Intermediate-files/condition1_concatenated_mean_stdev.tiRNA.depth &
