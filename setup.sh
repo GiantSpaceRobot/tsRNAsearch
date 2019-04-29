@@ -195,8 +195,10 @@ echo "Creating absolute path for tsRNAsearch 'bin' and 'DBs'"
 myPath=$(pwd)
 sed -i -e "s~ bin~ ${myPath}\/bin~g" tsRNAsearch.sh # using tilde as delimiter here instead of slash as myPath variable contains slashes
 sed -i -e "s~ bin~ ${myPath}\/bin~g" tsRNAsearch_DE.sh
-sed -i -e "s~ DBs~ ${myPath}\/DBs~g" tsRNAsearch.sh
-sed -i -e "s~ DBs~ ${myPath}\/DBs~g" tsRNAsearch_DE.sh
+sed -i -e "s~DBs~${myPath}\/DBs~g" tsRNAsearch.sh
+sed -i -e "s~DBs~${myPath}\/DBs~g" tsRNAsearch_DE.sh
+sed -i -e "s~bin\/trim~${myPath}\/bin\/trim~g" tsRNAsearch.sh
+sed -i -e "s~bin\/feat~${myPath}\/bin\/feat~g" tsRNAsearch.sh
 
 wait # Wait for things to finish (genome download and database setup)
 
