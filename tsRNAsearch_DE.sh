@@ -163,7 +163,7 @@ for f in $inDir/*; do
 	#else # Use HISAT2
 	analysis="Beginning analysis of $filename using tsRNAsearch"
 	string_padder $analysis
-	./tsRNAsearch.sh -g "$genome" -s "$f" -o "$outDir/Results/$filename" -p "$threads" -A "$Plots" #>> "$outDir"/"$filename"_tiRNApipeline.log
+	tsRNAsearch.sh -g "$genome" -s "$f" -o "$outDir/Results/$filename" -p "$threads" -A "$Plots" #>> "$outDir"/"$filename"_tiRNApipeline.log
 	#fi
 	wait
 	#cp $outDir/Results/$filename/Data_and_Plots/*pdf $outDir/Results/Plots/
