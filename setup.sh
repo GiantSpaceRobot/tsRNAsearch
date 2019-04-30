@@ -56,6 +56,7 @@ function human_genome () {
 	mv Homo_sapiens.GRCh37.87.NoDuplicates.gtf DBs/Homo_sapiens.GRCh37.87.gtf
 	echo "Building human genome index..."
 	hisat2-build -p $CPUs Homo_sapiens.GRCh37.dna.primary_assembly.fa DBs/hisat2_index/Homo_sapiens.GRCh37.dna.primary_assembly
+	echo "Feel free to delete the Homo_sapiens.GRCh37.dna.primary_assembly.fa file in this directory as it is no longer required"
 }
 
 function mouse_genome () {
@@ -70,6 +71,7 @@ function mouse_genome () {
 	mv Mus_musculus.GRCm38.95.gtf DBs/
 	echo "Building mouse genome index..."
 	hisat2-build -p $CPUs Mus_musculus.GRCm38.dna.primary_assembly.fa DBs/hisat2_index/Mus_musculus.GRCm38.dna.primary_assembly
+	echo "Feel free to delete the Mus_musculus.GRCm38.dna.primary_assembly.fa file in this directory as it is no longer required"
 }
 
 # HISAT2

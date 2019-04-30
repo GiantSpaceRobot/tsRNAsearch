@@ -185,7 +185,7 @@ mv $outDir/Results/Data/Intermediate-files/FCount.all-features $outDir/Results/D
 ### Determine if experiment layout file was provided or not. If not, try and figure out which files group together using R.
 if [ ! "$expFile" ]; then
     string_padder "No experiment layout plan provided. This will now be created prior to the formal DESeq2 analysis."
-    Rscript --vanilla bin/DESeq2_tiRNA-pipeline.R "$myPath/$outDir/Results/Data/Intermediate-files/"
+    Rscript --vanilla bin/DESeq2_tsRNAsearch.R "$myPath/$outDir/Results/Data/Intermediate-files/"
     condition1=$( awk -F ',' 'NR == 1 {print $2}' $myPath/$outDir/Results/Data/Intermediate-files/predicted_exp_layout.csv ) # Get element in first row second column (condition)
     grep $condition1 $myPath/$outDir/Results/Data/Intermediate-files/predicted_exp_layout.csv > $myPath/$outDir/Results/Data/Intermediate-files/predicted_exp_layout_cond1.csv
     condition2=$( grep -v $condition1 $myPath/$outDir/Results/Data/Intermediate-files/predicted_exp_layout.csv | awk -F ',' 'NR == 1 {print $2}') # Get the second condition using the inverse of the first one
@@ -193,7 +193,7 @@ if [ ! "$expFile" ]; then
 	expFile="$myPath/$outDir/Results/Data/Intermediate-files/predicted_exp_layout.csv"
 else
     string_padder "An experiment layout plan was provided. Carrying out DESeq2 analysis now."
-    Rscript --vanilla bin/DESeq2_tiRNA-pipeline.R "$expFile" "$myPath/$outDir/Results/Data/Intermediate-files/"
+    Rscript --vanilla bin/DESeq2_tsRNAsearch.R "$expFile" "$myPath/$outDir/Results/Data/Intermediate-files/"
     condition1=$( awk -F ',' 'NR == 1 {print $2}' "$expFile" ) # Get element in first row second column (condition)
     grep $condition1 "$expFile" > $myPath/$outDir/Results/Data/Intermediate-files/predicted_exp_layout_cond1.csv
     condition2=$( grep -v $condition1 "$expFile" | awk -F ',' 'NR == 1 {print $2}') # Get the second condition using the inverse of the first one
