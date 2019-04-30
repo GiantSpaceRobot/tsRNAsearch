@@ -9,7 +9,7 @@ Many ncRNA identification pipelines are based on differential gene expression. T
 Run the setup.sh script to install required software:
 
 ```
-#Please indicate the genome you wish to analyse using the *-g* parameter. Options are __human__/__mouse__/__both__.
+#Please indicate the genome you wish to analyse using the -g parameter. Options are human/mouse/both.
 sudo ./setup.sh -g both
 ```
 
@@ -18,8 +18,9 @@ This script will install the following pieces of software at root level:
 * FastQC
 * Cutadapt
 * HISAT2
-* python (and python modules)
-* R (and R libraries)
+* python/pip (and python modules)
+* R/Rscript (and R libraries)
+* samtools
 
 Add tsRNAsearch.sh and tsRNAsearch\_DE.sh to your path
 
@@ -29,10 +30,16 @@ We have supplied data to test that the pipeline is functioning correctly:
 ```
 tsRNAsearch.sh -g mouse -s ExampleData/CytC_IP1.fastq.gz -o CytC_Results -t 1
 ```
+
+On finishing the run, search for files in *CytC\_Results/Data\_and\_Plots/* to confirm completion of tsRNAsearch run. 
+
 ### Comparing two conditions (e.g. control vs treatment)
 ```
 tsRNAsearch_DE.sh -g mouse -d ExampleData/ -e additional-files/Example_ExperimentLayout.csv -o MyResults -t 1 
 ```
+
+On finishing the run, search for files in *MyResults/Plots/* to confirm completion of tsRNAsearch run.
+
 ## More Information
 #### ncRNA identification methods:
 * DESeq2
