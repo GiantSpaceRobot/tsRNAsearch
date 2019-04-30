@@ -24,7 +24,7 @@ Options
 	-g	Analyse datasets against 'human' or 'mouse'? {default: human}
 	-d	Directory containing the files for analysis. Directory should have no other contents.
 	-o	Output directory for the results and log files
-	-e	Optional (but recommended) CSV file containing file names and file groups (see examples in ./additional-files/)
+	-e	Optional (but recommended) CSV file containing file names and file groups (see examples in additional-files/)
 	-t	Number of threads to use {default is to calculate the number of processors and use 75%}
 	-A	Plot all features? yes/no {default: no (only plot differentially expressed features)}
 
