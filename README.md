@@ -24,6 +24,7 @@ tsRNAsearch_DE.sh -g human -d ExampleData/ -e additional-files/Example_Experimen
 * DESeq2
 * Distribution score
 * Cleavage score
+
 tsRNAsearch\_DE.sh executes tsRNAsearch.sh on each RNA-seq file, concatenates the results and uses the three aformentioned methods to identify ncRNAs (both fragmented and full), and genes.
 
 ### tsRNAsearch.sh 
@@ -35,10 +36,10 @@ tsRNAsearch\_DE.sh executes tsRNAsearch.sh on each RNA-seq file, concatenates th
 * Data processing
 #### Parameters:
 * -h *Print the usage and options information*
-* -g *Analyse data against 'human' or 'mouse'? {default: human}*
+* -g *Analyse data against '__human__' or '__mouse__'? {default: __human__}*
 * -s *Single-end file for analysis*
 * -o *Output directory for the results and log files*
-* -A *Plot all features? yes/no {default: yes}*
+* -A *Plot all features? __yes__/__no__ {default: __yes__}*
 * -t *Number of threads to use {default is to calculate the number of processors and use 75%}*
 
 ### tsRNAsearch\_DE.sh 
@@ -51,12 +52,12 @@ tsRNAsearch\_DE.sh executes tsRNAsearch.sh on each RNA-seq file, concatenates th
 * Generate PDFs, CSVs and text reports
 #### Parameters
 * -h *Print the usage and options information*
-* -g *Analyse datasets against 'human' or 'mouse'? {default: human}*
+* -g *Analyse datasets against '__human__' or '__mouse__'? {default: __human__}*
 * -d *Directory containing the files for analysis (file formats: FASTQ or gzipped FASTQ). Directory should have no other contents.*
 * -o *Output directory for the results and log files*
 * -e *Optional (but recommended) CSV file containing file names and file groups (see examples in additional-files/)*
 * -t *Number of threads to use {default is to calculate the number of processors and use 75%}*
-* -A *Plot all features? yes/no {default: no (only plot differentially expressed features)}*
+* -A *Plot all features? __yes__/__no__ {default: __no__ (only plot differentially expressed features)}*
 
 ## Contributors
 * Paul Donovan, PhD
