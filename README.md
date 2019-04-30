@@ -7,6 +7,7 @@ Many ncRNA identification pipelines are based on differential gene expression. T
 ## Quickstart
 ### Installation
 Run the setup.sh script to install required software:
+
 * FastQC
 * Cutadapt
 * HISAT2
@@ -16,9 +17,11 @@ Run the setup.sh script to install required software:
 Please indicate the genome you wish to analyse using the *-g* parameter. Options are __human__/__mouse__/__both__.
 
 ```
-sudo ./setup.sh -g both # (human/mouse/both)
+sudo ./setup.sh -g both
 ```
 Add tsRNAsearch.sh and tsRNAsearch\_DE.sh to your path
+
+We have supplied data to test that the pipeline is functioning correctly:
 
 ### Analysing a single RNA-seq dataset
 ```
