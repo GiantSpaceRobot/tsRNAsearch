@@ -26,7 +26,7 @@ Options:
 	-s	Single-end file for analysis
 	-o	Output directory for the results and log files
 	-A	Plot all features? yes/no {default: yes}
-	-p	Number of threads to use {default is to calculate the number of processors and use 75%}
+	-t	Number of threads to use {default is to calculate the number of processors and use 75%}
 	
 
 	Input file format should be FASTQ (.fq/.fastq) or gzipped FASTQ (.gz)
@@ -40,7 +40,7 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts ":hg:p:s:o:A:" o; do
+while getopts ":hg:t:s:o:A:" o; do
     case "${o}" in
 		h)
 			asciiArt
@@ -57,7 +57,7 @@ while getopts ":hg:p:s:o:A:" o; do
 		o)
 			outDir="$OPTARG"
 			;;
-		p)
+		t)
 			threads="$OPTARG"
 			;;
 		A)
