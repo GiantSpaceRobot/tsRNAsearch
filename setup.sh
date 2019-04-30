@@ -199,6 +199,8 @@ sed -i -e "s~DBs~${myPath}\/DBs~g" tsRNAsearch.sh
 sed -i -e "s~DBs~${myPath}\/DBs~g" tsRNAsearch_DE.sh
 sed -i -e "s~bin\/trim~${myPath}\/bin\/trim~g" tsRNAsearch.sh
 sed -i -e "s~bin\/feat~${myPath}\/bin\/feat~g" tsRNAsearch.sh
+sed -i -e "s~additional~${myPath}\/additional~g" tsRNAsearch.sh
+sed -i -e "s~additional~${myPath}\/additional~g" tsRNAsearch_DE.sh
 
 wait # Wait for things to finish (genome download and database setup)
 

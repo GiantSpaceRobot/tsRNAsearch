@@ -457,7 +457,7 @@ sleep 5  # Make sure everything is finished running
 ### Move results to Data_and_Plots
 cp $outDir/FCount-to-RPM/$singleFile_basename.all-features.rpm.count $outDir/Data_and_Plots/
 if [[ $Plots == "yes" ]]; then
-	### If additional plotting parameter (-A) was selected, copy these files 
+	### If extra plotting parameter (-A) was selected, copy these files 
 	cp $outDir/tRNA-alignment/*Results.* $outDir/Data_and_Plots/
 	cp $outDir/snomiRNA-alignment/*Results.* $outDir/Data_and_Plots/
 fi
