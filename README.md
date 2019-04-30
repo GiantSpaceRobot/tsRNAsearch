@@ -20,7 +20,7 @@ tsRNAsearch_DE.sh -g human -d ExampleData/ -e additional-files/Example_Experimen
 ## More Information
 Many ncRNA identification pipelines are based on differential gene expression. This is a useful method but can fall short if portions of the differentially expressed ncRNAs are degraded, thus reducing the DE identification power. tsRNAsearch addresses this issue by applying a standard DE analysis and two separate (but related) methods to identify fragmented ncRNAs, especially tsRNAs. 
 
-ncRNA identification methods:
+#### ncRNA identification methods:
 * DESeq2
 * Distribution score
 * Cleavage score
