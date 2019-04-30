@@ -93,7 +93,6 @@ echo "Started analysing "$singleFile" on $(date)" # Print pipeline start-time
 ### Are we analysing Human or Mouse? -g parameter
 if [ "$genome" ]; then
     if [[ $genome == "human" ]]; then
-        #echo "Error: File paths must absolute. Please specify the full path for the FASTQ input file."
 		genomeDB="DBs/hisat2_index/Homo_sapiens.GRCh37.dna.primary_assembly"
 		ncRNADB="DBs/hisat2_index/hg19-combined_tiRNAs_snomiRNAs"
 		genomeGTF="DBs/Homo_sapiens.GRCh37.87.gtf"
@@ -104,7 +103,6 @@ if [ "$genome" ]; then
 		empty_snomiRNAs="additional-files/hg19_empty_snomiRNA.count"
 		empty_mRNAs="additional-files/hg19_empty_mRNA-ncRNA.count"
 	elif [[ $genome == "mouse" ]]; then
-		#echo "something"
 		genomeDB="DBs/hisat2_index/Mus_musculus.GRCm38.dna.primary_assembly"
 		ncRNADB="DBs/hisat2_index/GRCm38-combined_tiRNAs_snomiRNAs"
 		genomeGTF="DBs/Mus_musculus.GRCm38.95.gtf"
@@ -145,7 +143,6 @@ function string_padder () {
 }
 
 function bam_to_plots () {  ### Steps for plotting regions with high variation in coverage
-	
 	### Output coverage of all features we are interested in (e.g. tRNAs)
 	samtools depth -aa $1/accepted_hits.bam > $1/accepted_hits.depth   # A lot faster than bedtools genomecov
 	cp $1/accepted_hits.depth $1/accepted_hits_raw.depth
@@ -217,18 +214,11 @@ fi
 
 # The documentation for featureCounts says to use 4 threads max.
 # This if statement ensures this.
-## On revisiting this, I cannot find any such documentation. To be cautious, I'll go for a max of 8 threads
+# On revisiting this, I cannot find any such documentation. To be cautious, I'll go for a max of 8 threads
 if (( $threads > 8 )); then 
 	featureCountthreads=8
 else
 	featureCountthreads=$threads
-fi
-
-# Determine if paired-end or single-end files were provided as input
-if [ -z "$singleFile" ]; then # If the singleEnd variable is empty
-	pairedEnd="True"
-else
-	pairedEnd="False"
 fi
 
 # Check if the output directory exists. If not, create it
@@ -245,113 +235,66 @@ mkdir -p $outDir/FCount-to-RPM
 mkdir -p $outDir/Data_and_Plots
 
 if [ ! -f $outDir/checkpoints/checkpoint-4.flag ]; then
-	# Run Trim_Galore (paired-end or single-end)
+	singleFile_base=${singleFile##*/}    # Remove pathname
+	singleFile_basename="$( cut -d '.' -f 1 <<< "$singleFile_base" )" # Get filename before first occurence of .
+	if [[ $singleFile == *".gz"* ]]; then
+		suffix="fq.gz"
+	else
+		suffix="fq"
+	fi
+	printf -v trimmedFile "%s_trimmed.%s" "$singleFile_basename" "$suffix"
+	printf -v fastqcFile "%s_trimmed_fastqc.html" "$singleFile_basename"
+	
+	# Run Trim_Galore
 	string_padder "Trimming reads using Trim Galore"
-	if [[ $pairedEnd = "True" ]]; then
-		
-		#echo "
-		#Input: paired-end read files
-		#"
-		
-		string_padder "This version of the pipeline is under construction. Please treat your paired-end files as single-end for now."
-		#exit 1
+	if [ ! -f $outDir/trim_galore_output/$trimmedFile ]; then
+		bin/trim_galore --stringency 10 --length 15 -o $outDir/trim_galore_output/ $singleFile
+		string_padder "Trimming complete. Moving on to FastQC analysis"
+	else
+		string_padder "Found trimmed file. Skipping this step"
+	fi
+	
+	# Run FastQC on newly trimmed file
+	if [ ! -f $outDir/FastQC/$fastqcFile ]; then
+		fastqc -o $outDir/FastQC/ -f fastq $outDir/trim_galore_output/$trimmedFile
+		string_padder "Finished running FastQC. Moving onto alignment to tRNA database"
+	else
+		string_padder "Found FastQC file. Skipping this step."
+	fi
 
-		#file1_base=${file1##*/}    # Remove pathname
-		#basename1="$( cut -d '.' -f 1 <<< "$file1_base" )" # Get filename before first occurence of .
-		#suffix1="$( cut -d '.' -f 2- <<< "$file1_base" )" # Get full file suffix/entension
-		#file2_base=${file2##*/}    # Remove pathname
-		#basename2="$( cut -d '.' -f 1 <<< "$file2_base" )" # Get filename before first occurence of .
-		#suffix2="$( cut -d '.' -f 2- <<< "$file2_base" )" # Get full file suffix/entension
-		#suffix=$suffix1
-
-		# Run Trim_Galore on paired-end read files
-		#trim_galore --stringency 10 --length 15 -o $outDir/trim_galore_output/ --paired $file1 $file2
-		#printf -v trimmedFile1 "%s_val_1.%s" "$basename1" "$suffix1"
-		#printf -v trimmedFile2 "%s_val_2.%s" "$basename2" "$suffix2"
-		#string_padder "Trimming complete. Moving on to FastQC analysis"
-
-		# Run FastQC on newly trimmed files
-		#fastqc -o $outDir/FastQC/ -f fastq $outDir/trim_galore_output/$trimmedFile1 $outDir/trim_galore_output/$trimmedFile2
-		#string_padder "Finished running FastQC. Moving onto alignment to tRNA database"
-
-		# Align trimmed reads to tRNA database using HISAT2/Tophat2
-		#if [[ $oldAligner = "yes" ]]; then
-		#	tophat2 -p $threads -x 1 -o $outDir/tRNA-alignment/ DBs/bowtie2_index/hg19-wholetRNA-CCA_cdhit $outDir/trim_galore_output/$trimmedFile1 $outDir/trim_galore_output/$trimmedFile2
-			# Tophat2 using HG38 genome below:
-			#tophat2 -p $threads -x 1 -o $outDir/tRNA-alignment/ DBs/bowtie2_index/hg38-tRNAs_CCA $outDir/trim_galore_output/$trimmedFile1 $outDir/trim_galore_output/$trimmedFile2
-		#	bedtools bamtofastq -i $outDir/tRNA-alignment/unmapped.bam -fq $outDir/tRNA-alignment/unmapped_1.fastq -fq2 $outDir/tRNA-alignment/unmapped_2.fastq
-		#else
-		#	echo $trimmedFile1
-			#hisat2 -p $threads -x DBs/hisat2_index/hg19-wholetRNA-CCA_cdhit -1 $outDir/trim_galore_output/$trimmedFile1 -2 $outDir/trim_galore_output/$trimmedFile2 -S $outDir/tRNA-alignment/aligned_tRNAdb.sam
-		#fi
-
-	elif [[ $pairedEnd = "False" ]]; then
-
-		echo "
-		Input: single-end read file
-		"
-			
-		singleFile_base=${singleFile##*/}    # Remove pathname
-		singleFile_basename="$( cut -d '.' -f 1 <<< "$singleFile_base" )" # Get filename before first occurence of .
-		if [[ $singleFile == *".gz"* ]]; then
-			suffix="fq.gz"
+	# Align trimmed reads to tRNA database using HISAT2/Tophat2
+	
+	if [ ! -f $outDir/tRNA-alignment/align_summary.txt ]; then
+		string_padder "Running tRNA/snomiRNA alignment step..."
+		hisat2 -p $threads -x $ncRNADB -U $outDir/trim_galore_output/$trimmedFile -S $outDir/tRNA-alignment/aligned_tRNAdb.sam --summary-file $outDir/tRNA-alignment/align_summary.txt --un $outDir/tRNA-alignment/unmapped.fastq
+		grep "reads" $outDir/tRNA-alignment/align_summary.txt > $outDir/Stats.log
+		if [ -f $outDir/tRNA-alignment/aligned_tRNAdb.sam ]; then  #If hisat2 successfully mapped reads, convert to bam and index
+			### Split the resulting SAM file into reads aligned to tRNAs and snomiRNAs
+			grep ^@ $outDir/tRNA-alignment/aligned_tRNAdb.sam > $outDir/tRNA-alignment/SamHeader.sam &
+			grep ENS $outDir/tRNA-alignment/aligned_tRNAdb.sam > $outDir/tRNA-alignment/snomiRNAs.sam &
+			grep -v ENS $outDir/tRNA-alignment/aligned_tRNAdb.sam > $outDir/tRNA-alignment/tiRNAs_aligned.sam &
+			wait
+			cat $outDir/tRNA-alignment/SamHeader.sam $outDir/tRNA-alignment/snomiRNAs.sam > $outDir/tRNA-alignment/snomiRNAs_aligned.sam
+			wait
+			samtools view -bS $outDir/tRNA-alignment/tiRNAs_aligned.sam > $outDir/tRNA-alignment/accepted_hits_unsorted.bam
+			samtools sort $outDir/tRNA-alignment/accepted_hits_unsorted.bam > $outDir/tRNA-alignment/accepted_hits.bam 
+			samtools index $outDir/tRNA-alignment/accepted_hits.bam &
+			cp $outDir/tRNA-alignment/unmapped.fastq $outDir/tRNA-alignment/$trimmedFile
+			### Move snomiRNA BAM to directory
+			samtools view -bS $outDir/tRNA-alignment/snomiRNAs.sam > $outDir/snomiRNA-alignment/accepted_hits_unsorted.bam
+			samtools sort $outDir/snomiRNA-alignment/accepted_hits_unsorted.bam > $outDir/snomiRNA-alignment/accepted_hits.bam 
+			samtools index $outDir/snomiRNA-alignment/accepted_hits.bam &
+			rm $outDir/tRNA-alignment/SamHeader.sam $outDir/tRNA-alignment/snomiRNAs.sam $outDir/tRNA-alignment/aligned_tRNAdb.sam &	
 		else
-			suffix="fq"
+			echo "
+			Alignment output not found. Reads likely did not map to tRNA/sno/miRNA reference. 
+			Using trimmed reads from Trim_Galore output.
+			"
+			cp $outDir/trim_galore_output/$trimmedFile $outDir/tRNA-alignment/$trimmedFile
 		fi
-		printf -v trimmedFile "%s_trimmed.%s" "$singleFile_basename" "$suffix"
-		printf -v fastqcFile "%s_trimmed_fastqc.html" "$singleFile_basename"
-		
-		# Run Trim_Galore on single read file
-		if [ ! -f $outDir/trim_galore_output/$trimmedFile ]; then
-			bin/trim_galore --stringency 10 --length 15 -o $outDir/trim_galore_output/ $singleFile
-			string_padder "Trimming complete. Moving on to FastQC analysis"
-		else
-			string_padder "Found trimmed file. Skipping this step"
-		fi
-		
-		# Run FastQC on newly trimmed file
-		if [ ! -f $outDir/FastQC/$fastqcFile ]; then
-			# Put fastqcFile definition here?
-			fastqc -o $outDir/FastQC/ -f fastq $outDir/trim_galore_output/$trimmedFile
-			string_padder "Finished running FastQC. Moving onto alignment to tRNA database"
-		else
-			string_padder "Found FastQC file. Skipping this step."
-		fi
-
-		# Align trimmed reads to tRNA database using HISAT2/Tophat2
-		
-		if [ ! -f $outDir/tRNA-alignment/align_summary.txt ]; then
-			string_padder "Running tRNA/snomiRNA alignment step..."
-			hisat2 -p $threads -x $ncRNADB -U $outDir/trim_galore_output/$trimmedFile -S $outDir/tRNA-alignment/aligned_tRNAdb.sam --summary-file $outDir/tRNA-alignment/align_summary.txt --un $outDir/tRNA-alignment/unmapped.fastq
-			grep "reads" $outDir/tRNA-alignment/align_summary.txt > $outDir/Stats.log
-			if [ -f $outDir/tRNA-alignment/aligned_tRNAdb.sam ]; then  #If hisat2 successfully mapped reads, convert to bam and index
-				### Split the resulting SAM file into reads aligned to tRNAs and snomiRNAs
-				grep ^@ $outDir/tRNA-alignment/aligned_tRNAdb.sam > $outDir/tRNA-alignment/SamHeader.sam &
-				grep ENS $outDir/tRNA-alignment/aligned_tRNAdb.sam > $outDir/tRNA-alignment/snomiRNAs.sam &
-				grep -v ENS $outDir/tRNA-alignment/aligned_tRNAdb.sam > $outDir/tRNA-alignment/tiRNAs_aligned.sam &
-				wait
-				cat $outDir/tRNA-alignment/SamHeader.sam $outDir/tRNA-alignment/snomiRNAs.sam > $outDir/tRNA-alignment/snomiRNAs_aligned.sam
-				wait
-				samtools view -bS $outDir/tRNA-alignment/tiRNAs_aligned.sam > $outDir/tRNA-alignment/accepted_hits_unsorted.bam
-				samtools sort $outDir/tRNA-alignment/accepted_hits_unsorted.bam > $outDir/tRNA-alignment/accepted_hits.bam 
-				samtools index $outDir/tRNA-alignment/accepted_hits.bam &
-				cp $outDir/tRNA-alignment/unmapped.fastq $outDir/tRNA-alignment/$trimmedFile
-				### Move snomiRNA BAM to directory
-				samtools view -bS $outDir/tRNA-alignment/snomiRNAs.sam > $outDir/snomiRNA-alignment/accepted_hits_unsorted.bam
-				samtools sort $outDir/snomiRNA-alignment/accepted_hits_unsorted.bam > $outDir/snomiRNA-alignment/accepted_hits.bam 
-				samtools index $outDir/snomiRNA-alignment/accepted_hits.bam &
-				rm $outDir/tRNA-alignment/SamHeader.sam $outDir/tRNA-alignment/snomiRNAs.sam $outDir/tRNA-alignment/aligned_tRNAdb.sam &	
-			else
-				echo "
-				Alignment output not found. Reads likely did not map to tRNA/sno/miRNA reference. 
-				Using trimmed reads from Trim_Galore output.
-				"
-				cp $outDir/trim_galore_output/$trimmedFile $outDir/tRNA-alignment/$trimmedFile
-			fi
-		else
-			string_padder "Found tRNA/sno/miRNA alignment file. Skipping this step."
-		fi
-
+	else
+		string_padder "Found tRNA/sno/miRNA alignment file. Skipping this step."
+	fi
 		if [ ! -f $outDir/mRNA-ncRNA-alignment/align_summary.txt ]; then # If this file was not generated, try and align the unmapped reads from the tRNA alignment	
 			string_padder "Running mRNA/ncRNA alignment step..."
 			hisat2 -p $threads -x $genomeDB $outDir/tRNA-alignment/$trimmedFile -S $outDir/mRNA-ncRNA-alignment/aligned.sam --summary-file $outDir/mRNA-ncRNA-alignment/align_summary.txt --un $outDir/mRNA-ncRNA-alignment/unmapped.fastq
@@ -373,7 +316,6 @@ if [ ! -f $outDir/checkpoints/checkpoint-4.flag ]; then
 		fi
 	fi
 	touch $outDir/checkpoints/checkpoint-4.flag
-fi
 
 # Produce read counts for the three alignment steps. If one of the alignment steps failed, use an empty htseq-count output file.
 string_padder "Alignment steps complete. Moving on to read-counting using FCount-count"
@@ -465,5 +407,3 @@ echo "Finised analysing "$singleFile" on $(date)" # Print pipeline end-time
 echo "_____________________________________________________________________________________________________________________
 
 "
-
-
