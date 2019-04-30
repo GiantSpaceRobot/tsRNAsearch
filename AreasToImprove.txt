@@ -1,0 +1,8 @@
+# Areas that would benefit from improvements
+
+* Alignment (is it worth testing other aligners? e.g. STAR vs HISAT2?)
+* Improvements to Cleavage or Distribution algorithms
+  * Introduction of p-value calculation for both algorithms; what is a sensible null hypothesis?
+* Suggestions of new algorithms to differentiate between control and treatment conditions?
+* Code optimisation? Identification of bottlenecks such as plot generation (quite slow)
+* Packaging of scripts more efficiently?

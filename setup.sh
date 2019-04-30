@@ -112,12 +112,12 @@ This will take approx. 1 hour per genome (downloading and indexing genomes is a 
 "
 
 # curl
-echo "Looking for Curl..."
-if ! [ -x "$(command -v curl)" ]; then
-	sudo apt install curl
-else
-	echo "Curl already installed"
-fi
+#echo "Looking for Curl..."
+#if ! [ -x "$(command -v curl)" ]; then
+#	sudo apt install curl
+#else
+#	echo "Curl already installed"
+#fi
 
 # python 
 echo "Looking for Python..."

@@ -88,12 +88,12 @@ fi
 #fi
 
 ### If the pathname specified by $expFile does not begin with a slash, quit (we need full path name)
-if [ "$expFile" ]; then
-    if [[ ! $expFile = /* ]]; then
-        echo "Error: File path must absolute. Please specify the full path for the experiment layout file."
-        exit 1
-    fi
-fi
+#if [ "$expFile" ]; then
+#    if [[ ! $expFile = /* ]]; then
+#        echo "Error: File path must absolute. Please specify the full path for the experiment layout file."
+#        exit 1
+#    fi
+#fi
 
 ### Get working dir to recreate full path for R script execution
 myPath=$(pwd) 
@@ -159,7 +159,7 @@ for f in $inDir/*; do
 	filename="$( cut -d '.' -f 1 <<< "$file_base" )" 
 	analysis="Beginning analysis of $filename using tsRNAsearch"
 	string_padder $analysis
-	tsRNAsearch.sh -g "$genome" -s "$f" -o "$outDir/$filename" -p "$threads" -A "$Plots" #>> "$outDir"/"$filename"_tiRNApipeline.log
+	tsRNAsearch.sh -g "$genome" -s "$f" -o "$outDir/$filename" -t "$threads" -A "$Plots" #>> "$outDir"/"$filename"_tiRNApipeline.log
 	wait
 	cat $outDir/$filename/FCount-count-output/*.count | grep -v ^__ | sort -k1,1 > $outDir/Data/Intermediate-files/$filename.all-features.count	
 	readsMapped=$(awk '{sum+=$2} END{print sum;}' $outDir/Data/Intermediate-files/$filename.all-features.count)
