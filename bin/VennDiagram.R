@@ -27,11 +27,6 @@ if(class(input2)=="try-error"){
   PC <- as.vector(input3[,1])
 }
 
-
-#input1 <- read.table("/home/paul/Documents/Pipelines/tirna-pipeline/subset6/Results/Data/DE_Results/DESeq2/DEGs_names-only.txt")
-#input2 <- read.table("/home/paul/Documents/Pipelines/tirna-pipeline/subset6/Results/Data/Intermediate-files/Distribution-score/High-distribution-scores_feature-names.txt")
-#input3 <- read.table("/home/paul/Documents/Pipelines/tirna-pipeline/subset6/Results/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt")
-
 pdf(file = paste0(args[4], ".VennDiagram.pdf"), 
     width = 8, 
     height = 8)
@@ -39,7 +34,6 @@ venn(list(Differentially.Expressed=input1$V1,
           High.Distribution=input2$V1,
           Potentially.Cleaved=input3$V1))
 dev.off()
-
 
 intersect.DE.HD <- Reduce(intersect, list(DE, HD))
 intersect.PC.HD <- Reduce(intersect, list(PC, HD))
