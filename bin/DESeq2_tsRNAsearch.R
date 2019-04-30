@@ -1,10 +1,10 @@
 #!/usr/bin/env Rscript
 
-## Script name: DESeq2_tiRNA-pipeline.R
+## Script name: DESeq2_tsRNAsearch.R
 ##
-## Purpose of script: Carry out differential gene expression analysis of sncRNAs/tiRNAs from small RNA-seq data
+## Purpose of script: Carry out differential gene expression analysis of ncRNAs/genes from small RNA-seq data
 ##
-## Author: Dr. Paul Donovan
+## Author: Dr Paul Donovan
 ##
 ## Date Created: 2-1-2018 (2nd of Jan 2018)
 ##
@@ -59,11 +59,9 @@ if (length(args)==0) {
   }
 } else if (length(args)==2) {     # If a .csv and file path were provided:
   experiment <- args[1]
-  #experiment <- "/home/paul/Documents/predicted_exp_layout.csv"
   exp.file <- read.csv(experiment, header=FALSE)
   setwd(args[2])
-  #setwd("/home/paul/Documents/Pipelines/tsRNAsearch/Full-SimData/Results/Data/Intermediate-files/")
-  
+
   ### Count the number of factor levels in the provided .csv file (this should be 2)
   lvls <- levels(exp.file$V2)
   if (length(lvls)==2) {
@@ -79,14 +77,12 @@ if (length(args)==0) {
     dir.create("DE_Results")
   }
   file.CSV <- read.csv(args[1], header=FALSE)
-  #file.CSV <- read.csv("/home/paul/Documents/Data/Marion_Epilepsy-data/Control_vs_PreSeizure/Layout2.csv", header=FALSE)
   lvls.df <- as.data.frame(table(file.CSV$V2))
   ReplicateNumber1 <- lvls.df[1,2]
   Condition1 <- toString(lvls.df[1,1])
   ReplicateNumber2 <- lvls.df[2,2]
   Condition2 <- toString(lvls.df[2,1])
   myPath <- args[2]
-  #myPath <- "/home/paul/Documents/Pipelines/tsRNAsearch/Full_Marion_Epilepsy/Results/Data/Intermediate-files/"
   message("A .csv file was provided, and the directory provided exists.")
 }
 
@@ -115,7 +111,6 @@ if(ReplicateNumber1==1) {
   file.create("DE_Results/DESeq2/upregulated.csv")
   file.create("DE_Results/DESeq2/downregulated.csv")
   quit.message <- "Replicate number is 1, cannot continue DESeq2 analysis"
-  #print(quit.message)
   stop(quit.message)
 }
 
@@ -131,7 +126,6 @@ library(DESeq2)
 library(gplots)
 library(ggplot2)
 
-
 #------------------------------#
 #    Define DESeq2 function    #
 #------------------------------#
@@ -140,9 +134,7 @@ library(ggplot2)
 DESeq2.function <- function(path.to.files){
   
   ### Create checkpoints (for simple degbugging) 
-  count <- 0
-  count <- count + 1
-  print(paste0("Checkpoint ", count))
+  print("Checkpoint 1")
   
   ### Read files
   path.to.files <- myPath
@@ -157,8 +149,7 @@ DESeq2.function <- function(path.to.files){
   rownames(cDataAll) <- file[,1]
   
   ### checkpoint
-  count <- count + 1
-  print(paste0("Checkpoint ", count))
+  print("Checkpoint 2")
   
   ###
   groups <- factor(x=c(rep(Condition1, ReplicateNumber1), rep(Condition2, ReplicateNumber2)), levels=c(Condition1, Condition2))
@@ -168,8 +159,7 @@ DESeq2.function <- function(path.to.files){
   colTy <- c(rep(1:ReplicateNumber1, ReplicateNumber1), rep(1:ReplicateNumber2, ReplicateNumber2))
   
   ### checkpoint
-  count <- count + 1
-  print(paste0("Checkpoint ", count))
+  print("Checkpoint 3")
 
   ### Create a density plot
   pdf(paste0("DE_Results/", ResultsFile, "_Density-Plot.pdf"),
@@ -188,8 +178,7 @@ DESeq2.function <- function(path.to.files){
   garbage <- dev.off()
   
   ### checkpoint
-  count <- count + 1
-  print(paste0("Checkpoint ", count))
+  print("Checkpoint 4")
 
   ### Differential Expression Analysis
   colData <- DataFrame(condition=groups) 
@@ -199,13 +188,33 @@ DESeq2.function <- function(path.to.files){
   res <- res[order(res$log2FoldChange, decreasing=TRUE),]
   
   ### checkpoint
-  count <- count + 1
-  print(paste0("Checkpoint ", count))
+  print("Checkpoint 5")
 
   ### Carry out a log transformation of the DESeq2 data set
-  #rld <- rlogTransformation(dds)
-  rld <- varianceStabilizingTransformation(dds)   # I hit an error with simulated data and rlog transformation. Michael Love (author) recommended VST https://support.bioconductor.org/p/100927/
-
+  tryCatch({
+    print("Attempting variance stabilising transformation of dds")
+    #I hit an error with simulated data and rlog transformation. Michael Love (author) recommended VST https://support.bioconductor.org/p/100927/
+    rld <- varianceStabilizingTransformation(dds)
+  }, warning = function(w) {
+    # Do nothing
+  }, error = function(e) {
+    print("Failed variance stabilising transformation. Using rlog transformation instead")
+    rld <- rlogTransformation(dds)
+  }, finally = {
+    # Do nothing
+  })
+  if(exists("rld")==TRUE){
+    #Do nothing
+  } else {
+    print("
+          
+          WARNING: COULD NOT TRANSFORM COUNT DATA AS IT IS IRREGULAR. CONTINUING DESEQ2 ANALYSIS USING UNTRANSFORMED DATA.
+          
+          ")
+    rld <- dds
+    #stop("Error: Could not apply transformation to data. Aborted DESeq2 analysis.")
+  }
+  
   ### Create a histogram
   pdf(paste0("DE_Results/", ResultsFile, "_Histogram.pdf"),
       width=12,height=12)
@@ -213,8 +222,7 @@ DESeq2.function <- function(path.to.files){
   garbage <- dev.off()
   
   ### checkpoint
-  count <- count + 1
-  print(paste0("Checkpoint ", count))
+  print("Checkpoint 6")
 
   ### Convert the rld transformation into a matrix
   rld.matrx <- assay(rld)   
@@ -237,8 +245,7 @@ DESeq2.function <- function(path.to.files){
   garbage <- dev.off()
   
   ### checkpoint
-  count <- count + 1
-  print(paste0("Checkpoint ", count))
+  print("Checkpoint 7")
   
   ### Principal component analysis
   #Tpm PCA plot (not DESeq2)
@@ -268,25 +275,7 @@ DESeq2.function <- function(path.to.files){
   #par(mar=c(5, 4, 4, 2) + 0.1)
   
   ### checkpoint
-  count <- count + 1
-  print(paste0("Checkpoint ", count))
-
-  # PCA plot that won't print to PDF
-  #pdf(paste0("DE_Results/", ResultsFile, "_PCA.pdf"),
-  #    width=12,height=12)
-  #pcaData <- plotPCA(rld, returnData=TRUE)
-  #percentVar <- round(100 * attr(pcaData, "percentVar"))
-  #ggplot(pcaData, aes(PC1, PC2, colour=name)) +
-  #  geom_point(size=3) +
-  #  geom_text(aes(label=group),hjust=-0.25, vjust=0.2) +
-  #  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
-  #  ylab(paste0("PC2: ",percentVar[2],"% variance")) +
-  #  coord_fixed()
-  #garbage <- dev.off()
-  
-  ### checkpoint
-  count <- count + 1
-  print(paste0("Checkpoint ", count))
+  print("Checkpoint 8")
 
   write.csv(as.data.frame(res), file=paste0("DE_Results/DESeq2/", ResultsFile, "_DESeq2-output.csv"))
   
@@ -295,7 +284,6 @@ DESeq2.function <- function(path.to.files){
   
   down <- (res[!is.na(res$padj) & res$padj <= 0.1 &    
                         res$log2FoldChange <= -0.5, ])    
-  #print(sprintf("%s genes up-regulated, %s genes down-regulated", length(up), length(down)))
   write.table(x = up,
               sep = ",",
               file=paste0("DE_Results/DESeq2/", ResultsFile, "_DESeq2-output-upregulated.csv"), 
@@ -310,8 +298,7 @@ DESeq2.function <- function(path.to.files){
               quote = FALSE)
   
   ### checkpoint
-  count <- count + 1
-  print(paste0("Checkpoint ", count))
+  print("Checkpoint 9")
 
   }
 

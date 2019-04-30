@@ -224,7 +224,6 @@ fi
 # Check if the output directory exists. If not, create it
 string_padder "Creating directory structure"
 mkdir -p $outDir
-mkdir -p $outDir/checkpoints
 mkdir -p $outDir/trim_galore_output
 mkdir -p $outDir/FastQC
 mkdir -p $outDir/tRNA-alignment
@@ -234,143 +233,132 @@ mkdir -p $outDir/FCount-count-output
 mkdir -p $outDir/FCount-to-RPM
 mkdir -p $outDir/Data_and_Plots
 
-if [ ! -f $outDir/checkpoints/checkpoint-4.flag ]; then
-	singleFile_base=${singleFile##*/}    # Remove pathname
-	singleFile_basename="$( cut -d '.' -f 1 <<< "$singleFile_base" )" # Get filename before first occurence of .
-	if [[ $singleFile == *".gz"* ]]; then
-		suffix="fq.gz"
-	else
-		suffix="fq"
-	fi
-	printf -v trimmedFile "%s_trimmed.%s" "$singleFile_basename" "$suffix"
-	printf -v fastqcFile "%s_trimmed_fastqc.html" "$singleFile_basename"
-	
-	# Run Trim_Galore
-	string_padder "Trimming reads using Trim Galore"
-	if [ ! -f $outDir/trim_galore_output/$trimmedFile ]; then
-		bin/trim_galore --stringency 10 --length 15 -o $outDir/trim_galore_output/ $singleFile
-		string_padder "Trimming complete. Moving on to FastQC analysis"
-	else
-		string_padder "Found trimmed file. Skipping this step"
-	fi
-	
-	# Run FastQC on newly trimmed file
-	if [ ! -f $outDir/FastQC/$fastqcFile ]; then
-		fastqc -o $outDir/FastQC/ -f fastq $outDir/trim_galore_output/$trimmedFile
-		string_padder "Finished running FastQC. Moving onto alignment to tRNA database"
-	else
-		string_padder "Found FastQC file. Skipping this step."
-	fi
+singleFile_base=${singleFile##*/}    # Remove pathname
+singleFile_basename="$( cut -d '.' -f 1 <<< "$singleFile_base" )" # Get filename before first occurence of .
+if [[ $singleFile == *".gz"* ]]; then
+	suffix="fq.gz"
+else
+	suffix="fq"
+fi
+printf -v trimmedFile "%s_trimmed.%s" "$singleFile_basename" "$suffix"
+printf -v fastqcFile "%s_trimmed_fastqc.html" "$singleFile_basename"
 
-	# Align trimmed reads to tRNA database using HISAT2/Tophat2
-	
-	if [ ! -f $outDir/tRNA-alignment/align_summary.txt ]; then
-		string_padder "Running tRNA/snomiRNA alignment step..."
-		hisat2 -p $threads -x $ncRNADB -U $outDir/trim_galore_output/$trimmedFile -S $outDir/tRNA-alignment/aligned_tRNAdb.sam --summary-file $outDir/tRNA-alignment/align_summary.txt --un $outDir/tRNA-alignment/unmapped.fastq
-		grep "reads" $outDir/tRNA-alignment/align_summary.txt > $outDir/Stats.log
-		if [ -f $outDir/tRNA-alignment/aligned_tRNAdb.sam ]; then  #If hisat2 successfully mapped reads, convert to bam and index
-			### Split the resulting SAM file into reads aligned to tRNAs and snomiRNAs
-			grep ^@ $outDir/tRNA-alignment/aligned_tRNAdb.sam > $outDir/tRNA-alignment/SamHeader.sam &
-			grep ENS $outDir/tRNA-alignment/aligned_tRNAdb.sam > $outDir/tRNA-alignment/snomiRNAs.sam &
-			grep -v ENS $outDir/tRNA-alignment/aligned_tRNAdb.sam > $outDir/tRNA-alignment/tiRNAs_aligned.sam &
-			wait
-			cat $outDir/tRNA-alignment/SamHeader.sam $outDir/tRNA-alignment/snomiRNAs.sam > $outDir/tRNA-alignment/snomiRNAs_aligned.sam
-			wait
-			samtools view -bS $outDir/tRNA-alignment/tiRNAs_aligned.sam > $outDir/tRNA-alignment/accepted_hits_unsorted.bam
-			samtools sort $outDir/tRNA-alignment/accepted_hits_unsorted.bam > $outDir/tRNA-alignment/accepted_hits.bam 
-			samtools index $outDir/tRNA-alignment/accepted_hits.bam &
-			cp $outDir/tRNA-alignment/unmapped.fastq $outDir/tRNA-alignment/$trimmedFile
-			### Move snomiRNA BAM to directory
-			samtools view -bS $outDir/tRNA-alignment/snomiRNAs.sam > $outDir/snomiRNA-alignment/accepted_hits_unsorted.bam
-			samtools sort $outDir/snomiRNA-alignment/accepted_hits_unsorted.bam > $outDir/snomiRNA-alignment/accepted_hits.bam 
-			samtools index $outDir/snomiRNA-alignment/accepted_hits.bam &
-			rm $outDir/tRNA-alignment/SamHeader.sam $outDir/tRNA-alignment/snomiRNAs.sam $outDir/tRNA-alignment/aligned_tRNAdb.sam &	
-		else
-			echo "
-			Alignment output not found. Reads likely did not map to tRNA/sno/miRNA reference. 
-			Using trimmed reads from Trim_Galore output.
-			"
-			cp $outDir/trim_galore_output/$trimmedFile $outDir/tRNA-alignment/$trimmedFile
-		fi
+# Run Trim_Galore
+string_padder "Trimming reads using Trim Galore"
+if [ ! -f $outDir/trim_galore_output/$trimmedFile ]; then
+	bin/trim_galore --stringency 10 --length 15 -o $outDir/trim_galore_output/ $singleFile
+	string_padder "Trimming complete. Moving on to FastQC analysis"
+else
+	string_padder "Found trimmed file. Skipping this step"
+fi
+
+# Run FastQC on newly trimmed file
+if [ ! -f $outDir/FastQC/$fastqcFile ]; then
+	fastqc -o $outDir/FastQC/ -f fastq $outDir/trim_galore_output/$trimmedFile
+	string_padder "Finished running FastQC. Moving onto alignment to tRNA database"
+else
+	string_padder "Found FastQC file. Skipping this step."
+fi
+
+# Align trimmed reads to tRNA database using HISAT2/Tophat2
+
+if [ ! -f $outDir/tRNA-alignment/align_summary.txt ]; then
+	string_padder "Running tRNA/snomiRNA alignment step..."
+	hisat2 -p $threads -x $ncRNADB -U $outDir/trim_galore_output/$trimmedFile -S $outDir/tRNA-alignment/aligned_tRNAdb.sam --summary-file $outDir/tRNA-alignment/align_summary.txt --un $outDir/tRNA-alignment/unmapped.fastq
+	grep "reads" $outDir/tRNA-alignment/align_summary.txt > $outDir/Stats.log
+	if [ -f $outDir/tRNA-alignment/aligned_tRNAdb.sam ]; then  #If hisat2 successfully mapped reads, convert to bam and index
+		### Split the resulting SAM file into reads aligned to tRNAs and snomiRNAs
+		grep ^@ $outDir/tRNA-alignment/aligned_tRNAdb.sam > $outDir/tRNA-alignment/SamHeader.sam &
+		grep ENS $outDir/tRNA-alignment/aligned_tRNAdb.sam > $outDir/tRNA-alignment/snomiRNAs.sam &
+		grep -v ENS $outDir/tRNA-alignment/aligned_tRNAdb.sam > $outDir/tRNA-alignment/tiRNAs_aligned.sam &
+		wait
+		cat $outDir/tRNA-alignment/SamHeader.sam $outDir/tRNA-alignment/snomiRNAs.sam > $outDir/tRNA-alignment/snomiRNAs_aligned.sam
+		wait
+		samtools view -bS $outDir/tRNA-alignment/tiRNAs_aligned.sam > $outDir/tRNA-alignment/accepted_hits_unsorted.bam
+		samtools sort $outDir/tRNA-alignment/accepted_hits_unsorted.bam > $outDir/tRNA-alignment/accepted_hits.bam 
+		samtools index $outDir/tRNA-alignment/accepted_hits.bam &
+		cp $outDir/tRNA-alignment/unmapped.fastq $outDir/tRNA-alignment/$trimmedFile
+		### Move snomiRNA BAM to directory
+		samtools view -bS $outDir/tRNA-alignment/snomiRNAs.sam > $outDir/snomiRNA-alignment/accepted_hits_unsorted.bam
+		samtools sort $outDir/snomiRNA-alignment/accepted_hits_unsorted.bam > $outDir/snomiRNA-alignment/accepted_hits.bam 
+		samtools index $outDir/snomiRNA-alignment/accepted_hits.bam &
+		rm $outDir/tRNA-alignment/SamHeader.sam $outDir/tRNA-alignment/snomiRNAs.sam $outDir/tRNA-alignment/aligned_tRNAdb.sam &	
 	else
-		string_padder "Found tRNA/sno/miRNA alignment file. Skipping this step."
+		echo "
+		Alignment output not found. Reads likely did not map to tRNA/sno/miRNA reference. 
+		Using trimmed reads from Trim_Galore output.
+		"
+		cp $outDir/trim_galore_output/$trimmedFile $outDir/tRNA-alignment/$trimmedFile
 	fi
-		if [ ! -f $outDir/mRNA-ncRNA-alignment/align_summary.txt ]; then # If this file was not generated, try and align the unmapped reads from the tRNA alignment	
-			string_padder "Running mRNA/ncRNA alignment step..."
-			hisat2 -p $threads -x $genomeDB $outDir/tRNA-alignment/$trimmedFile -S $outDir/mRNA-ncRNA-alignment/aligned.sam --summary-file $outDir/mRNA-ncRNA-alignment/align_summary.txt --un $outDir/mRNA-ncRNA-alignment/unmapped.fastq
-			if [ -f $outDir/mRNA-ncRNA-alignment/aligned.sam ]; then  #If hisat2 successfully mapped reads, convert the unmapped to FASTQ
-				samtools view -bS $outDir/mRNA-ncRNA-alignment/aligned.sam > $outDir/mRNA-ncRNA-alignment/accepted_hits_unsorted.bam
-				rm $outDir/mRNA-ncRNA-alignment/aligned.sam &
-				samtools sort $outDir/mRNA-ncRNA-alignment/accepted_hits_unsorted.bam > $outDir/mRNA-ncRNA-alignment/accepted_hits.bam
-				samtools index $outDir/mRNA-ncRNA-alignment/accepted_hits.bam &
-				cp $outDir/mRNA-ncRNA-alignment/unmapped.fastq $outDir/mRNA-ncRNA-alignment/UnmappedReads.fq &
-			else
-				echo "
-				mRNA/ncRNA alignment output not found. Reads likely did not map to mRNA/ncRNA reference. 
-				"
-				cp $outDir/tRNA-alignment/$trimmedFile $outDir/mRNA-ncRNA-alignment/$trimmedFile
-				string_padder "$unmappedReadCount"
-			fi
-		else
-			string_padder "Found mRNA/ncRNA alignment file. Skipping this step"
-		fi
+else
+	string_padder "Found tRNA/sno/miRNA alignment file. Skipping this step."
+fi
+if [ ! -f $outDir/mRNA-ncRNA-alignment/align_summary.txt ]; then # If this file was not generated, try and align the unmapped reads from the tRNA alignment	
+	string_padder "Running mRNA/ncRNA alignment step..."
+	hisat2 -p $threads -x $genomeDB $outDir/tRNA-alignment/$trimmedFile -S $outDir/mRNA-ncRNA-alignment/aligned.sam --summary-file $outDir/mRNA-ncRNA-alignment/align_summary.txt --un $outDir/mRNA-ncRNA-alignment/unmapped.fastq
+	if [ -f $outDir/mRNA-ncRNA-alignment/aligned.sam ]; then  #If hisat2 successfully mapped reads, convert the unmapped to FASTQ
+		samtools view -bS $outDir/mRNA-ncRNA-alignment/aligned.sam > $outDir/mRNA-ncRNA-alignment/accepted_hits_unsorted.bam
+		rm $outDir/mRNA-ncRNA-alignment/aligned.sam &
+		samtools sort $outDir/mRNA-ncRNA-alignment/accepted_hits_unsorted.bam > $outDir/mRNA-ncRNA-alignment/accepted_hits.bam
+		samtools index $outDir/mRNA-ncRNA-alignment/accepted_hits.bam &
+		cp $outDir/mRNA-ncRNA-alignment/unmapped.fastq $outDir/mRNA-ncRNA-alignment/UnmappedReads.fq &
+	else
+		echo "
+		mRNA/ncRNA alignment output not found. Reads likely did not map to mRNA/ncRNA reference. 
+		"
+		cp $outDir/tRNA-alignment/$trimmedFile $outDir/mRNA-ncRNA-alignment/$trimmedFile
+		string_padder "$unmappedReadCount"
 	fi
-	touch $outDir/checkpoints/checkpoint-4.flag
+else
+	string_padder "Found mRNA/ncRNA alignment file. Skipping this step"
+fi
 
 # Produce read counts for the three alignment steps. If one of the alignment steps failed, use an empty htseq-count output file.
 string_padder "Alignment steps complete. Moving on to read-counting using FCount-count"
 
-if [ ! -f $outDir/checkpoints/checkpoint-5.flag ]; then
-	
-	# Count for alignment step 3
-	if [ ! -f $outDir/mRNA-ncRNA-alignment/accepted_hits.bam ]; then
-		echo "
-	No alignment file found for mRNA/ncRNA alignment. Using blank count file instead
-	"
-		cp $empty_mRNAs $outDir/FCount-count-output/mRNA-ncRNA-alignment.count &
-	else
-		echo "
-	Counting mRNA/ncRNA alignment reads
-	"
-		bin/featureCounts -T $featureCountthreads -a $genomeGTF -o $outDir/FCount-count-output/mRNA-ncRNA-alignment.fcount $outDir/mRNA-ncRNA-alignment/accepted_hits.bam
-		grep -v featureCounts $outDir/FCount-count-output/mRNA-ncRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/FCount-count-output/mRNA-ncRNA-alignment.count
-	fi
-	
-	# Count for alignment step 2
-	if [ ! -f $outDir/snomiRNA-alignment/accepted_hits.bam ]; then
-		echo "
-	No alignment file found for sno/miRNA alignment. Using blank count file instead
-	"
-		cp $empty_snomiRNAs $outDir/FCount-count-output/snomiRNA-alignment.count &
-	else
-		echo "
-	Counting sno/miRNA alignment reads
-	"
-		bin/featureCounts -T $featureCountthreads -a $snomiRNAGTF -o $outDir/FCount-count-output/snomiRNA-alignment.fcount $outDir/snomiRNA-alignment/accepted_hits.bam
-		grep -v featureCounts $outDir/FCount-count-output/snomiRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/FCount-count-output/snomiRNA-alignment.count
-	fi
-	
-	# Count for alignment step 1
-	if [ ! -f $outDir/tRNA-alignment/accepted_hits.bam ]; then
-		echo "
-	No alignment file found for tRNA alignment. Using blank count file instead
-	"
-		cp $empty_tRNAs $outDir/FCount-count-output/tRNA-alignment.count &
-	else
-		echo "
-	Counting tRNA alignment reads
-	"
-		bin/featureCounts -T $featureCountthreads -a $tRNAGTF -o $outDir/FCount-count-output/tRNA-alignment.fcount $outDir/tRNA-alignment/accepted_hits.bam
-		grep -v featureCounts $outDir/FCount-count-output/tRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/FCount-count-output/tRNA-alignment.count	
-	fi
-
-	touch $outDir/checkpoints/checkpoint-5.flag
-	wait
+# Count for alignment step 3
+if [ ! -f $outDir/mRNA-ncRNA-alignment/accepted_hits.bam ]; then
+	echo "
+No alignment file found for mRNA/ncRNA alignment. Using blank count file instead
+"
+	cp $empty_mRNAs $outDir/FCount-count-output/mRNA-ncRNA-alignment.count &
 else
 	echo "
-	Checkpoint 5 exists, skipping this step
-	"
+Counting mRNA/ncRNA alignment reads
+"
+	bin/featureCounts -T $featureCountthreads -a $genomeGTF -o $outDir/FCount-count-output/mRNA-ncRNA-alignment.fcount $outDir/mRNA-ncRNA-alignment/accepted_hits.bam
+	grep -v featureCounts $outDir/FCount-count-output/mRNA-ncRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/FCount-count-output/mRNA-ncRNA-alignment.count
 fi
+	
+# Count for alignment step 2
+if [ ! -f $outDir/snomiRNA-alignment/accepted_hits.bam ]; then
+	echo "
+No alignment file found for sno/miRNA alignment. Using blank count file instead
+"
+	cp $empty_snomiRNAs $outDir/FCount-count-output/snomiRNA-alignment.count &
+else
+	echo "
+Counting sno/miRNA alignment reads
+"
+	bin/featureCounts -T $featureCountthreads -a $snomiRNAGTF -o $outDir/FCount-count-output/snomiRNA-alignment.fcount $outDir/snomiRNA-alignment/accepted_hits.bam
+	grep -v featureCounts $outDir/FCount-count-output/snomiRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/FCount-count-output/snomiRNA-alignment.count
+fi
+
+# Count for alignment step 1
+if [ ! -f $outDir/tRNA-alignment/accepted_hits.bam ]; then
+	echo "
+No alignment file found for tRNA alignment. Using blank count file instead
+"
+	cp $empty_tRNAs $outDir/FCount-count-output/tRNA-alignment.count &
+else
+	echo "
+Counting tRNA alignment reads
+"
+	bin/featureCounts -T $featureCountthreads -a $tRNAGTF -o $outDir/FCount-count-output/tRNA-alignment.fcount $outDir/tRNA-alignment/accepted_hits.bam
+	grep -v featureCounts $outDir/FCount-count-output/tRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/FCount-count-output/tRNA-alignment.count
+fi
+
+wait
 
 ### Get total reads mapped
 string_padder "Get total number of reads mapped"
