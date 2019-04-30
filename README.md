@@ -4,13 +4,13 @@ A pipeline for the identification, quantification and analysis of ncRNAs (especi
 
 Many ncRNA identification pipelines are based on differential gene expression. This is a useful method but can fall short if portions of the differentially expressed ncRNAs are degraded, thus reducing the DE identification power. tsRNAsearch addresses this issue by applying a standard DE analysis and two separate (but related) methods to identify fragmented ncRNAs, especially tsRNAs.
 
-## INSTALL
+## Quickstart
+### Installation
 ```
-#chmod 755 setup.sh
 sudo ./setup.sh -g human # (human/mouse/both)
 ```
 Add tsRNAsearch.sh and tsRNAsearch\_DE.sh to your path
-## Quickstart
+
 ### Analysing a single RNA-seq dataset
 ```
 tsRNAsearch.sh -g human -s ExampleData/CytC_IP1.fastq.gz -o CytC_Results -t 1
