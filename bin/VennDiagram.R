@@ -1,65 +1,85 @@
-library(gplots)
-
+#!/usr/bin/env Rscript
 args = commandArgs(trailingOnly=TRUE)
+
+library("VennDiagram")
+library("gplots")
+
+# Borrowed this code from https://www.r-bloggers.com/working-with-venn-diagrams/
 
 input1 <- try(read.table(args[1]), silent = TRUE)
 input2 <- try(read.table(args[2]), silent = TRUE)
 input3 <- try(read.table(args[3]), silent = TRUE)
+geneLists <- c("DE" = input1, #DESeq2 
+               "DS" = input2, #Distribution score
+               "CS" = input3) #Cleavage score
 
-if(class(input1)=="try-error"){
-  input1 <- data.frame()
-  DE <- NA
-} else {
-  DE <- as.vector(input1[,1])
-}
+print(venn.diagram(geneLists, 
+             #filename = "/home/paul/Documents/Pipelines/tsRNAsearch/Runs/Output.venn.pdf",
+             filename = paste0(args[4], "_VennDiagram.pdf"), 
+             #fill=c("darkmagenta", "darkblue", "red"), 
+             fill=c("#3e4574", "#00a9ff", "#ff0c3e"),
+             alpha=c(0.5,0.5,0.5), 
+             cex = 2, 
+             cat.fontface=4,
+             #cat.pos = c(340,20,0),
+             #cat.col = c("#3e4574", "#00a9ff", "#ff0c3e"),
+             cat.cex = 1.5,
+             category.names=c("DESeq2", "Distribution", "Cleavage"), 
+             main="Features identified by the three tsRNAsearch_DE methods"))
 
-if(class(input2)=="try-error"){
-  input2 <- data.frame()
-  HD <- NA
-} else {
-  HD <- as.vector(input2[,1])
-}
 
-if(class(input2)=="try-error"){
-  input2 <- data.frame()
-  PC <- NA
-} else {
-  PC <- as.vector(input3[,1])
-}
+a <- venn(geneLists, show.plot=FALSE)
 
-pdf(file = paste0(args[4], ".VennDiagram.pdf"), 
-    width = 8, 
-    height = 8)
-venn(list(Differentially.Expressed=input1$V1, 
-          High.Distribution=input2$V1,
-          Potentially.Cleaved=input3$V1))
-dev.off()
+# You can inspect the contents of this object with the str() function
+#str(a)
 
-intersect.DE.HD <- Reduce(intersect, list(DE, HD))
-intersect.PC.HD <- Reduce(intersect, list(PC, HD))
-intersect.DE.PC <- Reduce(intersect, list(DE, PC))
-intersect.all <- Reduce(intersect, list(DE, HD, PC))
+# By inspecting the structure of the a object created, 
+# you notice two attributes: 1) dimnames 2) intersections
+# We can store the intersections in a new object named inters
+inters <- attr(a,"intersections")
 
-write.table(intersect.all, 
+# We can summarize the contents of each venn compartment, as follows:
+# in 1) ConditionA only, 2) ConditionB only, 3) ConditionA & ConditionB
+intersections <- lapply(inters, head) 
+
+write.table(intersections$`DE.V1:DS.V1:CS.V1`, 
             file = paste0(args[4], ".intersect.all.txt"),
             quote = FALSE, 
             sep = "\t",
             row.names = FALSE,
             col.names = FALSE)
-write.table(intersect.DE.HD, 
-            file = paste0(args[4], ".intersect.DiffExpr-vs-HighDistr.txt"),
+write.table(intersections$`DE.V1:DS.V1`, 
+            file = paste0(args[4], ".intersect.DESeq2_Distribution.txt"),
             quote = FALSE, 
             sep = "\t",
             row.names = FALSE,
             col.names = FALSE)
-write.table(intersect.DE.PC, 
-            file = paste0(args[4], ".intersect.DiffExpr-vs-PotCleav.txt"),
+write.table(intersections$`DE.V1:CS.V1`, 
+            file = paste0(args[4], ".intersect.DESeq2_Cleavage.txt"),
             quote = FALSE, 
             sep = "\t",
             row.names = FALSE,
             col.names = FALSE)
-write.table(intersect.PC.HD, 
-            file = paste0(args[4], ".intersect.PotCleav-vs-HighDistr.txt"),
+write.table(intersections$`DS.V1:CS.V1`, 
+            file = paste0(args[4], ".intersect.Distribution_Cleavage.txt"),
+            quote = FALSE, 
+            sep = "\t",
+            row.names = FALSE,
+            col.names = FALSE)
+write.table(intersections$DE.V1, 
+            file = paste0(args[4], ".intersect.DESeq2-only.txt"),
+            quote = FALSE, 
+            sep = "\t",
+            row.names = FALSE,
+            col.names = FALSE)
+write.table(intersections$DS.V1, 
+            file = paste0(args[4], ".intersect.Distribution-only.txt"),
+            quote = FALSE, 
+            sep = "\t",
+            row.names = FALSE,
+            col.names = FALSE)
+write.table(intersections$CS.V1, 
+            file = paste0(args[4], ".intersect.Cleavage-only.txt"),
             quote = FALSE, 
             sep = "\t",
             row.names = FALSE,
