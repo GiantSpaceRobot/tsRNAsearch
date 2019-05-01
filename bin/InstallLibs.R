@@ -2,7 +2,7 @@
 
 ###------------------------------------------------------------------------------
 ### 
-### Establish the libraries required for tiRNA-pipeline execution
+### Establish the R libraries required for tsRNAsearch execution
 ### 
 ###-------------------------------------------------------------------------------
 
