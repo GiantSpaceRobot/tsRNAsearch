@@ -49,7 +49,7 @@ if (length(args)==0) {
     df2 <- df
     colnames(df2) <- NULL
     df2[,2] <- paste0("Condition",df2[,2],sep="")
-    write.table(df2, sep = ",", quote = FALSE, file = "predicted_exp_layout.csv", row.names = FALSE)
+    write.table(df2, sep = ",", quote = FALSE, file = paste0(myPath, "predicted_exp_layout.csv"), row.names = FALSE)
     lvls.df <- as.data.frame(table(df$cutree.hc..k...2.))
     Condition1 <- "Condition1"
     ReplicateNumber1 <- lvls.df[1,2]
