@@ -18,6 +18,11 @@ if(!require(gplots)){
   library(gplots)
 } 
 
+if(!require(VennDiagram)){
+  install.packages("VennDiagram")
+  library(VennDiagram)
+}
+
 if(!require(DESeq2)){
   install.packages("DESeq2")
   library(DESeq2)

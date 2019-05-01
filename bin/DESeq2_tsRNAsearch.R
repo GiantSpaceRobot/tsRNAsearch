@@ -19,16 +19,17 @@ args = commandArgs(trailingOnly=TRUE)
 ### Check if the correct number of command line arguments were provide. If not, return an error.
 if (length(args)==0) {
   message("No arguments provided. Defaulting to condition 1 vs condition 2 assuming three replicates each.")
-} else if (length(args)>2) {
+} else if (length(args)>3) {
   stop("Error: Too many command line arguments. Quitting.")
-} else if (length(args)==1) {             # If only a filepath was provided:
+} else if (length(args)==1) {
+  stop("Error: Require two command line arguments at least: path-to-files, output-prefix, [layout-file.csv]. Quitting.")
+} else if (length(args)==2) {             # If only a filepath was provided:
   myPath <- args[1]
   if (dir.exists(myPath)) {
-    setwd(myPath)
     message("Carrying out hierarchical clustering of filenames to classify files into groups.")
     ### A weird idea of clustering the filenames based on string similarity 
     ### (so I don't need to ask the user which samples belong to the same group)
-    file.names.long <- dir(pattern=".all-features.count")
+    file.names.long <- dir(path = myPath, pattern=".all-features.count")
     file.names <- gsub(".all-features.count", "", file.names.long)
     d <- adist(file.names)
     rownames(d) <- file.names
@@ -38,7 +39,7 @@ if (length(args)==0) {
     } else {
       dir.create("DE_Results")
     }
-    pdf("DE_Results/Hierarchical-Clustering-of-Filenames.pdf",
+    pdf(paste0(myPath, "DE_Results/Hierarchical-Clustering-of-Filenames.pdf"),
         width=12,height=12)
     plot(hc, cex=.4)
     rect.hclust(hc,k=2)
@@ -57,10 +58,10 @@ if (length(args)==0) {
   } else {
     stop("Error: Command line argument 1 is not a directory path.")
   }
-} else if (length(args)==2) {     # If a .csv and file path were provided:
-  experiment <- args[1]
+} else if (length(args)==3) {     # If a .csv and file path were provided:
+  experiment <- args[3]
   exp.file <- read.csv(experiment, header=FALSE)
-  setwd(args[2])
+  myPath <- args[1]
 
   ### Count the number of factor levels in the provided .csv file (this should be 2)
   lvls <- levels(exp.file$V2)
@@ -72,17 +73,17 @@ if (length(args)==0) {
     stop(quit.message)
   }
   ### Create directory for the results files
-  if (file.exists("DE_Results")){
+  if (file.exists(paste0(myPath, "DE_Results"))){
   } else {
-    dir.create("DE_Results")
+    dir.create(paste0(myPath, "DE_Results"))
   }
-  file.CSV <- read.csv(args[1], header=FALSE)
+  file.CSV <- read.csv(args[3], header=FALSE)
   lvls.df <- as.data.frame(table(file.CSV$V2))
   ReplicateNumber1 <- lvls.df[1,2]
   Condition1 <- toString(lvls.df[1,1])
   ReplicateNumber2 <- lvls.df[2,2]
   Condition2 <- toString(lvls.df[2,1])
-  myPath <- args[2]
+  myPath <- args[1]
   message("A .csv file was provided, and the directory provided exists.")
 }
 
@@ -101,15 +102,15 @@ if (substring(myPath, nchar(myPath)) == "/") {
 ResultsFile <- paste0(Condition1,"-vs-",Condition2)
 
 ### Directory for writing DESeq2 results to file
-if (file.exists("DE_Results/DESeq2")){
+if (file.exists(paste0(myPath, "DE_Results/DESeq2"))){
 } else {
-  dir.create("DE_Results/DESeq2")
+  dir.create(paste0(myPath, "DE_Results/DESeq2"))
 }
 
 ### If replicate number = 1, stop analysis
 if(ReplicateNumber1==1) {
-  file.create("DE_Results/DESeq2/upregulated.csv")
-  file.create("DE_Results/DESeq2/downregulated.csv")
+  file.create(paste0(myPath, "DE_Results/DESeq2/upregulated.csv"))
+  file.create(paste0(myPath, "DE_Results/DESeq2/downregulated.csv"))
   quit.message <- "Replicate number is 1, cannot continue DESeq2 analysis"
   stop(quit.message)
 }
@@ -162,7 +163,7 @@ DESeq2.function <- function(path.to.files){
   print("Checkpoint 3")
 
   ### Create a density plot
-  pdf(paste0("DE_Results/", ResultsFile, "_Density-Plot.pdf"),
+  pdf(paste0(path.to.files, "DE_Results/", ResultsFile, "_Density-Plot.pdf"),
       width=12,height=12)
   plot(density(inlog[,1]), 
        ylim=c(0,0.4), 
@@ -216,7 +217,7 @@ DESeq2.function <- function(path.to.files){
   }
   
   ### Create a histogram
-  pdf(paste0("DE_Results/", ResultsFile, "_Histogram.pdf"),
+  pdf(paste0(path.to.files, "DE_Results/", ResultsFile, "_Histogram.pdf"),
       width=12,height=12)
   hist(assay(rld))
   garbage <- dev.off()
@@ -231,7 +232,7 @@ DESeq2.function <- function(path.to.files){
   ### Sample distance heatmap
   sampleDists <- as.matrix(dist(t(assay(rld))))
   #(mycols <- brewer.pal(length(file.names), "Paired")[1:length(unique(file.names))])
-  pdf(paste0("DE_Results/", ResultsFile, "_Distance-Matrix.pdf"),
+  pdf(paste0(path.to.files, "DE_Results/", ResultsFile, "_Distance-Matrix.pdf"),
       width=12,height=12)
   heatmap.2(as.matrix(sampleDists), key=F, trace="none",
             col=colorpanel(100, "black", "white"),
@@ -253,7 +254,7 @@ DESeq2.function <- function(path.to.files){
   fit=cmdscale(d, eig=TRUE, k=2)
   x=fit$points[,1]
   y=fit$points[,2]
-  pdf(paste0("DE_Results/", ResultsFile, "_tpm-PCA.pdf"),
+  pdf(paste0(path.to.files, "DE_Results/", ResultsFile, "_tpm-PCA.pdf"),
       width=8,height=8)
   par(xpd = T, mar = par()$mar + c(5,4,4,8))
   plot(x, y, 
@@ -277,7 +278,7 @@ DESeq2.function <- function(path.to.files){
   ### checkpoint
   print("Checkpoint 8")
 
-  write.csv(as.data.frame(res), file=paste0("DE_Results/DESeq2/", ResultsFile, "_DESeq2-output.csv"))
+  write.csv(as.data.frame(res), file=paste0(path.to.files, "DE_Results/DESeq2/", ResultsFile, "_DESeq2-output.csv"))
   
   up <- (res[!is.na(res$padj) & res$padj <= 0.1 &
                       res$log2FoldChange >= 0.5, ])
@@ -286,19 +287,82 @@ DESeq2.function <- function(path.to.files){
                         res$log2FoldChange <= -0.5, ])    
   write.table(x = up,
               sep = ",",
-              file=paste0("DE_Results/DESeq2/", ResultsFile, "_DESeq2-output-upregulated.csv"), 
+              file=paste0(path.to.files, "DE_Results/DESeq2/", ResultsFile, "_DESeq2-output-upregulated.csv"), 
               col.names=NA,
               row.names=TRUE, 
               quote = FALSE)
   write.table(x = down,
               sep = ",",
-              file=paste0("DE_Results/DESeq2/", ResultsFile, "_DESeq2-output-downregulated.csv"), 
+              file=paste0(path.to.files, "DE_Results/DESeq2/", ResultsFile, "_DESeq2-output-downregulated.csv"), 
               col.names=NA,
               row.names=TRUE, 
               quote = FALSE)
   
   ### checkpoint
   print("Checkpoint 9")
+  
+  up.df <- as.data.frame(up)
+  down.df <- as.data.frame(down)
+  newdata.subset <- rbind(up.df, down.df)
+  newdata.subset$features <- rownames(newdata.subset)
+  newdata.subset$negLog10 <- -log10(newdata.subset$padj)
+  tsRNAs.df <- subset(newdata.subset, startsWith(as.character(features), "chr"))
+  # If there are more than 20 features, show top 20
+  if(nrow(tsRNAs.df) > 20){
+    tsRNAs.df.subset <- head(tsRNAs.df, n = 20)
+  } else {
+    tsRNAs.df.subset <- tsRNAs.df
+  }
+  genes.df <- subset(newdata.subset, startsWith(as.character(features), "ENS"))
+  # If there are more than 20 features, show top 20
+  if(nrow(genes.df) > 20){
+    genes.df.subset <- head(genes.df, n = 20)
+  } else {
+    genes.df.subset <- genes.df
+  }
+  ### replace Inf values (extremely low adj p-value) with -Log10 of 300
+  tsRNAs.df.subset <- data.frame(lapply(tsRNAs.df.subset, function(x) {gsub(Inf, "300", x)}))
+  tsRNAs.df.subset$negLog10 <- as.numeric(levels(tsRNAs.df.subset$negLog10))[tsRNAs.df.subset$negLog10] #Convert factor type to numeric
+  genes.df.subset <- data.frame(lapply(genes.df.subset, function(x) {gsub(Inf, "300", x)}))
+  genes.df.subset$negLog10 <- as.numeric(levels(genes.df.subset$negLog10))[genes.df.subset$negLog10] #Convert factor type to numeric
+  
+  ### checkpoint
+  print("Checkpoint 10")
+  
+  pdf.width <- nrow(tsRNAs.df.subset)*0.2 + 3
+  pdf(file = paste0(path.to.files, args[2], "_tsRNAs.high-DE-negLog10_padj.pdf"), width = pdf.width, height = 5)
+  print(ggplot(data = tsRNAs.df.subset, mapping = aes(features, 
+                                              tsRNAs.df.subset$negLog10, 
+                                              color=tsRNAs.df.subset$negLog10)) +
+    geom_point() +
+    ggtitle("DE Analysis - tsRNAs") +
+    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size=7)) +
+    scale_color_gradient(low="blue", high="red") +
+    #scale_y_continuous(trans='log2') +   # Change y axis to log scale
+    scale_x_discrete(limits = (levels(tsRNAs.df.subset$negLog10))) +
+    labs(colour = "-Log10 of padj", 
+         x = "ncRNA/gene", 
+         y = "-Log10 of padj", 
+         subtitle = "Max number of features shown is 20"))
+  dev.off()
+  
+  ### Plot genes and sno/miRNAs:
+  pdf.width <- nrow(genes.df.subset)*0.2 + 3
+  pdf(file = paste0(path.to.files, args[2], "_snomiRNAs-and-genes.high-DE-negLog10_padj.pdf"), width = pdf.width, height = 5)
+  print(ggplot(data = genes.df.subset, mapping = aes(features, 
+                                                genes.df.subset$negLog10, 
+                                                color=genes.df.subset$negLog10)) +
+    geom_point() +
+    ggtitle("DE Analysis - Genes and sno/miRNAs") +
+    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size=7)) +
+    scale_color_gradient(low="blue", high="red") +
+    #scale_y_continuous(trans='log2') +   # Change y axis to log scale
+    scale_x_discrete(limits = (levels(genes.df.subset$negLog10))) +
+    labs(colour = "-Log10 of padj", 
+         x = "ncRNA/gene", 
+         y = "-Log10 of padj", 
+         subtitle = "Max number of features shown is 20"))
+  dev.off()
 
   }
 
