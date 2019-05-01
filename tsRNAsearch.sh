@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Usage: ./tiRNA-pipeline.sh -h
+# Usage: tsRNAsearch.sh -h
 # Author: Paul Donovan
 # Email: pauldonovan@rcsi.com
 # 19-Oct-2018
@@ -149,7 +149,7 @@ function bam_to_plots () {  ### Steps for plotting regions with high variation i
 	### Normalise by reads per million (RPM)
 	python bin/Depth-to-Depth_RPM.py $1/accepted_hits_raw.depth $mapped $1/accepted_hits.depth 
 	### If we are working with tRNAs, collapse all tRNAs based on same isoacceptor
-	if [[ $3 = "tiRNA" ]]; then
+	if [[ $3 = "tsRNA" ]]; then
 		### Remove introns from tRNA counts (as these will interfere with the read counts of collapsed tRNAs)
 		Rscript bin/Remove-introns.R $1/accepted_hits.depth $tRNA_introns $1/accepted_hits_intron-removed.depth 
 		### Flip the read coverage of tRNAs that are in the minus orientation
@@ -170,7 +170,7 @@ function bam_to_plots () {  ### Steps for plotting regions with high variation i
 		if [[ $3 = "snomiRNA" ]]; then
 			Rscript bin/Bedgraph_plotter.R $1/accepted_hits_sorted.depth $1/$2_$3_Coverage-plots.pdf 1 $snomiRNAGTF
 			Rscript bin/Five-vs-Threeprime.R $1/accepted_hits_sorted.depth $1/$2_$3_Results $snomiRNAGTF &
-		elif [[ $3 == "tiRNA" ]]; then
+		elif [[ $3 == "tsRNA" ]]; then
 			Rscript bin/Bedgraph_plotter.R $1/accepted_hits_sorted.depth $1/$2_$3_Coverage-plots.pdf 0
 			Rscript bin/Five-vs-Threeprime.R $1/accepted_hits_sorted.depth $1/$2_$3_Results &
 		else
@@ -371,7 +371,7 @@ wait
 
 ### Plot everything
 string_padder "Generate depth files and plot features"
-bam_to_plots $outDir/tRNA-alignment $singleFile_basename tiRNA &
+bam_to_plots $outDir/tRNA-alignment $singleFile_basename tsRNA &
 bam_to_plots $outDir/snomiRNA-alignment $singleFile_basename snomiRNA &
 #bam_to_plots $outDir/mRNA-ncRNA-alignment $singleFile_basename mRNA &  
 

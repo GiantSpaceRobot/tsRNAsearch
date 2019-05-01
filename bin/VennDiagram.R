@@ -14,8 +14,7 @@ geneLists <- c("DE" = input1, #DESeq2
                "CS" = input3) #Cleavage score
 
 print(venn.diagram(geneLists, 
-             filename = "/home/paul/Documents/Pipelines/tsRNAsearch/Runs/Output.venn.pdf",
-             #filename = paste0(args[4], "_VennDiagram.pdf"), 
+             filename = paste0(args[4], "_VennDiagram.pdf"), 
              #fill=c("darkmagenta", "darkblue", "red"), 
              fill=c("#3e4574", "#00a9ff", "#ff0c3e"),
              alpha=c(0.5,0.5,0.5), 
