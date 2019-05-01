@@ -270,11 +270,11 @@ if [ ! -f $outDir/tRNA-alignment/align_summary.txt ]; then
 		### Split the resulting SAM file into reads aligned to tRNAs and snomiRNAs
 		grep ^@ $outDir/tRNA-alignment/aligned_tRNAdb.sam > $outDir/tRNA-alignment/SamHeader.sam &
 		grep ENS $outDir/tRNA-alignment/aligned_tRNAdb.sam > $outDir/tRNA-alignment/snomiRNAs.sam &
-		grep -v ENS $outDir/tRNA-alignment/aligned_tRNAdb.sam > $outDir/tRNA-alignment/tiRNAs_aligned.sam &
+		grep -v ENS $outDir/tRNA-alignment/aligned_tRNAdb.sam > $outDir/tRNA-alignment/tsRNAs_aligned.sam &
 		wait
 		cat $outDir/tRNA-alignment/SamHeader.sam $outDir/tRNA-alignment/snomiRNAs.sam > $outDir/tRNA-alignment/snomiRNAs_aligned.sam
 		wait
-		samtools view -bS $outDir/tRNA-alignment/tiRNAs_aligned.sam > $outDir/tRNA-alignment/accepted_hits_unsorted.bam
+		samtools view -bS $outDir/tRNA-alignment/tsRNAs_aligned.sam > $outDir/tRNA-alignment/accepted_hits_unsorted.bam
 		samtools sort $outDir/tRNA-alignment/accepted_hits_unsorted.bam > $outDir/tRNA-alignment/accepted_hits.bam 
 		samtools index $outDir/tRNA-alignment/accepted_hits.bam &
 		cp $outDir/tRNA-alignment/unmapped.fastq $outDir/tRNA-alignment/$trimmedFile
