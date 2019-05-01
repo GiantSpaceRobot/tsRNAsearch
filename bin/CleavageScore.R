@@ -149,7 +149,7 @@ write.table(newdata,
             row.names = FALSE,
             col.names = TRUE)
 
-# If there are more than 50 features, show top 50
+# If there are more than 20 features, show top 20
 if(nrow(newdata) > 20){
   newdata.subset <- head(newdata, n = 20)
 } else {
