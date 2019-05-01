@@ -14,8 +14,8 @@ geneLists <- c("DE" = input1, #DESeq2
                "CS" = input3) #Cleavage score
 
 print(venn.diagram(geneLists, 
-             #filename = "/home/paul/Documents/Pipelines/tsRNAsearch/Runs/Output.venn.pdf",
-             filename = paste0(args[4], "_VennDiagram.pdf"), 
+             filename = "/home/paul/Documents/Pipelines/tsRNAsearch/Runs/Output.venn.pdf",
+             #filename = paste0(args[4], "_VennDiagram.pdf"), 
              #fill=c("darkmagenta", "darkblue", "red"), 
              fill=c("#3e4574", "#00a9ff", "#ff0c3e"),
              alpha=c(0.5,0.5,0.5), 
@@ -24,7 +24,8 @@ print(venn.diagram(geneLists,
              #cat.pos = c(340,20,0),
              #cat.col = c("#3e4574", "#00a9ff", "#ff0c3e"),
              cat.cex = 1.5,
-             category.names=c("DESeq2", "Distribution", "Cleavage"), 
+             category.names=c("DESeq2", "Distribution", "Cleavage"),
+             main.cex = 1.5,
              main="Features identified by the three tsRNAsearch_DE methods"))
 
 
