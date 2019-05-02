@@ -179,7 +179,7 @@ mv $outDir/Data/Intermediate-files/FCount.all-features $outDir/Data/FCount.all-f
 ### Determine if experiment layout file was provided or not. If not, try and figure out which files group together using R.
 if [ ! "$expFile" ]; then
     string_padder "No experiment layout plan provided. This will now be created prior to the formal DESeq2 analysis."
-    Rscript --vanilla bin/DESeq2_tsRNAsearch.R "$myPath/$outDir/Data/Intermediate-files/" Condition1_vs_Condition2
+    Rscript --vanilla bin/DESeq2_tsRNAsearch.R "$myPath/$outDir/Data/Intermediate-files/" Condition1_vs_Condition2 "$snomiRNAGTF"
     condition1=$( awk -F ',' 'NR == 1 {print $2}' $myPath/$outDir/Data/Intermediate-files/predicted_exp_layout.csv ) # Get element in first row second column (condition)
     grep $condition1 $myPath/$outDir/Data/Intermediate-files/predicted_exp_layout.csv > $myPath/$outDir/Data/Intermediate-files/predicted_exp_layout_cond1.csv
     condition2=$( grep -v $condition1 $myPath/$outDir/Data/Intermediate-files/predicted_exp_layout.csv | awk -F ',' 'NR == 1 {print $2}') # Get the second condition using the inverse of the first one
@@ -189,7 +189,7 @@ else
     string_padder "An experiment layout plan was provided. Carrying out DESeq2 analysis now."
     condition1=$( awk -F ',' 'NR == 1 {print $2}' "$expFile" ) # Get element in first row second column (condition)
     condition2=$( grep -v $condition1 "$expFile" | awk -F ',' 'NR == 1 {print $2}') # Get the second condition using the inverse of the first one
-	Rscript --vanilla bin/DESeq2_tsRNAsearch.R "$myPath/$outDir/Data/Intermediate-files/" "${condition1}_vs_${condition2}" "$expFile"
+	Rscript --vanilla bin/DESeq2_tsRNAsearch.R "$myPath/$outDir/Data/Intermediate-files/" "${condition1}_vs_${condition2}" "$snomiRNAGTF" "$expFile"
     grep $condition1 "$expFile" > $myPath/$outDir/Data/Intermediate-files/predicted_exp_layout_cond1.csv
     grep $condition2 "$expFile" > $myPath/$outDir/Data/Intermediate-files/predicted_exp_layout_cond2.csv
 fi

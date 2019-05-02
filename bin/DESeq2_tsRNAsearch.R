@@ -19,11 +19,13 @@ args = commandArgs(trailingOnly=TRUE)
 ### Check if the correct number of command line arguments were provide. If not, return an error.
 if (length(args)==0) {
   message("No arguments provided. Defaulting to condition 1 vs condition 2 assuming three replicates each.")
-} else if (length(args)>3) {
+} else if (length(args)>4) {
   stop("Error: Too many command line arguments. Quitting.")
 } else if (length(args)==1) {
-  stop("Error: Require two command line arguments at least: path-to-files, output-prefix, [layout-file.csv]. Quitting.")
-} else if (length(args)==2) {             # If only a filepath was provided:
+  stop("Error: Require three command line arguments at least: path-to-files, output-prefix, sno/miRNA GTF, [layout-file.csv]. Quitting.")
+} else if (length(args)==2) {
+  stop("Error: Require three command line arguments at least: path-to-files, output-prefix, sno/miRNA GTF, [layout-file.csv]. Quitting.")
+} else if (length(args)==3) {             # If only a filepath was provided:
   myPath <- args[1]
   if (dir.exists(myPath)) {
     message("Carrying out hierarchical clustering of filenames to classify files into groups.")
@@ -58,8 +60,8 @@ if (length(args)==0) {
   } else {
     stop("Error: Command line argument 1 is not a directory path.")
   }
-} else if (length(args)==3) {     # If a .csv and file path were provided:
-  experiment <- args[3]
+} else if (length(args)==4) {     # If a .csv and file path were provided:
+  experiment <- args[4]
   exp.file <- read.csv(experiment, header=FALSE)
   myPath <- args[1]
 
@@ -77,7 +79,7 @@ if (length(args)==0) {
   } else {
     dir.create(paste0(myPath, "DE_Results"))
   }
-  file.CSV <- read.csv(args[3], header=FALSE)
+  file.CSV <- read.csv(args[4], header=FALSE)
   lvls.df <- as.data.frame(table(file.CSV$V2))
   ReplicateNumber1 <- lvls.df[1,2]
   Condition1 <- toString(lvls.df[1,1])
@@ -136,7 +138,7 @@ DESeq2.function <- function(path.to.files){
   
   ### Create checkpoints (for simple degbugging) 
   print("Checkpoint 1")
-  
+
   ### Read files
   path.to.files <- myPath
   file.names <- dir(path.to.files, pattern =".count")
@@ -278,13 +280,34 @@ DESeq2.function <- function(path.to.files){
   ### checkpoint
   print("Checkpoint 8")
 
-  write.csv(as.data.frame(res), file=paste0(path.to.files, "DE_Results/DESeq2/", ResultsFile, "_DESeq2-output.csv"))
+  ### Covnert ncRNA names into gene names
+  print("Converting gene IDs to gene names")
+  GTF <- read.table(args[3], sep = "\t") # Read in GTF for name conversion
+  GTF$NewNames <- paste0(GTF$V1, " (", as.character(sub(".*gene_name *(.*?) *; gene_source.*", "\\1", GTF$V9)), ")") # Add new column with gene names
+  GTF <- GTF[!duplicated(GTF$NewNames),]  # Remove duplicates based on NewNames
+  results.DF <- as.data.frame(res)
+  results.DF$features <- rownames(results.DF) # Add column with gene IDs
+  # Map names in GTF to gene ENSG IDs
+  for( row in seq_len( nrow(GTF))) {  
+    results.DF$mapped[ substr( results.DF$features, 0, nchar(as.character(GTF$V1[row]))) == GTF$V1[row] ] <- GTF$NewNames[row]
+  }
+  results.DF$mapped <- as.character(results.DF$mapped) # Convert from factor to character
+  results.DF$features <- as.character(results.DF$features) # Convert from factor to character
+  results.DF$final <- ifelse(is.na(results.DF$mapped), results.DF$features, results.DF$mapped) # Create new column using new name where possible
+  resultsDF <- subset(results.DF, select = -c(features, mapped)) # Remove unneeded columns
+  rownames(resultsDF) <- resultsDF$final # Replace rownames with new names
+  resultsDF <- subset(resultsDF, select = -c(final)) # Remove unneeded columns
   
-  up <- (res[!is.na(res$padj) & res$padj <= 0.1 &
-                      res$log2FoldChange >= 0.5, ])
+  ### checkpoint
+  print("Checkpoint 9")
   
-  down <- (res[!is.na(res$padj) & res$padj <= 0.1 &    
-                        res$log2FoldChange <= -0.5, ])    
+  write.csv(resultsDF, file=paste0(path.to.files, "DE_Results/DESeq2/", ResultsFile, "_DESeq2-output.csv"))
+  
+  up <- (resultsDF[!is.na(resultsDF$padj) & resultsDF$padj <= 0.1 &
+               resultsDF$log2FoldChange >= 0.5, ])
+  down <- (resultsDF[!is.na(resultsDF$padj) & resultsDF$padj <= 0.1 &    
+                 resultsDF$log2FoldChange <= -0.5, ]) 
+  
   write.table(x = up,
               sep = ",",
               file=paste0(path.to.files, "DE_Results/DESeq2/", ResultsFile, "_DESeq2-output-upregulated.csv"), 
@@ -299,11 +322,10 @@ DESeq2.function <- function(path.to.files){
               quote = FALSE)
   
   ### checkpoint
-  print("Checkpoint 9")
+  print("Checkpoint 10")
   
-  up.df <- as.data.frame(up)
-  down.df <- as.data.frame(down)
-  newdata.subset <- rbind(up.df, down.df)
+  ### Generate data for plots
+  newdata.subset <- rbind(up, down)
   newdata.subset$features <- rownames(newdata.subset)
   newdata.subset$negLog10 <- -log10(newdata.subset$padj)
   tsRNAs.df <- subset(newdata.subset, startsWith(as.character(features), "chr"))
@@ -327,7 +349,7 @@ DESeq2.function <- function(path.to.files){
   genes.df.subset$negLog10 <- as.numeric(levels(genes.df.subset$negLog10))[genes.df.subset$negLog10] #Convert factor type to numeric
   
   ### checkpoint
-  print("Checkpoint 10")
+  print("Checkpoint 11")
   
   pdf.width <- nrow(tsRNAs.df.subset)*0.2 + 3
   pdf(file = paste0(path.to.files, args[2], "_tsRNAs.high-DE-negLog10_padj.pdf"), width = pdf.width, height = 5)
@@ -372,4 +394,3 @@ DESeq2.function <- function(path.to.files){
 #--------------------#
 
 DESeq2.function(myPath)
-
