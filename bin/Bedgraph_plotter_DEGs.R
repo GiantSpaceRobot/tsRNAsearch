@@ -24,11 +24,16 @@ library(ggplot2)
 ### Read in files and get file basename
 input1 <- read.table(args[1])
 input2 <- read.table(args[2])
+#input1 <- read.table("/home/paul/Documents/Pipelines/tsRNAsearch/Runs/test/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth")
+#input2 <- read.table("/home/paul/Documents/Pipelines/tsRNAsearch/Runs/test/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth")
+#input3 <- read.table("/home/paul/Documents/Pipelines/tsRNAsearch/Runs/test/Data/DE_Results/DESeq2/DEGs_names-only.txt", sep = "\t")
+#GTF <- read.table("/home/paul/Documents/Pipelines/tsRNAsearch/DBs/hg19-snomiRNA_cdhit.gtf", sep = "\t")
+#file3 <- "Kong1_vs_Kong2_Features_something.pdf"
 if (file.size(args[3]) == 0) { # Check if features file contains any lines
   message <- paste0("The file ", as.character(args[3]), " was empty. There were no features to plot")
   write.table(x = message, file = paste0(args[3], ".README"))
 } else {
-  input3 <- read.table(args[3])
+  input3 <- read.table(args[3], sep = "\t")
   if (length(args)==6) {
     GTF <- read.table(args[6], sep = "\t")
   } 
