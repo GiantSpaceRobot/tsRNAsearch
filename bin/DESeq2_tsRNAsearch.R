@@ -99,7 +99,7 @@ if (substring(myPath, nchar(myPath)) == "/") {
 }
 
 ### A variable that will act as a prefix to all output files
-ResultsFile <- paste0(Condition1,"-vs-",Condition2)
+ResultsFile <- paste0(Condition1,"_vs_",Condition2)
 
 ### Directory for writing DESeq2 results to file
 if (file.exists(paste0(myPath, "DE_Results/DESeq2"))){
