@@ -17,12 +17,10 @@ if (length(args)==0) {
 
 #### Input file
 input <- read.table(args[1])
-#input <- read.table("/home/paul/Documents/Pipelines/tsRNAsearch/Full_SRR8114385/snomiRNA-alignment/accepted_hits_sorted.depth")
 
 #### Read in GTF for name conversions
 if (length(args)==3) {
   GTF <- read.table(args[3], sep = "\t")
-  #GTF <- read.table("/home/paul/Documents/Pipelines/tsRNAsearch/DBs/hg19-snomiRNA_cdhit.gtf", sep = "\t")
 } 
 
 df <- split( input , f = input$V1 )  # Split dataframe based on column 1 elements
@@ -47,11 +45,6 @@ for(subset in df) {
     geneName <- as.character(sub(".*gene_name *(.*?) *; gene_source.*", "\\1", featureRows$V9))
     feature <- paste0(feature," (",geneName,")")
   } 
-  #if (half.length < 150) {
-  #  length.penalty <- half.length/150###
-  #} else {
-  #  length.penalty <- 1
-  #}
   ### Count no. of zeros in subset. If over 3/4 values are zero, do not calculate ratios.
   zero.percent <- (sum(subset$V3==0)/subset.length)*100
   if(zero.percent >= 75) {
@@ -95,9 +88,6 @@ for(subset in df) {
     } else {
       ratio5vs3 <- (threeprime.avg/fiveprime.avg)*100
     }
-    #if(ratio5vs3=="NaN"){
-    #  ratio5vs3 <- 0
-    #} 
     cleavage.score <- mean.coverage*ratio5vs3
   }
   results.df[nrow(results.df) + 1,] = list(feature,
@@ -136,15 +126,6 @@ write.table(newdata,
             row.names = FALSE,
             col.names = TRUE)
 
-### Make plots
-#png.width <- nrow(results.df)*15
-#png(file = paste0(args[2], ".all-features.png"), width = png.width, height = 400)
-#ggplot(data = results.df, mapping = aes(feature, `-Log10 of KS p-value`, color=`-Log10 of KS p-value`)) +
-#  geom_point() +
-#  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
-#  scale_color_gradient(low="blue", high="red")
-#dev.off()
-
 pdf.width <- nrow(newdata.subset)*0.2 + 3
 pdf(file = paste0(args[2], ".high-cleavage-score.pdf"), width = pdf.width, height = 5)
 ggplot(data = newdata.subset, mapping = aes(feature, `cleavage.score`, color=`cleavage.score`)) +
@@ -158,5 +139,4 @@ ggplot(data = newdata.subset, mapping = aes(feature, `cleavage.score`, color=`cl
        y = "Cleavage score", 
        subtitle = "Cleavage score = 5' to 3' ratio (%) multiplied by mean coverage (RPM)\nMax number of features shown is 20")
 dev.off()
-
 

@@ -168,7 +168,7 @@ function bam_to_plots () {  ### Steps for plotting regions with high variation i
 		### Plot the coverage of all features (arg 3 is mean coverage in RPM) and
 		### Create plot and txt file describing relationship between 5' and 3' regions of feature
 		if [[ $3 = "snomiRNA" ]]; then
-			Rscript bin/Bedgraph_plotter.R $1/accepted_hits_sorted.depth $1/$2_$3_Coverage-plots.pdf 1 $snomiRNAGTF
+			Rscript bin/Bedgraph_plotter.R $1/accepted_hits_sorted.depth $1/$2_$3_Coverage-plots.pdf 0 $snomiRNAGTF
 			Rscript bin/Five-vs-Threeprime.R $1/accepted_hits_sorted.depth $1/$2_$3_Results $snomiRNAGTF &
 		elif [[ $3 == "tsRNA" ]]; then
 			Rscript bin/Bedgraph_plotter.R $1/accepted_hits_sorted.depth $1/$2_$3_Coverage-plots.pdf 0
@@ -181,8 +181,8 @@ function bam_to_plots () {  ### Steps for plotting regions with high variation i
 	fi
 	### Output the mean, standard deviation and coefficient of variance of each ncRNA/gene
 	python bin/Bedgraph-analyser.py $1/accepted_hits_sorted.depth $1/accepted_hits_sorted.tsv
-	### Gather all ncRNAs/genes with at least a mean coverage of 10
-	awk '$2>10' $1/accepted_hits_sorted.tsv > $1/accepted_hits_sorted_mean-std.tsv
+	### Gather all ncRNAs/genes with a mean coverage greater than 0 (pointless step but the cutoff used to be higher than 0)
+	awk '$2>0' $1/accepted_hits_sorted.tsv > $1/accepted_hits_sorted_mean-std.tsv
 	### Sort the remaining ncRNAs/genes by coef. of variance
 	sort -k4,4nr $1/accepted_hits_sorted_mean-std.tsv > $1/$2_$3_accepted_hits_sorted_mean-std_sorted.tsv
 	### Move finalised data for further analysis

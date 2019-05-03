@@ -367,8 +367,8 @@ mv $outDir/Data/Intermediate-files/FCount.rpm.all-features $outDir/Data/FCount.a
 
 ### Move DESeq results to Data directory
 mv $myPath/$outDir/Data/Intermediate-files/DE_Results/ $myPath/$outDir/Data/
-cp $myPath/$outDir/Data/DE_Results/*pdf $myPath/$outDir/Plots/ #Move PDFs to Plots dir
-cp $myPath/$outDir/Data/DE_Results/DESeq2/*regulated.csv $myPath/$outDir/Data/ #Move DESeq2 results to Data dir
+cp $myPath/$outDir/Data/DE_Results/*pdf $myPath/$outDir/Plots/ #Copy PDFs to Plots dir
+cp $myPath/$outDir/Data/DE_Results/DESeq2/*regulated.csv $myPath/$outDir/Data/ #Copy DESeq2 results to Data dir
 mv $myPath/$outDir/Plots/*log $myPath/$outDir/Data/Intermediate-files/ #Move Venn Diagram log file to Intermediate-files dir 
 
 finished="Finished project analysis on $(date)"
