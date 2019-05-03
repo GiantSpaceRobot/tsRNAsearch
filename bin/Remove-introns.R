@@ -15,8 +15,6 @@ if (length(args)==0) {
 }
 
 ### Read in files and get file basename
-#input1 <- read.table("/home/paul/Documents/Pipelines/tirna-pipeline/hisat-test4/tRNA-alignment/test/accepted_hits.genomecov")
-#input2 <- read.table("/home/paul/Documents/Pipelines/tirna-pipeline/additional-files/tRNA-introns-for-removal_hg19.tsv")
 input1 <- read.table(args[1])
 input2 <- read.table(args[2])
 
@@ -34,7 +32,6 @@ for(feature in featuresUnion) {   # Loop over all tRNAs
     newdf$V2 <- 1:nrow(newdf)    #Replace column 2 with range 1 to dataframe end
     write.table(newdf, 
                 file = args[3], 
-                #file = "/home/paul/Documents/Pipelines/tirna-pipeline/hisat-test4/tRNA-alignment/test/accepted_hits_Flipped.genomecov",
                 quote = FALSE,
                 col.names = FALSE,
                 row.names = FALSE,
@@ -43,7 +40,6 @@ for(feature in featuresUnion) {   # Loop over all tRNAs
   } else {
     write.table(subset1, 
                 file = args[3], 
-                #file = "/home/paul/Documents/Pipelines/tirna-pipeline/hisat-test4/tRNA-alignment/test/accepted_hits_Flipped.genomecov",
                 quote = FALSE,
                 col.names = FALSE,
                 row.names = FALSE,

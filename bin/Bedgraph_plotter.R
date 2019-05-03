@@ -15,33 +15,22 @@ if (length(args)==0) {
 
 if (length(args)==4) {
   GTF <- read.table(args[4], sep = "\t")
-  #GTF <- read.table("/home/paul/Documents/Pipelines/tsRNAsearch/DBs/hg19-snomiRNA_cdhit.gtf", sep = "\t")
 } 
 
 ### Change this if you want only to plot features with a higher mean coverage
 ### (e.g. mean coverage of 100 reads is 'mean.cutoff <- 100')
 mean.cutoff <- as.integer(args[3])  
-#mean.cutoff <- 20
 
 ### Input file
 fileData <- read.table(args[1], 
                        col.names = c("chrom", "coordinate", "dataValue"))
-#fileData <- read.table("/home/paul/Documents/Pipelines/tsRNAsearch/test/tRNA-alignment/accepted_hits_sorted.depth", col.names = c("chrom", "coordinate", "dataValue"))
-#feature <- "ENSG00000207730"
-#feature <- "ValCAC"
-
-#features <- fileData$chrom   # Group features by name
-#featuresUnion <- union(features, features) # Get unique set of features
 
 df1 <- split( fileData , f = fileData$chrom )  # Split dataframe based on column 1 elements
 
 
 pdf(args[2])
-#pdf("/home/paul/Documents/Pipelines/tirna-pipeline/output.pdf3")
 for(subset in df1) {
   feature <- as.character(subset[1,1])
-  #subset.NoFlanks <- tail(subset, -10)
-  #subset.NoFlanks <- head(subset.NoFlanks, -10)
   subset.NoFlanks <- subset
   subset.mean <- mean(subset.NoFlanks$dataValue)
   if (length(args)==4) {

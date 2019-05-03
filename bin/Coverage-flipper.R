@@ -16,8 +16,6 @@ if (length(args)==0) {
 }
 
 ### Read in files and get file basename
-#input1 <- read.table("/home/paul/Documents/Pipelines/tirna-pipeline/hisat-test4/tRNA-alignment/test/accepted_hits_Flipped.genomecov")
-#input2 <- read.table("/home/paul/Documents/Pipelines/tirna-pipeline/DBs/hg19-wholetRNA-CCA.gtf")
 input1 <- read.table(args[1])
 input2 <- read.table(args[2])
 
@@ -33,7 +31,6 @@ for(feature in featuresUnion) {
     minus.tRNAs.df$V3 <- rev(minus.tRNAs.df$V3)  # Reverse column 3 so the data reflects plus strand data
     write.table(minus.tRNAs.df, 
                 file = args[3], 
-                #file = "/home/paul/Documents/Pipelines/tirna-pipeline/hisat-test4/tRNA-alignment/test/accepted_hits_Flipped.genomecov",
                 quote = FALSE,
                 col.names = FALSE,
                 row.names = FALSE,
@@ -44,7 +41,6 @@ for(feature in featuresUnion) {
     plus.tRNAs.df <- input1[plus.tRNAs,]
     write.table(plus.tRNAs.df, 
                 file = args[3], 
-                #file = "/home/paul/Documents/Pipelines/tirna-pipeline/hisat-test4/tRNA-alignment/test/accepted_hits_Flipped.genomecov",
                 quote = FALSE,
                 col.names = FALSE,
                 row.names = FALSE,

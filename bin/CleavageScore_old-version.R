@@ -2,7 +2,7 @@
 
 ###------------------------------------------------------------------------------
 ### 
-### This script calculates statistics for 5' vs 3' read coverage distributions
+### This script calculates statistics for 5' vs 3' read coverage distributions. Normalise by 
 ### 
 ###-------------------------------------------------------------------------------
 
@@ -12,7 +12,7 @@ args = commandArgs(trailingOnly=TRUE)
 
 ### Check if the correct number of command line arguments were provide. If not, return an error.
 if (length(args)==0) {
-  stop("Error: Not enough command line arguments provided. At least three file names required.")
+  stop("Error: Not enough command line arguments provided. Input file and output file names required.")
 } 
 
 #### Input file
@@ -26,14 +26,12 @@ if (length(args)==4) {
 df1 <- split( input1 , f = input1$V1 )  # Split dataframe based on column 1 elements
 df2 <- split( input2 , f = input2$V1 )  # Split dataframe based on column 1 elements
 
-results.df <- setNames(data.frame(matrix(ncol = 11, nrow = 0)), c("feature",
+results.df <- setNames(data.frame(matrix(ncol = 9, nrow = 0)), c("feature",
                                                                  "mean.coverage",
                                                                  "ratio.5prime",
                                                                  "ratio.3prime",
-                                                                 "5vs3.ratio.percent", 
+                                                                 "5vs3.ratio.percent",
                                                                  "cleavage.score.raw",
-                                                                 "standard.dev.condition1",
-                                                                 "standard.dev.condition2",
                                                                  "penalty (%)",
                                                                  "cleavage.score.penalty",
                                                                  "cleavage.score")) # Initialise empty dataframe with column headers
@@ -121,8 +119,6 @@ for(subset1 in df1) {
                                            ratio3prime,
                                            ratio5vs3,
                                            cleavage.score.raw,
-                                           std1.size,
-                                           std2.size,
                                            penalty*100,  # % penalty applied to raw cleavage score
                                            relative.penalty, # Actual penalty 
                                            cleavage.score)  # Finalised cleavage score
@@ -131,13 +127,6 @@ for(subset1 in df1) {
 }
 
 results.df <- results.df[order(-as.numeric(results.df$`cleavage.score`)),]
-
-# New method for generating cleavage score that doesn't involve multiplying by mean.coverage (this method produces less crazy cleavage scores)
-# I still prefer the other method for the results that make it to the top
-#results.df <- results.df[order(as.numeric(results.df$`mean.coverage`)),]
-#results.df$numbers <- 1:nrow(results.df)
-#results.df$metric <- results.df$`5vs3.ratio.percent` * results.df$numbers
-#results.df <- results.df[order(-as.numeric(results.df$`metric`)),]
 
 # Remove crud from full dataframe
 newdata <- results.df[complete.cases(results.df), ]  # Remove NAs

@@ -1,7 +1,8 @@
 #!/usr/bin/env python
  
 """
-Bedgraph thing
+Calculate the mean and standard dev for 
+every feature in a bedgraph/samtools depth file 
 """
  
 __author__ = "Paul Donovan"
@@ -13,7 +14,6 @@ import numpy as np
 
 bedgr = open(sys.argv[1], "r")
 newfile = open(sys.argv[2], "w")
-#newfile.write("Feature\tMean\tStandard deviation\tCoefficient of variation\n")
 readlines = bedgr.readlines()
 bedgr.close()
 
@@ -27,10 +27,8 @@ for line in readlines:
         tRNAs[strpline[0]] = [strpline[2]] 
 
 for k, v in tRNAs.iteritems():
-    #v2 = v[10:]
-    #v3 = v2[:len(v2) - 10] # Get values without the counts for the flanking Ns from the FASTA
     v3 = v
-    tRNALen = len(v)     # Minus 20 because the FASTA was buffered/flanked with 10 Ns either side
+    tRNALen = len(v)
     values = map(float, v3)
     meanV = np.mean(values)
     stdV = np.std(values)
