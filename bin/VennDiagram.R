@@ -7,8 +7,20 @@ library("gplots")
 # Borrowed this code from https://www.r-bloggers.com/working-with-venn-diagrams/
 
 input1 <- try(read.table(args[1]), silent = TRUE)
+if (inherits(input1, 'try-error')){ 
+  input1 <- data.frame(feature=character())
+} 
+
 input2 <- try(read.table(args[2]), silent = TRUE)
+if (inherits(input2, 'try-error')){ 
+  input2 <- data.frame(feature=character())
+} 
+
 input3 <- try(read.table(args[3]), silent = TRUE)
+if (inherits(input3, 'try-error')){ 
+  input3 <- data.frame(feature=character())
+} 
+
 geneLists <- c("DE" = input1, #DESeq2 
                "DS" = input2, #Distribution score
                "CS" = input3) #Cleavage score
