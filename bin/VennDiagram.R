@@ -52,7 +52,7 @@ inters <- attr(a,"intersections")
 
 # We can summarize the contents of each venn compartment, as follows:
 # in 1) ConditionA only, 2) ConditionB only, 3) ConditionA & ConditionB
-intersections <- lapply(inters, head) 
+intersections <- lapply(inters, print) 
 
 write.table(intersections$`DE.V1:DS.V1:CS.V1`, 
             file = paste0(args[4], ".intersect.all.txt"),
