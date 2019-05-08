@@ -39,7 +39,6 @@ print(venn.diagram(geneLists,
              main.cex = 1.5,
              main="Features identified by the three tsRNAsearch_DE methods"))
 
-
 a <- venn(geneLists, show.plot=FALSE)
 
 # You can inspect the contents of this object with the str() function
@@ -52,45 +51,44 @@ inters <- attr(a,"intersections")
 
 # We can summarize the contents of each venn compartment, as follows:
 # in 1) ConditionA only, 2) ConditionB only, 3) ConditionA & ConditionB
-intersections <- lapply(inters, print) 
 
-write.table(intersections$`DE.V1:DS.V1:CS.V1`, 
+write.table(inters$`DE.V1:DS.V1:CS.V1`, 
             file = paste0(args[4], ".intersect.all.txt"),
             quote = FALSE, 
             sep = "\t",
             row.names = FALSE,
             col.names = FALSE)
-write.table(intersections$`DE.V1:DS.V1`, 
+write.table(inters$`DE.V1:DS.V1`, 
             file = paste0(args[4], ".intersect.DESeq2_Distribution.txt"),
             quote = FALSE, 
             sep = "\t",
             row.names = FALSE,
             col.names = FALSE)
-write.table(intersections$`DE.V1:CS.V1`, 
+write.table(inters$`DE.V1:CS.V1`, 
             file = paste0(args[4], ".intersect.DESeq2_Cleavage.txt"),
             quote = FALSE, 
             sep = "\t",
             row.names = FALSE,
             col.names = FALSE)
-write.table(intersections$`DS.V1:CS.V1`, 
+write.table(inters$`DS.V1:CS.V1`, 
             file = paste0(args[4], ".intersect.Distribution_Cleavage.txt"),
             quote = FALSE, 
             sep = "\t",
             row.names = FALSE,
             col.names = FALSE)
-write.table(intersections$DE.V1, 
+write.table(inters$DE.V1, 
             file = paste0(args[4], ".intersect.DESeq2-only.txt"),
             quote = FALSE, 
             sep = "\t",
             row.names = FALSE,
             col.names = FALSE)
-write.table(intersections$DS.V1, 
+write.table(inters$DS.V1, 
             file = paste0(args[4], ".intersect.Distribution-only.txt"),
             quote = FALSE, 
             sep = "\t",
             row.names = FALSE,
             col.names = FALSE)
-write.table(intersections$CS.V1, 
+write.table(inters$CS.V1, 
             file = paste0(args[4], ".intersect.Cleavage-only.txt"),
             quote = FALSE, 
             sep = "\t",
