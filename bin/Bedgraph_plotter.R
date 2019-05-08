@@ -39,7 +39,7 @@ for(subset in df1) {
     geneName <- as.character(sub(".*gene_name *(.*?) *; gene_source.*", "\\1", featureRows$V9))
     feature <- geneName
   } 
-  if(subset.mean>mean.cutoff){
+  if(subset.mean>=mean.cutoff){
     plot(subset.NoFlanks$dataValue, 
        type = "l",
        col = "blue", 
