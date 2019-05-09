@@ -25,18 +25,22 @@ if (length(args)==3) {
 
 df <- split( input , f = input$V1 )  # Split dataframe based on column 1 elements
 
-results.df <- setNames(data.frame(matrix(ncol = 7, nrow = 0)), c("feature",
+results.df <- setNames(data.frame(matrix(ncol = 9, nrow = 0)), c("feature",
                                                                  "mean.coverage",
+                                                                 "standard.dev",
                                                                  "mean.fiveprime",
                                                                  "mean.3prime",
                                                                  "5vs3.ratio.percent",
                                                                  "cleavage.score",
+                                                                 "distribution.score",
                                                                  "note"))  # Initialise empty dataframe with column headers
 
 for(subset in df) {
   feature <- as.character(subset[1,1])
   subset.length <- nrow(subset)
   mean.coverage <- mean(subset$V3)
+  subset.std <- sd(subset$V3)
+  distribution.score <- mean.coverage*subset.std
   half.length <- as.integer(subset.length/2)
   note <- ""
   if (length(args)==3) {
@@ -73,7 +77,7 @@ for(subset in df) {
       } else {
         ### Fiveprime average is 0, but threeprime average is a real number
         ratio5vs3 <- threeprime.avg
-        note <- "Real 5' to 3' ratio could not be calculated. Using 3' mean coverage as proxy."
+        note <- "Cleavage score: Real 5' to 3' ratio could not be calculated. Using 3' mean coverage as proxy."
       }
     } else if(threeprime.avg=="0"){
       if(fiveprime.avg=="0"){
@@ -81,7 +85,7 @@ for(subset in df) {
       } else {
         ### Threeprime average is 0, but fiveprime average is a real number
         ratio5vs3 <- fiveprime.avg
-        note <- "Real 5' to 3' ratio could not be calculated. Using 5' mean coverage as proxy."
+        note <- "Cleavage score: Real 5' to 3' ratio could not be calculated. Using 5' mean coverage as proxy."
       }
     } else if(fiveprime.avg >= threeprime.avg){
       ratio5vs3 <- (fiveprime.avg/threeprime.avg)*100
@@ -92,14 +96,25 @@ for(subset in df) {
   }
   results.df[nrow(results.df) + 1,] = list(feature,
                                            mean.coverage,
+                                           subset.std,
                                            fiveprime.avg,
                                            threeprime.avg,
                                            ratio5vs3,
                                            cleavage.score,
+                                           distribution.score,
                                            note)
 
 }
 
+###
+write.table(results.df, 
+            file = paste0(args[2], ".all-features.txt"),
+            quote = FALSE, 
+            sep = "\t",
+            row.names = FALSE,
+            col.names = TRUE)
+
+### Cleavage score:
 results.df <- results.df[order(-results.df$cleavage.score),]
 newdata <- results.df[complete.cases(results.df), ]  # Remove NAs
 newdata <- newdata[!grepl("Inf", newdata$cleavage.score),] # Remove Inf
@@ -113,12 +128,6 @@ if(nrow(newdata) > 20){
   newdata.subset <- newdata
 }
 
-write.table(results.df, 
-            file = paste0(args[2], ".all-features.txt"),
-            quote = FALSE, 
-            sep = "\t",
-            row.names = FALSE,
-            col.names = TRUE)
 write.table(newdata, 
             file = paste0(args[2], ".high-cleavage-score.txt"),
             quote = FALSE, 
@@ -138,5 +147,40 @@ ggplot(data = newdata.subset, mapping = aes(feature, `cleavage.score`, color=`cl
        x = "ncRNA/gene", 
        y = "Cleavage score", 
        subtitle = "Cleavage score = 5' to 3' ratio (%) multiplied by mean coverage (RPM)\nMax number of features shown is 20")
+dev.off()
+
+
+### Distribution score
+results.df <- results.df[order(-results.df$distribution.score),]
+newdata <- results.df[complete.cases(results.df), ]  # Remove NAs
+newdata <- newdata[!grepl("Inf", newdata$distribution.score),] # Remove Inf
+newdata <- newdata[newdata$mean.coverage > 10, ] # Get high 5' / 3' ratios
+
+# If there are more than 50 features, show top 50
+if(nrow(newdata) > 20){
+  newdata.subset <- head(newdata, n = 20)
+} else {
+  newdata.subset <- newdata
+}
+
+write.table(newdata, 
+            file = paste0(args[2], ".high-distribution-score.txt"),
+            quote = FALSE, 
+            sep = "\t",
+            row.names = FALSE,
+            col.names = TRUE)
+
+pdf.width <- nrow(newdata.subset)*0.2 + 3
+pdf(file = paste0(args[2], ".high-distribution-score.pdf"), width = pdf.width, height = 5)
+ggplot(data = newdata.subset, mapping = aes(feature, `distribution.score`, color=`distribution.score`)) +
+  geom_point() +
+  scale_y_continuous(trans='log2') +
+  ggtitle("Feature Distribution Score") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
+  scale_color_gradient(low="blue", high="red") +
+  labs(colour = "Distribution\nscore", 
+       x = "ncRNA/gene", 
+       y = "Distribution score", 
+       subtitle = "Distribution score = Mean coverage x Standard Deviation\nMax number of features shown is 20")
 dev.off()
 
