@@ -13,6 +13,9 @@ args = commandArgs(trailingOnly=TRUE)
 ### (e.g. mean coverage of 100 reads is 'mean.cutoff <- 100')
 mean.cutoff <- as.integer(args[5])
 
+### Print everything:
+flag <- args[6]
+
 ### Check if the correct number of command line arguments were provided. If not, return an error.
 if (length(args)==0) {
   stop("Error: Not enough command line arguments provided. Input file and output file names required.")
@@ -29,8 +32,8 @@ if (file.size(args[3]) == 0) { # Check if features file contains any lines
   write.table(x = message, file = paste0(args[3], ".README"))
 } else {
   input3 <- read.table(args[3], sep = "\t")
-  if (length(args)==6) {
-    GTF <- read.table(args[6], sep = "\t")
+  if (length(args)==7) {
+    GTF <- read.table(args[7], sep = "\t")
   } 
   
   ### Get names of conditions from arg3 name for writing in plots
@@ -46,12 +49,12 @@ if (file.size(args[3]) == 0) { # Check if features file contains any lines
   ### Open a PDF for writing
   plot_list = list()
   
-  #pdf(args[3])
   for(feature in featuresUnion) {
-    if (any(grepl(feature,input3$V1))) { # Only generate plots for differentially expressed genes
-      # Do nothing and continue to generate plot etc.
-    } else next  # Skip this iteration and do not generate plot
-    
+    if(flag == "no") { # If 'print-everything' is set to 'no', only print the features supplied in input3
+      if (any(grepl(feature,input3$V1))) { # Only generate plots for differentially expressed genes
+        # Do nothing and continue to generate plot etc.
+      } else next  # Skip this iteration and do not generate plot
+    }
     ### file 1
     subset1 <- input1[grep(feature, input1$V1),]
     subset1.NoFlanks <- subset1
@@ -83,7 +86,7 @@ if (file.size(args[3]) == 0) { # Check if features file contains any lines
                             "Conditions")
     
     ### get sno/miRNA gene names rather than IDs
-    if (length(args)==6) {
+    if (length(args)==7) {
       featureRows <- GTF[grep(feature, GTF$V9),]
       featureRows <- featureRows[1,]
       geneName <- as.character(sub(".*gene_name *(.*?) *; gene_source.*", "\\1", featureRows$V9))
@@ -96,7 +99,7 @@ if (file.size(args[3]) == 0) { # Check if features file contains any lines
     new.df2 <- rbind(new.subset1, new.subset2)
     
     ### Plot only if the mean is above the min (arg4)
-    if(subset1.mean > mean.cutoff | subset2.mean > mean.cutoff){
+    if(subset1.mean >= mean.cutoff | subset2.mean >= mean.cutoff){
     p = ggplot(new.df2, aes(x=coord, y=mean, fill=Conditions), show.legend = FALSE) +
         geom_ribbon(aes(ymin=mean-std, ymax=mean+std, colour=Conditions),
                     alpha=0.3) +
