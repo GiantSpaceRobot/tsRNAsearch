@@ -147,6 +147,8 @@ echo -e "Parameters:
 ### If -A parameter was not provided, default is to only plot differentially expressed features
 if [ ! "$Plots" ]; then
 	Plots="no"
+else
+	Plots="yes"
 fi
 
 ### Create dir substructure
@@ -338,14 +340,19 @@ string_padder "Plotting any features identified in the analysis..."
 if [[ $(wc -l < $myPath/$outDir/Data/All-Features-Identified.txt) -ge 2 ]]; then
 	### Plot DEGs arg1 and 2 are inputs, arg 3 is list of differentially expressed genes, arg 4 is output pdf, 
 	### arg 5 is mean coverage cutoff (plot features with coverage above this), arg 5 is GTF file for snomiRNAs (arg 5 is not given to tsRNA data)
+	if [[ $Plots == "yes" ]]; then
+		### Plot all tsRNAs and sno/miRNAs if -A 'yes' parameter selected
+		Rscript bin/Bedgraph_plotter_DEGs.R $myPath/$outDir/Data/Intermediate-files/condition1_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/condition2_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_All-tsRNAs.pdf 0 $Plots &
+		Rscript bin/Bedgraph_plotter_DEGs.R $myPath/$outDir/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_All-snomiRNAs.pdf 0 $Plots $snomiRNAGTF &
+	fi
 	# tsRNAs
-	Rscript bin/Bedgraph_plotter_DEGs.R $myPath/$outDir/Data/Intermediate-files/condition1_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/condition2_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-tsRNAs.pdf 0 &
-	Rscript bin/Bedgraph_plotter_DEGs.R $myPath/$outDir/Data/Intermediate-files/condition1_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/condition2_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/DataTransformations/High-distribution-scores_feature-names.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-tsRNAs.pdf 0 &
-	Rscript bin/Bedgraph_plotter_DEGs.R $myPath/$outDir/Data/Intermediate-files/condition1_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/condition2_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-tsRNAs.pdf 0 &
+	Rscript bin/Bedgraph_plotter_DEGs.R $myPath/$outDir/Data/Intermediate-files/condition1_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/condition2_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-tsRNAs.pdf 0 "no" &
+	Rscript bin/Bedgraph_plotter_DEGs.R $myPath/$outDir/Data/Intermediate-files/condition1_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/condition2_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/DataTransformations/High-distribution-scores_feature-names.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-tsRNAs.pdf 0 "no" &
+	Rscript bin/Bedgraph_plotter_DEGs.R $myPath/$outDir/Data/Intermediate-files/condition1_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/condition2_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-tsRNAs.pdf 0 "no" &
 	# snomiRNAs
-	Rscript bin/Bedgraph_plotter_DEGs.R $myPath/$outDir/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-snomiRNAs.pdf 0 $snomiRNAGTF &
-	Rscript bin/Bedgraph_plotter_DEGs.R $myPath/$outDir/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Data/Intermediate-files/DataTransformations/High-distribution-scores_feature-names.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-snomiRNAs.pdf 0 $snomiRNAGTF &
-	Rscript bin/Bedgraph_plotter_DEGs.R $myPath/$outDir/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-snomiRNAs.pdf 0 $snomiRNAGTF &
+	Rscript bin/Bedgraph_plotter_DEGs.R $myPath/$outDir/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-snomiRNAs.pdf 0 "no" $snomiRNAGTF &
+	Rscript bin/Bedgraph_plotter_DEGs.R $myPath/$outDir/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Data/Intermediate-files/DataTransformations/High-distribution-scores_feature-names.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-snomiRNAs.pdf 0 "no" $snomiRNAGTF &
+	Rscript bin/Bedgraph_plotter_DEGs.R $myPath/$outDir/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-snomiRNAs.pdf 0 "no" $snomiRNAGTF &
 	# Venn diagram
 	Rscript bin/VennDiagram.R $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_short-names.txt $myPath/$outDir/Data/Intermediate-files/DataTransformations/High-distribution-scores_feature-names.txt $myPath/$outDir/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}
 	mv $myPath/$outDir/Plots/${condition1}_vs_${condition2}.intersect*txt $myPath/$outDir/Data/
@@ -370,6 +377,12 @@ mv $myPath/$outDir/Data/Intermediate-files/DE_Results/ $myPath/$outDir/Data/
 cp $myPath/$outDir/Data/DE_Results/*pdf $myPath/$outDir/Plots/ #Copy PDFs to Plots dir
 cp $myPath/$outDir/Data/DE_Results/DESeq2/*regulated.csv $myPath/$outDir/Data/ #Copy DESeq2 results to Data dir
 mv $myPath/$outDir/Plots/*log $myPath/$outDir/Data/Intermediate-files/ #Move Venn Diagram log file to Intermediate-files dir 
+
+### If -A parameter was provided, copy all plots to Plots dir
+if [[ $Plots == "yes" ]]; then 
+	mkdir $myPath/$outDir/Plots/Individual-Runs
+	cp $myPath/$outDir/*/Data_and_Plots/*.pdf $myPath/$outDir/Plots/Individual-Runs/
+fi
 
 finished="Finished project analysis on $(date)"
 string_padder "$finished"
