@@ -169,13 +169,13 @@ function bam_to_plots () {  ### Steps for plotting regions with high variation i
 		### Create plot and txt file describing relationship between 5' and 3' regions of feature
 		if [[ $3 = "snomiRNA" ]]; then
 			Rscript bin/Bedgraph_plotter.R $1/accepted_hits_sorted.depth $1/$2_$3_Coverage-plots.pdf 0 $snomiRNAGTF
-			Rscript bin/Five-vs-Threeprime.R $1/accepted_hits_sorted.depth $1/$2_$3_Results $snomiRNAGTF &
+			Rscript bin/Single-replicate-analysis.R $1/accepted_hits_sorted.depth $1/$2_$3_Results $snomiRNAGTF &
 		elif [[ $3 == "tsRNA" ]]; then
 			Rscript bin/Bedgraph_plotter.R $1/accepted_hits_sorted.depth $1/$2_$3_Coverage-plots.pdf 0
-			Rscript bin/Five-vs-Threeprime.R $1/accepted_hits_sorted.depth $1/$2_$3_Results &
+			Rscript bin/Single-replicate-analysis.R $1/accepted_hits_sorted.depth $1/$2_$3_Results &
 		else
 			Rscript bin/Bedgraph_plotter.R $1/accepted_hits_sorted.depth $1/$2_$3_Coverage-plots.pdf 1000 $genomeGTF
-			Rscript bin/Five-vs-Threeprime.R $1/accepted_hits_sorted.depth $1/$2_$3_Results &
+			Rscript bin/Single-replicate-analysis.R $1/accepted_hits_sorted.depth $1/$2_$3_Results &
 		fi
 		cp $1/$2_$3_Coverage-plots.pdf $outDir/Data_and_Plots/$2_$3_Coverage-plots.pdf
 	fi
