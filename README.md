@@ -17,7 +17,7 @@ This script will install the following pieces of software at root level:
 
 * FastQC
 * Cutadapt
-* HISAT2
+* STAR
 * python/pip (and python modules)
 * R/Rscript (and R libraries)
 * samtools
@@ -52,7 +52,7 @@ tsRNAsearch\_DE.sh executes tsRNAsearch.sh on each RNA-seq file, concatenates th
 #### Steps:
 * Trim\_galore 
 * FastQC
-* HISAT2 (Reads mapped to ncRNA database. Unmapped reads mapped to whole genome)
+* STAR (Reads mapped to ncRNA database. Unmapped reads mapped to whole genome)
 * FeatureCounts
 * Data processing
 #### Parameters:
@@ -79,6 +79,11 @@ tsRNAsearch\_DE.sh executes tsRNAsearch.sh on each RNA-seq file, concatenates th
 * -e *Optional (but recommended) CSV file containing file names and file groups (see examples in additional-files/)*
 * -t *Number of threads to use {default is to calculate the number of processors and use 75%}*
 * -A *Plot all features? __yes__/__no__ {default: __no__ (only plot differentially expressed features)}*
+
+### Methods to Address Difficulty in Correctly Identifying tRNA reads
+There are 625 tRNA genes in the human genome. Each tRNA species (e.g. Arginine) has multiple genes coding for it, many of which are identical or vastly similar. Therefore, correctly matching a read with its tRNA gene of origin is difficult. Two methods have been implemented to address this:
+* CD-HIT was used to extract representative sequences from all ncRNA sequences. The ncRNA STAR database was built using these representative sequences.
+* The STAR output (SAM file) is processed in such a way that all reads mapping to multiple database sequences from the same ncRNA species (e.g. read maps to multiple Proline-CCC genes) are collapsed into a single SAM entry. This single SAM entry is thereby considered a single-mapping read and is not removed by downstream processing steps.
 
 ## Contributors
 * Paul Donovan, PhD

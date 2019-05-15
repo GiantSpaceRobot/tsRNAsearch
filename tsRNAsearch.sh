@@ -93,8 +93,8 @@ echo "Started analysing "$singleFile" on $(date)" # Print pipeline start-time
 ### Are we analysing Human or Mouse? -g parameter
 if [ "$genome" ]; then
     if [[ $genome == "human" ]]; then
-		genomeDB="DBs/hisat2_index/Homo_sapiens.GRCh37.dna.primary_assembly"
-		ncRNADB="DBs/hisat2_index/hg19-combined_tiRNAs_snomiRNAs"
+		genomeDB="DBs/genome_index/human/"
+		ncRNADB="DBs/genome_index/human-ncRNAs/"
 		genomeGTF="DBs/Homo_sapiens.GRCh37.87.gtf"
 		tRNAGTF="DBs/hg19-wholetRNA-CCA_cdhit.gtf"
 		snomiRNAGTF="DBs/hg19-snomiRNA_cdhit.gtf"
@@ -103,8 +103,8 @@ if [ "$genome" ]; then
 		empty_snomiRNAs="additional-files/hg19_empty_snomiRNA.count"
 		empty_mRNAs="additional-files/hg19_empty_mRNA-ncRNA.count"
 	elif [[ $genome == "mouse" ]]; then
-		genomeDB="DBs/hisat2_index/Mus_musculus.GRCm38.dna.primary_assembly"
-		ncRNADB="DBs/hisat2_index/GRCm38-combined_tiRNAs_snomiRNAs"
+		genomeDB="DBs/genome_index/mouse/"
+		ncRNADB="DBs/genome_index/mouse-ncRNAs/"
 		genomeGTF="DBs/Mus_musculus.GRCm38.95.gtf"
 		tRNAGTF="DBs/mm10-tRNAs_renamed_cdhit.gtf"
 		snomiRNAGTF="DBs/mouse_snomiRNAs_relative_cdhit.gtf"
@@ -115,8 +115,8 @@ if [ "$genome" ]; then
 	fi
 else # If genome was not specified, default to use human genome/files
 	genome="human"
-	genomeDB="DBs/hisat2_index/Homo_sapiens.GRCh37.dna.primary_assembly"
-	ncRNADB="DBs/hisat2_index/hg19-combined_tiRNAs_snomiRNAs"
+	genomeDB="DBs/genome_index/human/"
+	ncRNADB="DBs/genome_index/human-ncRNAs/"
 	genomeGTF="DBs/Homo_sapiens.GRCh37.87.gtf"
 	tRNAGTF="DBs/hg19-wholetRNA-CCA_cdhit.gtf"
 	snomiRNAGTF="DBs/hg19-snomiRNA_cdhit.gtf"
@@ -140,6 +140,88 @@ function string_padder () {
 	$padding
 
 	"
+}
+
+function SAMcollapse () {
+	string_padder "Collapsing SAM file..."
+	### How many chunks to create:
+	readNumber=$(grep -v ^@ $1 | awk '{print $1}' | uniq | wc -l)
+	if (( $readNumber > 10000 )); then
+		chunksRaw=$(( readNumber / 1000 ))
+		chunks=$( echo $chunksRaw | awk '{print int($1+0.5)}' )
+		echo "Over 10,000 unique reads in SAM file. Splitting SAM into $chunks files..."
+	elif (( readNumber>=1000 && readNumber<=10000 )); then
+		chunks=10
+		echo "Between 1,000 and 10,000 unique reads in SAM file. Splitting SAM into $chunks files..."
+	else
+		chunks=2
+		echo "Less than 1,000 unique reads in SAM file. Splitting SAM into $chunks files..."
+	fi
+	### Define variables
+	cores=$threads
+	if (( $cores > $chunks )); then
+		# make sure cores is not set higher than no. of files after split
+		cores=$chunks
+	fi
+	echo "
+		Threads: $cores
+		# Split SAM files: $chunks"
+	fileLen=$(< "$1" wc -l)
+	division1=$((fileLen/chunks))
+	division=$((division1 + 1))
+	myFile="tempFile"
+	mkdir -p $outDir/tempDir
+
+	### Remove header
+	grep ^@ $1 > $outDir/tempDir/myHeader.txt &
+	grep -v ^@ $1 > $outDir/tempDir/mySAM.sam &
+	wait
+	### 
+	fileToCollapse=$outDir/tempDir/mySAM.sam
+	### Split file
+	split -l $division $fileToCollapse $outDir/tempDir/splitFile_
+	### Gather first and last read from every split file and add to separate file. Remove these reads from the split files.
+	for i in $outDir/tempDir/splitFile_*; do
+		base=$(basename $i)
+		first=$(awk 'NR==1' $i | awk '{print $1}') 
+		echo $first >> $outDir/tempDir/${myFile}_HeadsAndTails.txt
+		last=$(awk 'END{print}' $i | awk '{print $1}') 
+		echo $last >> $outDir/tempDir/${myFile}_HeadsAndTails.txt
+	done
+
+	sort $outDir/tempDir/${myFile}_HeadsAndTails.txt | uniq > $outDir/tempDir/${myFile}_HeadsAndTails_uniq.txt #remove duplicates
+	sed -i 's/$/\t/' $outDir/tempDir/${myFile}_HeadsAndTails_uniq.txt # Add tab to end of every line to match pattern exactly
+	grep -f $outDir/tempDir/${myFile}_HeadsAndTails_uniq.txt $fileToCollapse > $outDir/tempDir/edit_heads-and-tails #grep all patterns from the heads/tails file
+	for i in $outDir/tempDir/splitFile_*; do
+		base=$(basename $i)
+		grep -v -f  $outDir/tempDir/${myFile}_HeadsAndTails_uniq.txt $i > $outDir/tempDir/edit_${base}
+	done
+
+	### Run SAMcollapse.py. This loop will only run $cores processes at once
+	COUNTER=0
+	for i in $outDir/tempDir/edit_*; 
+	do
+		base=$(basename $i)
+		python bin/SAMcollapse.py $i ${fileToCollapse}_${base} & 
+		numjobs=($(jobs | wc -l))
+		echo Running job number ${COUNTER} of ${chunks}... 
+		COUNTER=$[$COUNTER + 1]
+		counter2=$COUNTER
+		while (( $numjobs == $cores )); do
+			if (( $COUNTER == $counter2)); then
+				echo There are $numjobs jobs now. Waiting for jobs to finish...
+			fi
+			counter2=$[$counter2 + 1]
+			numjobs=($(jobs | wc -l))
+			sleep 5 #Enter next loop iteration
+		done
+	done
+	wait
+
+	### Concatenate results
+	cat $outDir/tempDir/myHeader.txt ${fileToCollapse}*_edit_* > $outDir/Collapsed.sam
+	rm -rf $outDir/tempDir/ # Remove temp directory
+	echo "Finished collapsing SAM file"
 }
 
 function bam_to_plots () {  ### Steps for plotting regions with high variation in coverage
@@ -191,7 +273,7 @@ function bam_to_plots () {  ### Steps for plotting regions with high variation i
 	echo -e "Feature\tMean\tStandard Deviation\tCoefficient of Variation\n" > $outDir/Data_and_Plots/Header.txt
 	cat $outDir/Data_and_Plots/Header.txt $outDir/Data_and_Plots/$2_$3_depth.inf > $outDir/Data_and_Plots/$2_$3_depth.stats
 	rm $outDir/Data_and_Plots/$2_$3_depth.stats $outDir/Data_and_Plots/Header.txt
-	wait 
+	wait
 }
 
 # If -A parameter was not provided, default is to plot everything
@@ -237,10 +319,13 @@ singleFile_base=${singleFile##*/}    # Remove pathname
 singleFile_basename="$( cut -d '.' -f 1 <<< "$singleFile_base" )" # Get filename before first occurence of .
 if [[ $singleFile == *".gz"* ]]; then
 	suffix="fq.gz"
+	STARparam="--readFilesCommand zcat"
 else
 	suffix="fq"
+	STARparam=""
 fi
 printf -v trimmedFile "%s_trimmed.%s" "$singleFile_basename" "$suffix"
+printf -v myFile "%s.fq" "$singleFile_basename"
 printf -v fastqcFile "%s_trimmed_fastqc.html" "$singleFile_basename"
 
 # Run Trim_Galore
@@ -262,55 +347,69 @@ fi
 
 # Align trimmed reads to tRNA database using HISAT2/Tophat2
 
-if [ ! -f $outDir/tRNA-alignment/align_summary.txt ]; then
-	string_padder "Running tRNA/snomiRNA alignment step..."
-	hisat2 -p $threads -x $ncRNADB -U $outDir/trim_galore_output/$trimmedFile -S $outDir/tRNA-alignment/aligned_tRNAdb.sam --summary-file $outDir/tRNA-alignment/align_summary.txt --un $outDir/tRNA-alignment/unmapped.fastq
-	grep "reads" $outDir/tRNA-alignment/align_summary.txt > $outDir/Stats.log
-	if [ -f $outDir/tRNA-alignment/aligned_tRNAdb.sam ]; then  #If hisat2 successfully mapped reads, convert to bam and index
-		### Split the resulting SAM file into reads aligned to tRNAs and snomiRNAs
-		grep ^@ $outDir/tRNA-alignment/aligned_tRNAdb.sam > $outDir/tRNA-alignment/SamHeader.sam &
-		grep ENS $outDir/tRNA-alignment/aligned_tRNAdb.sam > $outDir/tRNA-alignment/snomiRNAs.sam &
-		grep -v ENS $outDir/tRNA-alignment/aligned_tRNAdb.sam > $outDir/tRNA-alignment/tsRNAs_aligned.sam &
-		wait
-		cat $outDir/tRNA-alignment/SamHeader.sam $outDir/tRNA-alignment/snomiRNAs.sam > $outDir/tRNA-alignment/snomiRNAs_aligned.sam
-		wait
-		samtools view -bS $outDir/tRNA-alignment/tsRNAs_aligned.sam > $outDir/tRNA-alignment/accepted_hits_unsorted.bam
-		samtools sort $outDir/tRNA-alignment/accepted_hits_unsorted.bam > $outDir/tRNA-alignment/accepted_hits.bam 
-		samtools index $outDir/tRNA-alignment/accepted_hits.bam &
-		cp $outDir/tRNA-alignment/unmapped.fastq $outDir/tRNA-alignment/$trimmedFile
-		### Move snomiRNA BAM to directory
-		samtools view -bS $outDir/tRNA-alignment/snomiRNAs.sam > $outDir/snomiRNA-alignment/accepted_hits_unsorted.bam
-		samtools sort $outDir/snomiRNA-alignment/accepted_hits_unsorted.bam > $outDir/snomiRNA-alignment/accepted_hits.bam 
-		samtools index $outDir/snomiRNA-alignment/accepted_hits.bam &
-		rm $outDir/tRNA-alignment/SamHeader.sam $outDir/tRNA-alignment/snomiRNAs.sam $outDir/tRNA-alignment/aligned_tRNAdb.sam &	
-	else
-		echo "
-		Alignment output not found. Reads likely did not map to tRNA/sno/miRNA reference. 
-		Using trimmed reads from Trim_Galore output.
-		"
-		cp $outDir/trim_galore_output/$trimmedFile $outDir/tRNA-alignment/$trimmedFile
-	fi
+string_padder "Running tRNA/snomiRNA alignment step..."
+
+### STAR ###
+STAR --runThreadN $threads --genomeDir $ncRNADB --readFilesIn $outDir/trim_galore_output/$trimmedFile --outFileNamePrefix $outDir/tRNA-alignment/ --outReadsUnmapped Fastx $STARparam
+grep "Number of input reads" $outDir/tRNA-alignment/Log.final.out | awk -F '\t' '{print $2}' | tr -d '\040\011\012\015' > $outDir/Stats.log # the tr command removes all types of spaces
+echo " reads; of these:" >> $outDir/Stats.log
+SAMcollapse $outDir/tRNA-alignment/Aligned.out.sam #Collapse reads aligned to the same tRNA species 
+mv $outDir/Collapsed.sam $outDir/tRNA-alignment/aligned_tRNAdb.sam # match hisat2 naming convention
+mv $outDir/tRNA-alignment/Unmapped.out.mate1 $outDir/tRNA-alignment/unmapped.fastq
+#### STAR ###
+
+### HISAT2 ###
+#hisat2 -p $threads -x $ncRNADB -U $outDir/trim_galore_output/$trimmedFile -S $outDir/tRNA-alignment/aligned_tRNAdb.sam --summary-file $outDir/tRNA-alignment/align_summary.txt --un $outDir/tRNA-alignment/unmapped.fastq
+#grep "reads" $outDir/tRNA-alignment/align_summary.txt > $outDir/Stats.log
+### HISAT2 ###
+
+if [ -f $outDir/tRNA-alignment/aligned_tRNAdb.sam ]; then  #If STAR successfully mapped reads, convert to bam and index
+	### Split the resulting SAM file into reads aligned to tRNAs and snomiRNAs
+	grep ^@ $outDir/tRNA-alignment/aligned_tRNAdb.sam > $outDir/tRNA-alignment/SamHeader.sam &
+	grep ENS $outDir/tRNA-alignment/aligned_tRNAdb.sam > $outDir/tRNA-alignment/snomiRNAs.sam &
+	grep -v ENS $outDir/tRNA-alignment/aligned_tRNAdb.sam > $outDir/tRNA-alignment/tsRNAs_aligned.sam &
+	wait
+	cat $outDir/tRNA-alignment/SamHeader.sam $outDir/tRNA-alignment/snomiRNAs.sam > $outDir/tRNA-alignment/snomiRNAs_aligned.sam
+	wait
+	samtools view -bS $outDir/tRNA-alignment/tsRNAs_aligned.sam > $outDir/tRNA-alignment/accepted_hits_unsorted.bam
+	samtools sort $outDir/tRNA-alignment/accepted_hits_unsorted.bam > $outDir/tRNA-alignment/accepted_hits.bam 
+	samtools index $outDir/tRNA-alignment/accepted_hits.bam &
+	mv $outDir/tRNA-alignment/unmapped.fastq $outDir/tRNA-alignment/$myFile
+	### Move snomiRNA BAM to directory
+	samtools view -bS $outDir/tRNA-alignment/snomiRNAs.sam > $outDir/snomiRNA-alignment/accepted_hits_unsorted.bam
+	samtools sort $outDir/snomiRNA-alignment/accepted_hits_unsorted.bam > $outDir/snomiRNA-alignment/accepted_hits.bam 
+	samtools index $outDir/snomiRNA-alignment/accepted_hits.bam &
+	rm $outDir/tRNA-alignment/SamHeader.sam $outDir/tRNA-alignment/snomiRNAs.sam $outDir/tRNA-alignment/aligned_tRNAdb.sam &	
 else
-	string_padder "Found tRNA/sno/miRNA alignment file. Skipping this step."
+	echo "
+	Alignment output not found. Reads likely did not map to tRNA/sno/miRNA reference. 
+	Using trimmed reads from Trim_Galore output.
+	"
+	cp $outDir/trim_galore_output/$trimmedFile $outDir/tRNA-alignment/$trimmedFile
 fi
-if [ ! -f $outDir/mRNA-ncRNA-alignment/align_summary.txt ]; then # If this file was not generated, try and align the unmapped reads from the tRNA alignment	
-	string_padder "Running mRNA/ncRNA alignment step..."
-	hisat2 -p $threads -x $genomeDB $outDir/tRNA-alignment/$trimmedFile -S $outDir/mRNA-ncRNA-alignment/aligned.sam --summary-file $outDir/mRNA-ncRNA-alignment/align_summary.txt --un $outDir/mRNA-ncRNA-alignment/unmapped.fastq
-	if [ -f $outDir/mRNA-ncRNA-alignment/aligned.sam ]; then  #If hisat2 successfully mapped reads, convert the unmapped to FASTQ
-		samtools view -bS $outDir/mRNA-ncRNA-alignment/aligned.sam > $outDir/mRNA-ncRNA-alignment/accepted_hits_unsorted.bam
-		rm $outDir/mRNA-ncRNA-alignment/aligned.sam &
-		samtools sort $outDir/mRNA-ncRNA-alignment/accepted_hits_unsorted.bam > $outDir/mRNA-ncRNA-alignment/accepted_hits.bam
-		samtools index $outDir/mRNA-ncRNA-alignment/accepted_hits.bam &
-		cp $outDir/mRNA-ncRNA-alignment/unmapped.fastq $outDir/mRNA-ncRNA-alignment/UnmappedReads.fq &
-	else
-		echo "
-		mRNA/ncRNA alignment output not found. Reads likely did not map to mRNA/ncRNA reference. 
-		"
-		cp $outDir/tRNA-alignment/$trimmedFile $outDir/mRNA-ncRNA-alignment/$trimmedFile
-		string_padder "$unmappedReadCount"
-	fi
+string_padder "Running mRNA/ncRNA alignment step..."
+
+### HISAT2 ###
+#hisat2 -p $threads -x $genomeDB $outDir/tRNA-alignment/$trimmedFile -S $outDir/mRNA-ncRNA-alignment/aligned.sam --summary-file $outDir/mRNA-ncRNA-alignment/align_summary.txt --un $outDir/mRNA-ncRNA-alignment/unmapped.fastq
+### HISAT2 ###
+
+### STAR ###
+STAR --runThreadN $threads --genomeDir $genomeDB --readFilesIn $outDir/tRNA-alignment/$myFile --outFileNamePrefix $outDir/mRNA-ncRNA-alignment/ --outReadsUnmapped Fastx #$STARparam
+mv $outDir/mRNA-ncRNA-alignment/Aligned.out.sam $outDir/mRNA-ncRNA-alignment/aligned.sam
+mv $outDir/mRNA-ncRNA-alignment/Unmapped.out.mate1 $outDir/mRNA-ncRNA-alignment/unmapped.fastq
+### STAR ###
+
+if [ -f $outDir/mRNA-ncRNA-alignment/aligned.sam ]; then  #If hisat2 successfully mapped reads, convert the unmapped to FASTQ
+	samtools view -bS $outDir/mRNA-ncRNA-alignment/aligned.sam > $outDir/mRNA-ncRNA-alignment/accepted_hits_unsorted.bam
+	rm $outDir/mRNA-ncRNA-alignment/aligned.sam &
+	samtools sort $outDir/mRNA-ncRNA-alignment/accepted_hits_unsorted.bam > $outDir/mRNA-ncRNA-alignment/accepted_hits.bam
+	samtools index $outDir/mRNA-ncRNA-alignment/accepted_hits.bam &
+	mv $outDir/mRNA-ncRNA-alignment/unmapped.fastq $outDir/mRNA-ncRNA-alignment/UnmappedReads.fq &
 else
-	string_padder "Found mRNA/ncRNA alignment file. Skipping this step"
+	echo "
+	mRNA/ncRNA alignment output not found. Reads likely did not map to mRNA/ncRNA reference. 
+	"
+	cp $outDir/tRNA-alignment/$myFile $outDir/mRNA-ncRNA-alignment/$trimmedFile
 fi
 
 # Produce read counts for the three alignment steps. If one of the alignment steps failed, use an empty htseq-count output file.
@@ -395,3 +494,5 @@ echo "Finised analysing "$singleFile" on $(date)" # Print pipeline end-time
 echo "_____________________________________________________________________________________________________________________
 
 "
+
+
