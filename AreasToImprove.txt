@@ -1,6 +1,5 @@
 # Areas that would benefit from improvements
 
-* Alignment (is it worth testing other aligners? e.g. STAR vs HISAT2?)
 * Improvements to Cleavage or Distribution algorithms
   * Introduction of p-value calculation for both algorithms; what is a sensible null hypothesis?
   * Alternative to cleavage algorithm rank ordering? Currently uses 5' to 3' ratio multiplied by mean read coverage.

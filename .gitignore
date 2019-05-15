@@ -9,8 +9,9 @@ Runs/
 Things*
 *batchjob*
 test*
-DBs/hisat2_index/Homo*
-DBs/hisat2_index/Mus*
+DBs/genome_index/*
+DBs/genome_index/human/*
+DBs/genome_index/mouse/*
 predicted*
 samtool*
 to-do.txt
