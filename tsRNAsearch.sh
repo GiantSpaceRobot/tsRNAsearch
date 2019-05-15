@@ -146,12 +146,16 @@ function SAMcollapse () {
 	string_padder "Collapsing SAM file..."
 	### How many chunks to create:
 	readNumber=$(grep -v ^@ $1 | awk '{print $1}' | uniq | wc -l)
-	if (( $readNumber > 10000 )); then
-		chunksRaw=$(( readNumber / 1000 ))
+	if (( $readNumber > 100000 )); then
+		chunksRaw=$(( readNumber / 10000 )) # 10,000 lines per SAM chunk
 		chunks=$( echo $chunksRaw | awk '{print int($1+0.5)}' )
-		echo "Over 10,000 unique reads in SAM file. Splitting SAM into $chunks files..."
+		echo "Over 100,000 unique reads in SAM file. Splitting SAM into $chunks files..."
+	elif (( readNumber>=10000 && readNumber<=100000 )); then
+		chunksRaw=$(( readNumber / 5000 )) # 5000 lines per SAM chunk
+		chunks=$( echo $chunksRaw | awk '{print int($1+0.5)}' )
+		echo "Between 10,000 and 100,000 unique reads in SAM file. Splitting SAM into $chunks files..."
 	elif (( readNumber>=1000 && readNumber<=10000 )); then
-		chunks=10
+		chunks=10 #
 		echo "Between 1,000 and 10,000 unique reads in SAM file. Splitting SAM into $chunks files..."
 	else
 		chunks=2
@@ -179,8 +183,10 @@ function SAMcollapse () {
 	### 
 	fileToCollapse=$outDir/tempDir/mySAM.sam
 	### Split file
+	echo "Splitting SAM..."
 	split -l $division $fileToCollapse $outDir/tempDir/splitFile_
 	### Gather first and last read from every split file and add to separate file. Remove these reads from the split files.
+	echo "Gathering the names of the first and last reads from every SAM chunk..."
 	for i in $outDir/tempDir/splitFile_*; do
 		base=$(basename $i)
 		first=$(awk 'NR==1' $i | awk '{print $1}') 
@@ -188,17 +194,18 @@ function SAMcollapse () {
 		last=$(awk 'END{print}' $i | awk '{print $1}') 
 		echo $last >> $outDir/tempDir/${myFile}_HeadsAndTails.txt
 	done
-
+	echo "Gathering unique set of read names from first/last read names..."
 	sort $outDir/tempDir/${myFile}_HeadsAndTails.txt | uniq > $outDir/tempDir/${myFile}_HeadsAndTails_uniq.txt #remove duplicates
 	sed -i 's/$/\t/' $outDir/tempDir/${myFile}_HeadsAndTails_uniq.txt # Add tab to end of every line to match pattern exactly
 	grep -f $outDir/tempDir/${myFile}_HeadsAndTails_uniq.txt $fileToCollapse > $outDir/tempDir/edit_heads-and-tails #grep all patterns from the heads/tails file
+	echo "Extracting alignments for first/last reads from all files..."
 	for i in $outDir/tempDir/splitFile_*; do
 		base=$(basename $i)
 		grep -v -f  $outDir/tempDir/${myFile}_HeadsAndTails_uniq.txt $i > $outDir/tempDir/edit_${base}
 	done
-
 	### Run SAMcollapse.py. This loop will only run $cores processes at once
 	COUNTER=0
+	echo "Collapsing every chunk of SAM..."
 	for i in $outDir/tempDir/edit_*; 
 	do
 		base=$(basename $i)
@@ -219,6 +226,7 @@ function SAMcollapse () {
 	wait
 
 	### Concatenate results
+	echo "Concatenating SAM header with collapsed files..."
 	cat $outDir/tempDir/myHeader.txt ${fileToCollapse}*_edit_* > $outDir/Collapsed.sam
 	rm -rf $outDir/tempDir/ # Remove temp directory
 	echo "Finished collapsing SAM file"
