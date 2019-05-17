@@ -226,6 +226,11 @@ function SAMcollapse () {
 	wait
 
 	### Concatenate results
+	echo "Gathering reads that were mapped to similar tRNAs..."
+	echo -e "tRNA.group\tread.start\tread.end.approx\tread.name" > $outDir/tRNA-alignment/tRNAs-almost-mapped.txt
+	cat $outDir/tempDir/*tRNAs-almost-mapped* | sort >> $outDir/tRNA-alignment/tRNAs-almost-mapped.txt
+	mkdir $outDir/tempDir/tRNAsAlmostMapped
+	mv $outDir/tempDir/*tRNAs-almost-mapped* $outDir/tempDir/tRNAsAlmostMapped/
 	echo "Concatenating SAM header with collapsed files..."
 	cat $outDir/tempDir/myHeader.txt ${fileToCollapse}*_edit_* > $outDir/Collapsed.sam
 	rm -rf $outDir/tempDir/ # Remove temp directory
@@ -408,6 +413,7 @@ mv $outDir/mRNA-ncRNA-alignment/Unmapped.out.mate1 $outDir/mRNA-ncRNA-alignment/
 ### STAR ###
 
 if [ -f $outDir/mRNA-ncRNA-alignment/aligned.sam ]; then  #If hisat2 successfully mapped reads, convert the unmapped to FASTQ
+	echo -e "\nConverting SAM to BAM and sorting..."
 	samtools view -bS $outDir/mRNA-ncRNA-alignment/aligned.sam > $outDir/mRNA-ncRNA-alignment/accepted_hits_unsorted.bam
 	rm $outDir/mRNA-ncRNA-alignment/aligned.sam &
 	samtools sort $outDir/mRNA-ncRNA-alignment/accepted_hits_unsorted.bam > $outDir/mRNA-ncRNA-alignment/accepted_hits.bam
@@ -482,6 +488,10 @@ bam_to_plots $outDir/tRNA-alignment $singleFile_basename tsRNA &
 bam_to_plots $outDir/snomiRNA-alignment $singleFile_basename snomiRNA &
 #bam_to_plots $outDir/mRNA-ncRNA-alignment $singleFile_basename mRNA &  
 
+### Process multi-mapping tRNAs
+python bin/Leftovers-to-Bedgraph.py $outDir/tRNA-alignment/tRNAs-almost-mapped.txt additional-files/tRNA-lengths_hg19.txt $outDir/tRNA-alignment/tRNAs-almost-mapped.depth
+python bin/Depth-to-Depth_RPM.py $outDir/tRNA-alignment/tRNAs-almost-mapped.depth $mapped $outDir/tRNA-alignment/tRNAs-almost-mapped_RPM.depth
+
 ### Get RPM-normalised FCount count data
 string_padder "Get RPM-normalised read-counts"
 python bin/FCount-to-RPM.py $outDir/FCount-count-output/$singleFile_basename.all-features.count $mapped $outDir/FCount-to-RPM/$singleFile_basename.all-features &
@@ -495,6 +505,8 @@ sleep 5  # Make sure everything is finished running
 cp $outDir/FCount-to-RPM/$singleFile_basename.all-features.rpm.count $outDir/Data_and_Plots/
 if [[ $Plots == "yes" ]]; then
 	### If extra plotting parameter (-A) was selected, copy these files 
+	Rscript bin/Bedgraph_plotter.R $outDir/tRNA-alignment/tRNAs-almost-mapped_RPM.depth $outDir/tRNA-alignment/Multi-mappers_tsRNAs_Coverage-plots.pdf 0
+	cp $outDir/tRNA-alignment/Multi-mappers_tsRNAs_Coverage-plots.pdf $outDir/Data_and_Plots/
 	cp $outDir/tRNA-alignment/*Results.* $outDir/Data_and_Plots/
 	cp $outDir/snomiRNA-alignment/*Results.* $outDir/Data_and_Plots/
 fi
