@@ -24,7 +24,7 @@ Options
 	-g	Analyse datasets against 'human' or 'mouse'? {default: human}
 	-d	Directory containing the files for analysis. Directory should have no other contents.
 	-o	Output directory for the results and log files
-	-e	Optional (but recommended) CSV file containing file names and file groups (see examples in additional-files/)
+	-e	CSV file containing file names and file groups (see examples in additional-files/)
 	-t	Number of threads to use {default is to calculate the number of processors and use 75%}
 	-A	Plot all features? yes/no {default: no (only plot differentially expressed features)}
 
@@ -114,6 +114,45 @@ function string_padder () {
 	"
 }
 
+function DataTransformations () {
+### Given half of a layout file, transform data
+count=0
+for fname in $(cat $1); do
+	count=$((count + 1))
+	cond1="$(cut -d ',' -f1 <<< $fname)"
+	cond1base="$(cut -d '.' -f1 <<< $cond1)"
+	echo "Finding file for $fname ($cond1base)..."
+	find $myPath/$outDir/ -type f -name "$cond1base*tsRNA.depth" -exec cp {} $myPath/$outDir/Data/Intermediate-files/$2_file$count.tsRNA.depth \; & # Gather tsRNAs
+	find $myPath/$outDir/ -type f -name "$cond1base*snomiRNA.depth" -exec cp {} $myPath/$outDir/Data/Intermediate-files/$2_file$count.snomiRNA.depth \; & # Gather sno/miRNAs
+	wait
+	mapped=$(grep "mapped" $myPath/$outDir/$cond1base/Stats.log | awk '{print $3}')
+	echo "Converting raw counts to RPM..."
+	python bin/Depth-to-Depth_RPM.py "$myPath/$outDir/Data/Intermediate-files/$2_file$count.tsRNA.depth" "$mapped" "$myPath/$outDir/Data/Intermediate-files/$2_file$count.tsRNA.depth.readspermil" &
+	python bin/Depth-to-Depth_RPM.py "$myPath/$outDir/Data/Intermediate-files/$2_file$count.snomiRNA.depth" "$mapped" "$myPath/$outDir/Data/Intermediate-files/$2_file$count.snomiRNA.depth.readspermil" &
+	### Left-over reads:
+	#cp $myPath/$outDir/$cond1base/tRNA-alignment/$cond1base.tRNAs-almost-mapped_RPM.depth $myPath/$outDir/Data/Intermediate-files/$2.$cond1base.tRNAs-almost-mapped_RPM.depth
+done
+wait
+### Concatenate data horizontally
+paste $myPath/$outDir/Data/Intermediate-files/$2_file*.tsRNA.depth.readspermil > $myPath/$outDir/Data/Intermediate-files/tsRNA.$2_concatenated.depth &
+paste $myPath/$outDir/Data/Intermediate-files/$2_file*.snomiRNA.depth.readspermil > $myPath/$outDir/Data/Intermediate-files/snomiRNA.$2_concatenated.depth &
+#paste $myPath/$outDir/Data/Intermediate-files/$2.*.tRNAs-almost-mapped_RPM.depth > $myPath/$outDir/Data/Intermediate-files/Combined.$2.tRNAs-almost-mapped_RPM.depth & # leftover reads
+### Concatenate data vertically
+cat $myPath/$outDir/Data/Intermediate-files/$2_file*.tsRNA.depth.readspermil | sort -k1,1 -k2,2n > $myPath/$outDir/Data/Intermediate-files/tsRNA.$2_concatenated.depthVert &
+cat $myPath/$outDir/Data/Intermediate-files/$2_file*.snomiRNA.depth.readspermil | sort -k1,1 -k2,2n > $myPath/$outDir/Data/Intermediate-files/snomiRNA.$2_concatenated.depthVert &
+wait
+### Leftovers:
+#python bin/MeanCalculator.py $myPath/$outDir/Data/Intermediate-files/$myPath/$outDir/Data/Intermediate-files/Combined.$2.tRNAs-almost-mapped_RPM.depth $myPath/$outDir/Data/Intermediate-files/DataTransformations/Combined.$2.tRNAs-almost-mapped_RPM.depth.mean &
+#sort -k1,1 -k2,2n $myPath/$outDir/Data/Intermediate-files/DataTransformations/Combined.$2.tRNAs-almost-mapped_RPM.depth.mean > $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_Combined.$2.tRNAs-almost-mapped_RPM.depth.mean &
+### Calculate mean
+python bin/MeanCalculator.py $myPath/$outDir/Data/Intermediate-files/tsRNA.$2_concatenated.depth $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.$2_concatenated.depth.mean &
+python bin/MeanCalculator.py $myPath/$outDir/Data/Intermediate-files/snomiRNA.$2_concatenated.depth $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.$2_concatenated.depth.mean &
+wait
+### Sort output
+sort -k1,1 -k2,2n $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.$2_concatenated.depth.mean > $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_tsRNA.$2_concatenated.depth.mean &
+sort -k1,1 -k2,2n $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.$2_concatenated.depth.mean > $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_snomiRNA.$2_concatenated.depth.mean &
+wait
+}
 
                  #############################
                  ##### Start of pipeline #####
@@ -156,12 +195,13 @@ for f in $inDir/*; do
 	mkdir -p $outDir
 	mkdir -p $outDir/Data
 	mkdir -p $outDir/Data/Intermediate-files
+	mkdir -p $outDir/Data/Intermediate-files/DataTransformations
 	mkdir -p $outDir/Plots
 	file_base=$(basename $f)
 	filename="$( cut -d '.' -f 1 <<< "$file_base" )" 
 	analysis="Beginning analysis of $filename using tsRNAsearch"
 	string_padder $analysis
-	tsRNAsearch.sh -g "$genome" -s "$f" -o "$outDir/$filename" -t "$threads" -A "$Plots" #>> "$outDir"/"$filename"_tsRNApipeline.log
+	tsRNAsearch.sh -g "$genome" -s "$f" -o "$outDir/$filename" -t "$threads" -A "$Plots"
 	wait
 	cat $outDir/$filename/FCount-count-output/*.count | grep -v ^__ | sort -k1,1 > $outDir/Data/Intermediate-files/$filename.all-features.count	
 	readsMapped=$(awk '{sum+=$2} END{print sum;}' $outDir/Data/Intermediate-files/$filename.all-features.count)
@@ -177,96 +217,24 @@ for f in $outDir/Data/Intermediate-files/*count; do
 done
 mv $outDir/Data/Intermediate-files/FCount.all-features $outDir/Data/FCount.all-features.raw.count
 
+### Carry out DESeq2 analysis
+string_padder "Carrying out DESeq2 analysis..."
+condition1=$( awk -F ',' 'NR == 1 {print $2}' "$expFile" ) # Get element in first row second column (condition)
+condition2=$( grep -v $condition1 "$expFile" | awk -F ',' 'NR == 1 {print $2}') # Get the second condition using the inverse of the first one
+Rscript --vanilla bin/DESeq2_tsRNAsearch.R "$myPath/$outDir/Data/Intermediate-files/" "${condition1}_vs_${condition2}" "$snomiRNAGTF" "$expFile"
+grep $condition1 "$expFile" > $myPath/$outDir/Data/Intermediate-files/predicted_exp_layout_cond1.csv
+grep $condition2 "$expFile" > $myPath/$outDir/Data/Intermediate-files/predicted_exp_layout_cond2.csv
 
-### Determine if experiment layout file was provided or not. If not, try and figure out which files group together using R.
-if [ ! "$expFile" ]; then
-    string_padder "No experiment layout plan provided. This will now be created prior to the formal DESeq2 analysis."
-    Rscript --vanilla bin/DESeq2_tsRNAsearch.R "$myPath/$outDir/Data/Intermediate-files/" Condition1_vs_Condition2 "$snomiRNAGTF"
-    condition1=$( awk -F ',' 'NR == 1 {print $2}' $myPath/$outDir/Data/Intermediate-files/predicted_exp_layout.csv ) # Get element in first row second column (condition)
-    grep $condition1 $myPath/$outDir/Data/Intermediate-files/predicted_exp_layout.csv > $myPath/$outDir/Data/Intermediate-files/predicted_exp_layout_cond1.csv
-    condition2=$( grep -v $condition1 $myPath/$outDir/Data/Intermediate-files/predicted_exp_layout.csv | awk -F ',' 'NR == 1 {print $2}') # Get the second condition using the inverse of the first one
-    grep $condition2 $myPath/$outDir/Data/Intermediate-files/predicted_exp_layout.csv > $myPath/$outDir/Data/Intermediate-files/predicted_exp_layout_cond2.csv
-	expFile="$myPath/$outDir/Data/Intermediate-files/predicted_exp_layout.csv"
-else
-    string_padder "An experiment layout plan was provided. Carrying out DESeq2 analysis now."
-    condition1=$( awk -F ',' 'NR == 1 {print $2}' "$expFile" ) # Get element in first row second column (condition)
-    condition2=$( grep -v $condition1 "$expFile" | awk -F ',' 'NR == 1 {print $2}') # Get the second condition using the inverse of the first one
-	Rscript --vanilla bin/DESeq2_tsRNAsearch.R "$myPath/$outDir/Data/Intermediate-files/" "${condition1}_vs_${condition2}" "$snomiRNAGTF" "$expFile"
-    grep $condition1 "$expFile" > $myPath/$outDir/Data/Intermediate-files/predicted_exp_layout_cond1.csv
-    grep $condition2 "$expFile" > $myPath/$outDir/Data/Intermediate-files/predicted_exp_layout_cond2.csv
-fi
-
-### Concatenate the depth files for the replicates of condition 1
-string_padder "Concatenating samtools depth files for condition 1..."
-count=0
-#touch $myPath/$outDir/Data/Intermediate-files/tRNAs-almost-mapped_RPM.depth
-for fname in $(cat $myPath/$outDir/Data/Intermediate-files/predicted_exp_layout_cond1.csv); do
-	count=$((count + 1))
-	cond1="$(cut -d ',' -f1 <<< $fname)"
-	cond1base="$(cut -d '.' -f1 <<< $cond1)"
-	echo "Finding file for $fname ($cond1base)..."
-	find $myPath/$outDir/ -type f -name "$cond1base*tsRNA.depth" -exec cp {} $myPath/$outDir/Data/Intermediate-files/condition1_file$count.tsRNA.depth \; & # Gather tsRNAs 
-	find $myPath/$outDir/ -type f -name "$cond1base*snomiRNA.depth" -exec cp {} $myPath/$outDir/Data/Intermediate-files/condition1_file$count.snomiRNA.depth \; & # Gather sno/miRNAs
-	wait
-	mapped=$(grep "mapped" $myPath/$outDir/$cond1base/Stats.log | awk '{print $3}')
-	echo "Converting raw counts to RPM..."
-	python bin/Depth-to-Depth_RPM.py "$myPath/$outDir/Data/Intermediate-files/condition1_file$count.tsRNA.depth" "$mapped" "$myPath/$outDir/Data/Intermediate-files/condition1_file$count.tsRNA.depth.readspermil" &
-	python bin/Depth-to-Depth_RPM.py "$myPath/$outDir/Data/Intermediate-files/condition1_file$count.snomiRNA.depth" "$mapped" "$myPath/$outDir/Data/Intermediate-files/condition1_file$count.snomiRNA.depth.readspermil" &
-	### Left-over reads:
-	cp $myPath/$outDir/$cond1base.tRNAs-almost-mapped_RPM.depth $myPath/$outDir/Data/Intermediate-files/${condition1}.$cond1base.tRNAs-almost-mapped_RPM.depth 
-done
-wait
-echo "Transforming depth data to horizontal and vertical formats..."
-### Concatenate data horizontally
-paste $myPath/$outDir/Data/Intermediate-files/condition1_file*.tsRNA.depth.readspermil > $myPath/$outDir/Data/Intermediate-files/tsRNA.condition1_concatenated.depth &
-paste $myPath/$outDir/Data/Intermediate-files/condition1_file*.snomiRNA.depth.readspermil > $myPath/$outDir/Data/Intermediate-files/snomiRNA.condition1_concatenated.depth &
-### Concatenate data vertically
-cat $myPath/$outDir/Data/Intermediate-files/condition1_file*.tsRNA.depth.readspermil | sort -k1,1 -k2,2n > $myPath/$outDir/Data/Intermediate-files/tsRNA.condition1_concatenated.depthVert &
-cat $myPath/$outDir/Data/Intermediate-files/condition1_file*.snomiRNA.depth.readspermil | sort -k1,1 -k2,2n > $myPath/$outDir/Data/Intermediate-files/snomiRNA.condition1_concatenated.depthVert &
-wait
- 
-### Concatenate the depth files for the replicates of condition 2 
-string_padder "Concatenating samtools depth files for condition 2..."
-count=0
-for fname in $(cat $myPath/$outDir/Data/Intermediate-files/predicted_exp_layout_cond2.csv); do
-	count=$((count + 1))
-	cond2="$(cut -d ',' -f1 <<< $fname)"
-	cond2base="$(cut -d '.' -f1 <<< $cond2)"
-	echo "Finding file for $fname ($cond2base)..."
-	find $myPath/$outDir/ -type f -name "$cond2base*tsRNA.depth" -exec cp {} $myPath/$outDir/Data/Intermediate-files/condition2_file$count.tsRNA.depth \; & # Gather tsRNAs
-	find $myPath/$outDir/ -type f -name "$cond2base*snomiRNA.depth" -exec cp {} $myPath/$outDir/Data/Intermediate-files/condition2_file$count.snomiRNA.depth \; & # Gather snomiRNAs
-	wait
-	mapped=$(grep "mapped" $myPath/$outDir/$cond2base/Stats.log | awk '{print $3}')
-	echo "Converting raw counts to RPM..."
-	python bin/Depth-to-Depth_RPM.py "$myPath/$outDir/Data/Intermediate-files/condition2_file$count.tsRNA.depth" "$mapped" "$myPath/$outDir/Data/Intermediate-files/condition2_file$count.tsRNA.depth.readspermil" &
-	python bin/Depth-to-Depth_RPM.py "$myPath/$outDir/Data/Intermediate-files/condition2_file$count.snomiRNA.depth" "$mapped" "$myPath/$outDir/Data/Intermediate-files/condition2_file$count.snomiRNA.depth.readspermil" &
-done
-wait
-echo "Transforming depth data to horizontal and vertical formats..."
-### Concatenate data horizontally
-paste $myPath/$outDir/Data/Intermediate-files/condition2_file*.tsRNA.depth.readspermil > $myPath/$outDir/Data/Intermediate-files/tsRNA.condition2_concatenated.depth &
-paste $myPath/$outDir/Data/Intermediate-files/condition2_file*.snomiRNA.depth.readspermil > $myPath/$outDir/Data/Intermediate-files/snomiRNA.condition2_concatenated.depth &
-### Concatenate data vertically
-cat $myPath/$outDir/Data/Intermediate-files/condition2_file*.tsRNA.depth.readspermil | sort -k1,1 -k2,2n > $myPath/$outDir/Data/Intermediate-files/tsRNA.condition2_concatenated.depthVert &
-cat $myPath/$outDir/Data/Intermediate-files/condition2_file*.snomiRNA.depth.readspermil | sort -k1,1 -k2,2n > $myPath/$outDir/Data/Intermediate-files/snomiRNA.condition2_concatenated.depthVert &
-wait
+### Transform data 
+DataTransformations $myPath/$outDir/Data/Intermediate-files/predicted_exp_layout_cond1.csv ${condition1} 
+DataTransformations $myPath/$outDir/Data/Intermediate-files/predicted_exp_layout_cond2.csv ${condition2}
 
 ### Get distribution scores (standard deviation of RPM difference between samples multiplied 
 ### by standard deviation of percent difference between samples, divided by 1000) of the features
-mkdir -p $myPath/$outDir/Data/Intermediate-files/DataTransformations
-
 string_padder "tsRNAs: Generating Distribution Scores..."
-### tsRNAs
-### Calculate mean
-python bin/MeanCalculator.py $myPath/$outDir/Data/Intermediate-files/tsRNA.condition1_concatenated.depth $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.condition1_concatenated.depth.mean & 
-python bin/MeanCalculator.py $myPath/$outDir/Data/Intermediate-files/tsRNA.condition2_concatenated.depth $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.condition2_concatenated.depth.mean &
-wait
-### Sort output
-sort -k1,1 -k2,2n $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.condition1_concatenated.depth.mean > $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_tsRNA.condition1_concatenated.depth.mean &
-sort -k1,1 -k2,2n $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.condition2_concatenated.depth.mean > $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_tsRNA.condition2_concatenated.depth.mean &
-wait
+
 ### Concatenate horizontally to make a dataframe
-paste $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_tsRNA.condition1_concatenated.depth.mean $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_tsRNA.condition2_concatenated.depth.mean > $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.mean
+paste $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_tsRNA.${condition1}_concatenated.depth.mean $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_tsRNA.${condition2}_concatenated.depth.mean > $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.mean
 ### Calculate StdDev
 python bin/Mean-to-RelativeDifference.py $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.mean $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.stddev
 ### Calculate distribution scores
@@ -274,27 +242,24 @@ Rscript bin/DistributionScore.R $myPath/$outDir/Data/Intermediate-files/DataTran
 ### Sort the output but not the header
 cat $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.high-distribution-score.txt | awk 'NR<2{print $0;next}{print $0| "sort -k5,5nr"}' > $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.high-distribution-score.sorted.txt
 cat $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.all-features.txt | awk 'NR<2{print $0;next}{print $0| "sort -k11,11nr"}' > $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.all-features.sorted.txt
+### Repeat these steps for reads mapped to tRNA groups (multi-mapping reads)
+#paste $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_Combined.${condition1}.tRNAs-almost-mapped_RPM.depth.mean $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_Combined.${condition2}.tRNAs-almost-mapped_RPM.depth.mean > $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.multi-mappers.cond1-vs-cond2.mean
+#python bin/Mean-to-RelativeDifference.py $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.multi-mappers.cond1-vs-cond2.mean $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.multi-mappers.cond1-vs-cond2.stddev
+#Rscript bin/DistributionScore.R $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.multi-mappers.cond1-vs-cond2.stddev $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.multi-mappers.cond1-vs-cond2 $snomiRNAGTF
+#cat $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.multi-mappers.cond1-vs-cond2.high-distribution-score.txt | awk 'NR<2{print $0;next}{print $0| "sort -k5,5nr"}' > $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.multi-mappers.cond1-vs-cond2.high-distribution-score.sorted.txt
+#cat $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.multi-mappers.cond1-vs-cond2.all-features.txt | awk 'NR<2{print $0;next}{print $0| "sort -k11,11nr"}' > $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.multi-mappers.cond1-vs-cond2.all-features.sorted.txt
+###
 
 string_padder "snoRNAs/miRNAs: Generating Distribution Scores..."
 ### snomiRNAs
-### Calculate mean
-python bin/MeanCalculator.py $myPath/$outDir/Data/Intermediate-files/snomiRNA.condition1_concatenated.depth $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.condition1_concatenated.depth.mean &
-python bin/MeanCalculator.py $myPath/$outDir/Data/Intermediate-files/snomiRNA.condition2_concatenated.depth $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.condition2_concatenated.depth.mean &
-wait
-### Sort output
-sort -k1,1 -k2,2n $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.condition1_concatenated.depth.mean > $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_snomiRNA.condition1_concatenated.depth.mean &
-sort -k1,1 -k2,2n $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.condition2_concatenated.depth.mean > $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_snomiRNA.condition2_concatenated.depth.mean &
-wait
 ### Concatenate horizontally to make a dataframe
-paste $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_snomiRNA.condition1_concatenated.depth.mean $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_snomiRNA.condition2_concatenated.depth.mean > $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2.mean
+paste $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_snomiRNA.${condition1}_concatenated.depth.mean $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_snomiRNA.${condition2}_concatenated.depth.mean > $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2.mean
 ### Calculate StdDev
 python bin/Mean-to-RelativeDifference.py $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2.mean $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2.stddev
 ### Calculate distribution score
 Rscript bin/DistributionScore.R $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2.stddev $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2 $snomiRNAGTF
 ### Sort the output but not the header
 cat $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2.high-distribution-score.txt | awk 'NR<2{print $0;next}{print $0| "sort -k6,6nr"}' > $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2.high-distribution-score.sorted.txt
-#cat $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2.all-features.txt | awk 'NR<2{print $0;next}{print $0| "sort -k14,14nr"}' > $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2.all-features.sorted.txt
-
 ### Copy txt files illustrating features with very different distributions to the Results directory:
 cp $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.high-distribution-score.sorted.txt $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-tsRNAs.txt 
 cp $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2.high-distribution-score.sorted.txt $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-snomiRNAs.txt
@@ -302,8 +267,8 @@ cp $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs
 
 string_padder "Generating Cleavage Scores..." 
 ### Test whether certain features are cleaved in one condition vs the other
-Rscript bin/CleavageScore.R $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_tsRNA.condition1_concatenated.depth.mean $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_tsRNA.condition2_concatenated.depth.mean $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_tsRNAs $snomiRNAGTF &
-Rscript bin/CleavageScore.R $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_snomiRNA.condition1_concatenated.depth.mean $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_snomiRNA.condition2_concatenated.depth.mean $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_snomiRNAs $snomiRNAGTF &
+Rscript bin/CleavageScore.R $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_tsRNA.${condition1}_concatenated.depth.mean $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_tsRNA.${condition2}_concatenated.depth.mean $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_tsRNAs $snomiRNAGTF &
+Rscript bin/CleavageScore.R $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_snomiRNA.${condition1}_concatenated.depth.mean $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_snomiRNA.${condition2}_concatenated.depth.mean $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_snomiRNAs $snomiRNAGTF &
 wait
 ### Sort the output but not the header
 cat $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_tsRNAs.high-cleavage-score.txt | awk 'NR<2{print $0;next}{print $0| "sort -k11,11nr"}' > $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_High-cleavage-tsRNAs.txt
@@ -318,10 +283,10 @@ mv $myPath/$outDir/Plots/tsRNA.cond1-vs-cond2.high-distribution-score.pdf $myPat
 mv $myPath/$outDir/Plots/snomiRNA.cond1-vs-cond2.high-distribution-score.pdf $myPath/$outDir/Plots/${condition1}_vs_${condition2}_snomiRNAs.high-distribution-score.pdf
 
 ### Get mean and standard deviation
-Rscript bin/Mean_Stdev.R $myPath/$outDir/Data/Intermediate-files/tsRNA.condition1_concatenated.depth $myPath/$outDir/Data/Intermediate-files/condition1_concatenated_mean_stdev.tsRNA.depth &
-Rscript bin/Mean_Stdev.R $myPath/$outDir/Data/Intermediate-files/tsRNA.condition2_concatenated.depth $myPath/$outDir/Data/Intermediate-files/condition2_concatenated_mean_stdev.tsRNA.depth &
-Rscript bin/Mean_Stdev.R $myPath/$outDir/Data/Intermediate-files/snomiRNA.condition1_concatenated.depth $myPath/$outDir/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth &
-Rscript bin/Mean_Stdev.R $myPath/$outDir/Data/Intermediate-files/snomiRNA.condition2_concatenated.depth $myPath/$outDir/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth &
+Rscript bin/Mean_Stdev.R $myPath/$outDir/Data/Intermediate-files/tsRNA.${condition1}_concatenated.depth $myPath/$outDir/Data/Intermediate-files/condition1_concatenated_mean_stdev.tsRNA.depth &
+Rscript bin/Mean_Stdev.R $myPath/$outDir/Data/Intermediate-files/tsRNA.${condition2}_concatenated.depth $myPath/$outDir/Data/Intermediate-files/condition2_concatenated_mean_stdev.tsRNA.depth &
+Rscript bin/Mean_Stdev.R $myPath/$outDir/Data/Intermediate-files/snomiRNA.${condition1}_concatenated.depth $myPath/$outDir/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth &
+Rscript bin/Mean_Stdev.R $myPath/$outDir/Data/Intermediate-files/snomiRNA.${condition2}_concatenated.depth $myPath/$outDir/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth &
 wait
 
 ### Get names of differentially expressed features
