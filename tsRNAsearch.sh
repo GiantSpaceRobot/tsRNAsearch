@@ -363,7 +363,7 @@ fi
 string_padder "Running tRNA/snomiRNA alignment step..."
 
 ### STAR ###
-STAR --runThreadN $threads --genomeDir $ncRNADB --readFilesIn $outDir/trim_galore_output/$trimmedFile --outFileNamePrefix $outDir/tRNA-alignment/ --outReadsUnmapped Fastx $STARparam
+STAR --runThreadN $threads --genomeDir $ncRNADB --readFilesIn $outDir/trim_galore_output/$trimmedFile --outFileNamePrefix $outDir/tRNA-alignment/ --outSAMattributes AS nM HI NH --outFilterMultimapScoreRange 0 --outReadsUnmapped Fastx $STARparam
 grep "Number of input reads" $outDir/tRNA-alignment/Log.final.out | awk -F '\t' '{print $2}' | tr -d '\040\011\012\015' > $outDir/Stats.log # the tr command removes all types of spaces
 echo " reads; of these:" >> $outDir/Stats.log
 SAMcollapse $outDir/tRNA-alignment/Aligned.out.sam #Collapse reads aligned to the same tRNA species 
