@@ -490,7 +490,7 @@ bam_to_plots $outDir/snomiRNA-alignment $singleFile_basename snomiRNA &
 
 ### Process multi-mapping tRNAs
 python bin/Leftovers-to-Bedgraph.py $outDir/tRNA-alignment/tRNAs-almost-mapped.txt additional-files/tRNA-lengths_hg19.txt $outDir/tRNA-alignment/tRNAs-almost-mapped.depth
-python bin/Depth-to-Depth_RPM.py $outDir/tRNA-alignment/tRNAs-almost-mapped.depth $mapped $outDir/tRNA-alignment/tRNAs-almost-mapped_RPM.depth
+python bin/Depth-to-Depth_RPM.py $outDir/tRNA-alignment/tRNAs-almost-mapped.depth $mapped $outDir/tRNA-alignment/$singleFile_basename.tRNAs-almost-mapped_RPM.depth
 
 ### Get RPM-normalised FCount count data
 string_padder "Get RPM-normalised read-counts"
@@ -505,7 +505,7 @@ sleep 5  # Make sure everything is finished running
 cp $outDir/FCount-to-RPM/$singleFile_basename.all-features.rpm.count $outDir/Data_and_Plots/
 if [[ $Plots == "yes" ]]; then
 	### If extra plotting parameter (-A) was selected, copy these files 
-	Rscript bin/Bedgraph_plotter.R $outDir/tRNA-alignment/tRNAs-almost-mapped_RPM.depth $outDir/tRNA-alignment/Multi-mappers_tsRNAs_Coverage-plots.pdf 0
+	Rscript bin/Bedgraph_plotter.R $outDir/tRNA-alignment/$singleFile_basename.tRNAs-almost-mapped_RPM.depth $outDir/tRNA-alignment/Multi-mappers_tsRNAs_Coverage-plots.pdf 0
 	cp $outDir/tRNA-alignment/Multi-mappers_tsRNAs_Coverage-plots.pdf $outDir/Data_and_Plots/
 	cp $outDir/tRNA-alignment/*Results.* $outDir/Data_and_Plots/
 	cp $outDir/snomiRNA-alignment/*Results.* $outDir/Data_and_Plots/
