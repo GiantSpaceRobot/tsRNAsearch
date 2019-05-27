@@ -44,7 +44,28 @@ for k,v in myDict.iteritems():
             tRNAgroup = v[0].split("\t")[2]
         if all(tRNAgroup in x for x in database_matches) == True:  # if every value in the dict contains the tRNA group
             counterGroup = counterGroup + 1
-            newLine = v[0].split("\t")
+            for alignment in v:
+                aligned = alignment.strip().split("\t")
+                ### Determine read alignment orientation.
+                ### This script should only have to deal with either '0' or '16' flags in the 2nd column of SAM
+                ### as these indicate +/- orientation for primary alignment. I have added the 256/272 catchalls just in
+                ### case something weird happened to the SAM file.
+                ### This step is necessary to make sure the correct plot is generated
+                if int(aligned[1]) == 0: # read aligned in + orientation
+                    newLine = aligned
+                    break
+                elif int(aligned[1]) == 16: # read aligned in - orientation
+                    newLine = aligned
+                    #break
+                elif int(aligned[1]) == 256: # read aligned in + orientation (secondary alignment) 
+                    newLine = aligned
+                    break
+                elif int(aligned[1]) == 272: # read aligned in - orientation (secondary alignment) 
+                    newLine = aligned
+                    #break
+                else:
+                    print ("ERROR in SAMcollapse.py: Alignment below does not have correct flag:\n%s" % (aligned))
+            #print "%s\n%s\n\n" % (v[0], aligned)
             newLine = tRNAgroup + "\t" + newLine[3] + "\t" + str(len(newLine[9]) + int(newLine[3])) + "\t" + newLine[0]
             if tRNAgroup in tRNAgroupDict.keys():
                 tRNAgroupDict[tRNAgroup].append(newLine)
