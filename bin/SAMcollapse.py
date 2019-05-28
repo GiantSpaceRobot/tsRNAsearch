@@ -77,7 +77,8 @@ for k,v in myDict.iteritems():
 
 Output.close()
 
-print "SAMcollapse.py results:\n%s reads collapsed at the tRNA species level (e.g. 2 gene copies of ProCCG)\n%s reads collapsed at the tRNA group level (e.g. ProCCG and ProAAG)" % (counter, counterGroup)
+print counter, counterGroup
+#print "SAMcollapse.py results:\n%s reads collapsed at the tRNA species level (e.g. 2 gene copies of ProCCG)\n%s reads collapsed at the tRNA group level (e.g. ProCCG and ProAAG)" % (counter, counterGroup)
 
 leftovers = open(sys.argv[2] + "_tRNAs-almost-mapped.txt", "w")
 #leftovers.write("tRNA.group\tread.start\tread.end.approx\tread.name\n")

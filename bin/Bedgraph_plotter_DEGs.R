@@ -55,8 +55,12 @@ if (file.size(args[3]) == 0) { # Check if features file contains any lines
         # Do nothing and continue to generate plot etc.
       } else next  # Skip this iteration and do not generate plot
     }
+    if(grepl("?", feature)) {
+      feature <- gsub("\\?", "\\\\?", feature)   # Allows script to grep for tRNA with ??? in name
+    }
     ### file 1
-    subset1 <- input1[grep(feature, input1$V1),]
+    feature.full <- paste0("^", feature, "$", sep="")
+    subset1 <- input1[grep(feature.full, input1$V1),] # \\ + \\b denote 'boundary' of word we are searching for. Stops partial matches. Equivalent to ^feature$
     subset1.NoFlanks <- subset1
     subset1.NoFlanks$coordinates <- 1:nrow(subset1.NoFlanks)   # Make a new column with coordinates starting from 1
     subset1.NoFlanks$Conditions <- condition1
@@ -71,7 +75,7 @@ if (file.size(args[3]) == 0) { # Check if features file contains any lines
                             "Conditions")
     
     ### file 2
-    subset2 <- input2[grep(feature, input2$V1),]
+    subset2 <- input2[grep(feature.full, input2$V1),]
     subset2.NoFlanks <- subset2
     subset2.NoFlanks$coordinates <- 1:nrow(subset2.NoFlanks)   # Make a new column with coordinates starting from 1
     subset2.NoFlanks$Conditions <- condition2  
@@ -91,6 +95,8 @@ if (file.size(args[3]) == 0) { # Check if features file contains any lines
       featureRows <- featureRows[1,]
       geneName <- as.character(sub(".*gene_name *(.*?) *; gene_source.*", "\\1", featureRows$V9))
       geneName <- paste0(geneName, " (", feature, ")")
+    } else if (nchar(feature) == 3) {
+      geneName <- paste0(feature, " (plot of all additional reads that mapped to this tRNA group)", sep="")
     } else {
       geneName <- feature
     }

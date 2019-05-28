@@ -204,26 +204,33 @@ function SAMcollapse () {
 		grep -v -f  $outDir/tempDir/${myFile}_HeadsAndTails_uniq.txt $i > $outDir/tempDir/edit_${base}
 	done
 	### Run SAMcollapse.py. This loop will only run $cores processes at once
-	COUNTER=0
+	COUNTER=1
+	chunksDiv=$((chunks/10))
 	echo "Collapsing every chunk of SAM..."
 	for i in $outDir/tempDir/edit_*; 
 	do
 		base=$(basename $i)
-		python bin/SAMcollapse.py $i ${fileToCollapse}_${base} & 
+		python bin/SAMcollapse.py $i ${fileToCollapse}_${base} >> $outDir/tRNA-alignment/collapsed-reads.txt & 
+		if (( $COUNTER % $chunksDiv == 0 )); then
+			echo "Started job $COUNTER of $chunks"
+		fi
 		numjobs=($(jobs | wc -l))
-		echo Running job number ${COUNTER} of ${chunks}... 
+		#echo Running job number ${COUNTER} of ${chunks}... 
 		COUNTER=$[$COUNTER + 1]
-		counter2=$COUNTER
+		#counter2=$COUNTER
 		while (( $numjobs == $cores )); do
-			if (( $COUNTER == $counter2)); then
-				echo There are $numjobs jobs now. Waiting for jobs to finish...
-			fi
-			counter2=$[$counter2 + 1]
+			#if (( $COUNTER == $counter2)); then
+			#	echo There are $numjobs jobs now. Waiting for jobs to finish...
+			#fi
+			#counter2=$[$counter2 + 1]
 			numjobs=($(jobs | wc -l))
 			sleep 5 #Enter next loop iteration
 		done
 	done
 	wait
+	readsCollapsedSpecies=$(awk '{split($0,a," "); sum += a[1]} END {print sum}' $outDir/tRNA-alignment/collapsed-reads.txt)
+	readsCollapsedGroup=$(awk '{split($0,a," "); sum += a[2]} END {print sum}' $outDir/tRNA-alignment/collapsed-reads.txt)
+	echo -e "SAM collapse results:\n\t$readsCollapsedSpecies reads collapsed at the tRNA species level (e.g. 2 gene copies of ProCCG)\n\t$readsCollapsedGroup reads collapsed at the tRNA group level (e.g. ProCCG and ProAAG)"
 
 	### Concatenate results
 	echo "Gathering reads that were mapped to similar tRNAs..."
