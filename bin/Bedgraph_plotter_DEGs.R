@@ -96,7 +96,7 @@ if (file.size(args[3]) == 0) { # Check if features file contains any lines
       geneName <- as.character(sub(".*gene_name *(.*?) *; gene_source.*", "\\1", featureRows$V9))
       geneName <- paste0(geneName, " (", feature, ")")
     } else if (nchar(feature) == 3) {
-      geneName <- paste0(feature, " (plot of all additional reads that mapped to this tRNA group)", sep="")
+      geneName <- paste0(feature, " (plot of multi-mapping reads where isoacceptor could not be identified)", sep="")
     } else {
       geneName <- feature
     }

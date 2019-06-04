@@ -126,9 +126,11 @@ for fname in $(cat $1); do
 	find $myPath/$outDir/ -type f -name "$cond1base*snomiRNA.depth" -exec cp {} $myPath/$outDir/Data/Intermediate-files/$2_file$count.snomiRNA.depth \; & # Gather sno/miRNAs
 	wait
 	mapped=$(grep "mapped" $myPath/$outDir/$cond1base/Stats.log | awk '{print $3}')
-	echo "Converting raw counts to RPM..."
-	python bin/Depth-to-Depth_RPM.py "$myPath/$outDir/Data/Intermediate-files/$2_file$count.tsRNA.depth" "$mapped" "$myPath/$outDir/Data/Intermediate-files/$2_file$count.tsRNA.depth.readspermil" &
-	python bin/Depth-to-Depth_RPM.py "$myPath/$outDir/Data/Intermediate-files/$2_file$count.snomiRNA.depth" "$mapped" "$myPath/$outDir/Data/Intermediate-files/$2_file$count.snomiRNA.depth.readspermil" &
+	mv $myPath/$outDir/Data/Intermediate-files/$2_file$count.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/$2_file$count.tsRNA.depth.readspermil
+	mv $myPath/$outDir/Data/Intermediate-files/$2_file$count.snomiRNA.depth $myPath/$outDir/Data/Intermediate-files/$2_file$count.snomiRNA.depth.readspermil
+	#echo "Converting raw counts to RPM..."
+	#python bin/Depth-to-Depth_RPM.py "$myPath/$outDir/Data/Intermediate-files/$2_file$count.tsRNA.depth" "$mapped" "$myPath/$outDir/Data/Intermediate-files/$2_file$count.tsRNA.depth.readspermil" &
+	#python bin/Depth-to-Depth_RPM.py "$myPath/$outDir/Data/Intermediate-files/$2_file$count.snomiRNA.depth" "$mapped" "$myPath/$outDir/Data/Intermediate-files/$2_file$count.snomiRNA.depth.readspermil" &
 	### Left-over reads:
 	cp $myPath/$outDir/$cond1base/tRNA-alignment/$cond1base.tRNAs-almost-mapped_RPM.depth $myPath/$outDir/Data/Intermediate-files/$2.$cond1base.tRNAs-almost-mapped_RPM.depth
 done
@@ -318,7 +320,7 @@ if [[ $(wc -l < $myPath/$outDir/Data/All-Features-Identified.txt) -ge 2 ]]; then
 	### Plot all tsRNAs
 	cat $myPath/$outDir/Data/Intermediate-files/Multimappers.condition1_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/condition1_concatenated_mean_stdev.tsRNA.depth | sort -k1,1 -k2,2n > $myPath/$outDir/Data/Intermediate-files/Everything.condition1_concatenated_mean_stdev.tsRNA.depth
 	cat $myPath/$outDir/Data/Intermediate-files/Multimappers.condition2_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/condition2_concatenated_mean_stdev.tsRNA.depth | sort -k1,1 -k2,2n > $myPath/$outDir/Data/Intermediate-files/Everything.condition2_concatenated_mean_stdev.tsRNA.depth
-	Rscript bin/Bedgraph_plotter_DEGs.R $myPath/$outDir/Data/Intermediate-files/Everything.condition1_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/Everything.condition2_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_All-tsRNAs.pdf 0 $Plots &
+	Rscript bin/Bedgraph_plotter_DEGs.R $myPath/$outDir/Data/Intermediate-files/Everything.condition1_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/Everything.condition2_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_All-tsRNAs.pdf 0 "yes" &
 	if [[ $Plots == "yes" ]]; then
 		### Plot all sno/miRNAs if -A 'yes' parameter selected
 		Rscript bin/Bedgraph_plotter_DEGs.R $myPath/$outDir/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_All-snomiRNAs.pdf 0 $Plots $snomiRNAGTF &
@@ -367,6 +369,65 @@ if [[ $Plots == "yes" ]]; then
 	mkdir $myPath/$outDir/Plots/Individual-Runs
 	cp $myPath/$outDir/*/Data_and_Plots/*.pdf $myPath/$outDir/Plots/Individual-Runs/
 fi
+
+### Results Summary
+vennLocation=$myPath/$outDir/Plots/${condition1}_vs_${condition2}_VennDiagram.pdf
+topFiveUpDE="$(grep -v ^,baseMean $myPath/$outDir/Data/DE_Results/DESeq2/*upregulated.csv | sort -t ',' -k7,7gr | awk -F ',' '{print $1}' | head -5)"
+topFiveDownDE="$(grep -v ^,baseMean $myPath/$outDir/Data/DE_Results/DESeq2/*downregulated.csv | sort -t ',' -k7,7gr | awk -F ',' '{print $1}' | head -5)"
+topDistribution_tRNAs="$(grep -v ^feature $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-tsRNAs.txt | head -5 | awk '{print $1}')"
+topDistribution_snomiRNAs="$(grep -v ^feature $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-snomiRNAs.txt | head -5 | awk '{print $1}')"
+topCleavage_tRNAs="$(grep -v ^feature $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-cleavage-tsRNAs.txt | head -5 | awk '{print $1}')"
+topCleavage_snomiRNAs="$(grep -v ^feature $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-cleavage-snomiRNAs.txt | head -5 | awk '{print $1}')"
+echo "tsRNAsearch Results
+
+For a comparison of all three methods, see venn diagram:
+	$vennLocation
+	Details of the intersections can be found in the $myPath/$outDir/Data directory
+	Files used to generate the Venn Diagram can be found here:
+		Folder with text files
+
+Differential Gene Expression Results can be found here:
+	$myPath/$outDir/Data/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output-upregulated.csv
+	$myPath/$outDir/Data/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output-downregulated.csv
+	Top 5 differentially upregulated features:
+
+$topFiveUpDE
+
+	Top 5 differentially downregulated features:
+
+$topFiveDownDE
+
+Distribution Score Results can be found here:
+	$myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-tsRNAs.txt
+	$myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-snomiRNAs.txt
+	Top scoring tRNAs:
+
+$topDistribution_tRNAs
+
+	Top scoring snomiRNAs:
+
+$topDistribution_snomiRNAs
+
+Cleavage Score Results can be found here:
+	$myPath/$outDir/Data/${condition1}_vs_${condition2}_High-cleavage-tsRNAs.txt
+	$myPath/$outDir/Data/${condition1}_vs_${condition2}_High-cleavage-snomiRNAs.txt
+	Top scoring tRNAs:
+
+$topCleavage_tRNAs
+	
+	Top scoring snomiRNAs:
+		
+$topCleavage_snomiRNAs
+
+More results:
+	All tRNA plots can be found here: 
+		$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_All-tsRNAs.pdf
+	All snoRNA/miRNA plots: 
+		$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-snomiRNAs.pdf
+		$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-cleavage-snomiRNAs.pdf
+" > $myPath/$outDir/${condition1}_vs_${condition2}.Results-Summary.txt
+
+cat $myPath/$outDir/${condition1}_vs_${condition2}.Results-Summary.txt
 
 finished="Finished project analysis on $(date)"
 string_padder "$finished"
