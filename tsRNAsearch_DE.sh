@@ -341,6 +341,10 @@ if [[ $(wc -l < $myPath/$outDir/Data/All-Features-Identified.txt) -ge 2 ]]; then
 	Rscript bin/Bedgraph_plotter_DEGs.R $myPath/$outDir/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-snomiRNAs.pdf 0 "no" $snomiRNAGTF &
 	# Venn diagram
 	Rscript bin/VennDiagram.R $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_short-names.txt $myPath/$outDir/Data/Intermediate-files/DataTransformations/High-distribution-scores_feature-names.txt $myPath/$outDir/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}
+	mkdir $myPath/$outDir/Data/Intermediate-files/VennDiagramGeneration
+	cp $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_short-names.txt $myPath/$outDir/Data/Intermediate-files/VennDiagramGeneration/DESeq2-Features.txt
+	cp  $myPath/$outDir/Data/Intermediate-files/DataTransformations/High-distribution-scores_feature-names.txt $myPath/$outDir/Data/Intermediate-files/VennDiagramGeneration/Distribution-Algorithm-Features.txt
+	cp $myPath/$outDir/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt $myPath/$outDir/Data/Intermediate-files/VennDiagramGeneration/Cleavage-Algorithm-Features.txt
 	mv $myPath/$outDir/Plots/${condition1}_vs_${condition2}.intersect*txt $myPath/$outDir/Data/
 else
 	string_padder "No features of interest were identified."
@@ -356,7 +360,8 @@ for f in $outDir/Data/*rpm.count; do
 	mv $outDir/Data/Intermediate-files/FCount.rpm.temp $outDir/Data/Intermediate-files/FCount.rpm.all-features
 done
 rm $outDir/Data/*rpm.count
-mv $outDir/Data/Intermediate-files/FCount.rpm.all-features $outDir/Data/FCount.all-features.rpm.count
+#mv $outDir/Data/Intermediate-files/FCount.rpm.all-features $outDir/Data/FCount.all-features.rpm.count
+mv $myPath/$outDir/Data/*count $myPath/$outDir/Data/Intermediate-files/  
 
 ### Move DESeq results to Data directory
 mv $myPath/$outDir/Data/Intermediate-files/DE_Results/ $myPath/$outDir/Data/
@@ -371,6 +376,10 @@ if [[ $Plots == "yes" ]]; then
 fi
 
 ### Results Summary
+results=$(string_padder "tsRNAsearch Results Report")
+de_results=$(string_padder "Differential Expression Results")
+dist_results=$(string_padder "Distribution Algorithm Results")
+cleav_results=$(string_padder "Cleavage Algorithm Results")
 vennLocation=$myPath/$outDir/Plots/${condition1}_vs_${condition2}_VennDiagram.pdf
 topFiveUpDE="$(grep -v ^,baseMean $myPath/$outDir/Data/DE_Results/DESeq2/*upregulated.csv | sort -t ',' -k7,7gr | awk -F ',' '{print $1}' | head -5)"
 topFiveDownDE="$(grep -v ^,baseMean $myPath/$outDir/Data/DE_Results/DESeq2/*downregulated.csv | sort -t ',' -k7,7gr | awk -F ',' '{print $1}' | head -5)"
@@ -378,46 +387,57 @@ topDistribution_tRNAs="$(grep -v ^feature $myPath/$outDir/Data/${condition1}_vs_
 topDistribution_snomiRNAs="$(grep -v ^feature $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-snomiRNAs.txt | head -5 | awk '{print $1}')"
 topCleavage_tRNAs="$(grep -v ^feature $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-cleavage-tsRNAs.txt | head -5 | awk '{print $1}')"
 topCleavage_snomiRNAs="$(grep -v ^feature $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-cleavage-snomiRNAs.txt | head -5 | awk '{print $1}')"
-echo "tsRNAsearch Results
+echo "$results
 
 For a comparison of all three methods, see venn diagram:
 	$vennLocation
-	Details of the intersections can be found in the $myPath/$outDir/Data directory
+	Details of the intersections can be found here: 
+		$myPath/$outDir/Data
 	Files used to generate the Venn Diagram can be found here:
-		Folder with text files
+		$myPath/$outDir/Data/Intermediate-files/VennDiagramGeneration
 
-Differential Gene Expression Results can be found here:
-	$myPath/$outDir/Data/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output-upregulated.csv
-	$myPath/$outDir/Data/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output-downregulated.csv
-	Top 5 differentially upregulated features:
+$de_results
+
+Top 5 differentially upregulated features in ${condition2} versus ${condition1}:
 
 $topFiveUpDE
 
-	Top 5 differentially downregulated features:
+Full results here: $myPath/$outDir/Data/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output-upregulated.csv
+
+Top 5 differentially downregulated features in ${condition2} versus ${condition1}:
 
 $topFiveDownDE
 
-Distribution Score Results can be found here:
-	$myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-tsRNAs.txt
-	$myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-snomiRNAs.txt
-	Top scoring tRNAs:
+Full results here: $myPath/$outDir/Data/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output-downregulated.csv
+
+$dist_results
+
+Top scoring tRNAs:
 
 $topDistribution_tRNAs
 
-	Top scoring snomiRNAs:
+Full results here: $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-tsRNAs.txt
+
+Top scoring snomiRNAs:
 
 $topDistribution_snomiRNAs
 
-Cleavage Score Results can be found here:
-	$myPath/$outDir/Data/${condition1}_vs_${condition2}_High-cleavage-tsRNAs.txt
-	$myPath/$outDir/Data/${condition1}_vs_${condition2}_High-cleavage-snomiRNAs.txt
-	Top scoring tRNAs:
+Full results here: $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-snomiRNAs.txt
+
+$cleav_results
+
+Top scoring tRNAs:
 
 $topCleavage_tRNAs
-	
-	Top scoring snomiRNAs:
+
+Full results here: $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-cleavage-tsRNAs.txt
+
+Top scoring snomiRNAs:
 		
 $topCleavage_snomiRNAs
+
+Full results here: $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-cleavage-snomiRNAs.txt
+
 
 More results:
 	All tRNA plots can be found here: 
