@@ -38,7 +38,7 @@ On finishing the run, search for files in *CytC\_Results/Data\_and\_Plots/* to c
 tsRNAsearch_DE.sh -g mouse -d ExampleData/ -e additional-files/Example_ExperimentLayout.csv -o MyResults -t 1 
 ```
 
-On finishing the run, search for files in *MyResults/Plots/* to confirm completion of tsRNAsearch run.
+On finishing the run, the file MyResults/Results-Summary.txt will be generated, summarising the results from the run.
 
 ## More Information
 #### ncRNA identification methods:

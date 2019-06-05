@@ -60,7 +60,6 @@ function human_genome () {
 	mkdir -p DBs/genome_index/human-ncRNAs
 	STAR --runThreadN $CPUs --runMode genomeGenerate --genomeDir DBs/genome_index/human/ --genomeFastaFiles Homo_sapiens.GRCh37.dna.primary_assembly.fa 
 	STAR --runThreadN $CPUs --runMode genomeGenerate --genomeDir DBs/genome_index/human-ncRNAs/ --genomeFastaFiles DBs/hg19-combined_tiRNAs_snomiRNAs.fa --genomeSAindexNbases 8
-	#hisat2-build -p $CPUs Homo_sapiens.GRCh37.dna.primary_assembly.fa DBs/hisat2_index/Homo_sapiens.GRCh37.dna.primary_assembly
 	echo "Feel free to delete the Homo_sapiens.GRCh37.dna.primary_assembly.fa file in this directory as it is no longer required"
 }
 
@@ -80,7 +79,6 @@ function mouse_genome () {
 	mkdir -p DBs/genome_index/mouse-ncRNAs
 	STAR --runThreadN $CPUs --runMode genomeGenerate --genomeDir DBs/genome_index/mouse/ --genomeFastaFiles Mus_musculus.GRCm38.dna.primary_assembly.fa
 	STAR --runThreadN $CPUs --runMode genomeGenerate --genomeDir DBs/genome_index/mouse-ncRNAs/ --genomeFastaFiles DBs/GRCm38-combined_tiRNAs_snomiRNAs.fsa
-	#hisat2-build -p $CPUs Mus_musculus.GRCm38.dna.primary_assembly.fa DBs/hisat2_index/Mus_musculus.GRCm38.dna.primary_assembly
 	echo "Feel free to delete the Mus_musculus.GRCm38.dna.primary_assembly.fa file in this directory as it is no longer required"
 }
 
@@ -92,14 +90,6 @@ if ! [ -x "$(command -v STAR)" ]; then
 else
 	echo "STAR already installed"
 fi
-
-# HISAT2
-#echo "Looking for HISAT2..."
-#if ! [ -x "$(command -v hisat2)" ]; then
-#	sudo apt install hisat2 
-#else
-#	echo "hisat2 already installed"
-#fi
 
 ### Download genomes
 if [ $genome = "human" ]; then
