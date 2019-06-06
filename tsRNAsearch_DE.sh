@@ -361,7 +361,7 @@ for f in $outDir/Data/*rpm.count; do
 done
 rm $outDir/Data/*rpm.count
 #mv $outDir/Data/Intermediate-files/FCount.rpm.all-features $outDir/Data/FCount.all-features.rpm.count
-mv $myPath/$outDir/Data/*count $myPath/$outDir/Data/Intermediate-files/  
+mv $myPath/$outDir/Data/*count $myPath/$outDir/Data/Intermediate-files/
 
 ### Move DESeq results to Data directory
 mv $myPath/$outDir/Data/Intermediate-files/DE_Results/ $myPath/$outDir/Data/
