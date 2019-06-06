@@ -246,7 +246,7 @@ function SAMcollapse () {
 
 function bam_to_plots () {  ### Steps for plotting regions with high variation in coverage
 	### Output coverage of all features we are interested in (e.g. tRNAs)
-	samtools depth -aa $1/accepted_hits.bam > $1/accepted_hits.depth   # A lot faster than bedtools genomecov
+	samtools depth -d 100000000 -aa $1/accepted_hits.bam > $1/accepted_hits.depth   # A lot faster than bedtools genomecov
 	cp $1/accepted_hits.depth $1/accepted_hits_raw.depth
 	### Normalise by reads per million (RPM)
 	python bin/Depth-to-Depth_RPM.py $1/accepted_hits_raw.depth $mapped $1/accepted_hits.depth 
@@ -373,15 +373,13 @@ string_padder "Running tRNA/snomiRNA alignment step..."
 STAR --runThreadN $threads --genomeDir $ncRNADB --readFilesIn $outDir/trim_galore_output/$trimmedFile --outFileNamePrefix $outDir/tRNA-alignment/ --outSAMattributes AS nM HI NH --outFilterMultimapScoreRange 0 --outReadsUnmapped Fastx $STARparam
 grep "Number of input reads" $outDir/tRNA-alignment/Log.final.out | awk -F '\t' '{print $2}' | tr -d '\040\011\012\015' > $outDir/Stats.log # the tr command removes all types of spaces
 echo " reads; of these:" >> $outDir/Stats.log
+## Collapse SAM files:
 SAMcollapse $outDir/tRNA-alignment/Aligned.out.sam #Collapse reads aligned to the same tRNA species 
 mv $outDir/Collapsed.sam $outDir/tRNA-alignment/aligned_tRNAdb.sam # match hisat2 naming convention
 mv $outDir/tRNA-alignment/Unmapped.out.mate1 $outDir/tRNA-alignment/unmapped.fastq
+## Or don't collapse SAM files (comment out three lines above and uncomment line below)
+#mv $outDir/tRNA-alignment/Aligned.out.sam $outDir/tRNA-alignment/aligned_tRNAdb.sam
 #### STAR ###
-
-### HISAT2 ###
-#hisat2 -p $threads -x $ncRNADB -U $outDir/trim_galore_output/$trimmedFile -S $outDir/tRNA-alignment/aligned_tRNAdb.sam --summary-file $outDir/tRNA-alignment/align_summary.txt --un $outDir/tRNA-alignment/unmapped.fastq
-#grep "reads" $outDir/tRNA-alignment/align_summary.txt > $outDir/Stats.log
-### HISAT2 ###
 
 if [ -f $outDir/tRNA-alignment/aligned_tRNAdb.sam ]; then  #If STAR successfully mapped reads, convert to bam and index
 	### Split the resulting SAM file into reads aligned to tRNAs and snomiRNAs
