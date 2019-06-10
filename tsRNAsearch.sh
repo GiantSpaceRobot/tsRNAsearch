@@ -496,6 +496,8 @@ bam_to_plots $outDir/snomiRNA-alignment $singleFile_basename snomiRNA &
 ### Process multi-mapping tRNAs
 python bin/Leftovers-to-Bedgraph.py $outDir/tRNA-alignment/tRNAs-almost-mapped.txt additional-files/tRNA-lengths_hg19.txt $outDir/tRNA-alignment/tRNAs-almost-mapped.depth
 python bin/Depth-to-Depth_RPM.py $outDir/tRNA-alignment/tRNAs-almost-mapped.depth $mapped $outDir/tRNA-alignment/$singleFile_basename.tRNAs-almost-mapped_RPM.depth
+sort -k1,1 -k2,2n $outDir/tRNA-alignment/$singleFile_basename.tRNAs-almost-mapped_RPM.depth > $outDir/tRNA-alignment/$singleFile_basename.tRNAs-almost-mapped_RPM.sorted.depth
+mv $outDir/tRNA-alignment/$singleFile_basename.tRNAs-almost-mapped_RPM.sorted.depth $outDir/tRNA-alignment/$singleFile_basename.tRNAs-almost-mapped_RPM.depth
 
 ### Get RPM-normalised FCount count data
 string_padder "Get RPM-normalised read-counts"
