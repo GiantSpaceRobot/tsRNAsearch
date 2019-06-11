@@ -370,7 +370,7 @@ fi
 string_padder "Running tRNA/snomiRNA alignment step..."
 
 ### STAR ###
-STAR --runThreadN $threads --genomeDir $ncRNADB --readFilesIn $outDir/trim_galore_output/$trimmedFile --outFileNamePrefix $outDir/tRNA-alignment/ --outSAMattributes AS nM HI NH --outFilterMultimapScoreRange 0 --outReadsUnmapped Fastx $STARparam
+STAR --runThreadN $threads --genomeDir $ncRNADB --readFilesIn $outDir/trim_galore_output/$trimmedFile --outFileNamePrefix $outDir/tRNA-alignment/ --outSAMattributes AS nM HI NH --outFilterMultimapScoreRange 0 --outReadsUnmapped Fastx --outFilterMatchNmin 15 $STARparam
 grep "Number of input reads" $outDir/tRNA-alignment/Log.final.out | awk -F '\t' '{print $2}' | tr -d '\040\011\012\015' > $outDir/Stats.log # the tr command removes all types of spaces
 echo " reads; of these:" >> $outDir/Stats.log
 ## Collapse SAM files:
@@ -412,7 +412,7 @@ string_padder "Running mRNA/ncRNA alignment step..."
 ### HISAT2 ###
 
 ### STAR ###
-STAR --runThreadN $threads --genomeDir $genomeDB --readFilesIn $outDir/tRNA-alignment/$myFile --outFileNamePrefix $outDir/mRNA-ncRNA-alignment/ --outReadsUnmapped Fastx #$STARparam
+STAR --runThreadN $threads --genomeDir $genomeDB --readFilesIn $outDir/tRNA-alignment/$myFile --outFileNamePrefix $outDir/mRNA-ncRNA-alignment/ --outReadsUnmapped Fastx --outFilterMatchNmin 15 #$STARparam
 mv $outDir/mRNA-ncRNA-alignment/Aligned.out.sam $outDir/mRNA-ncRNA-alignment/aligned.sam
 mv $outDir/mRNA-ncRNA-alignment/Unmapped.out.mate1 $outDir/mRNA-ncRNA-alignment/unmapped.fastq
 ### STAR ###
