@@ -150,7 +150,7 @@ DESeq2.function <- function(path.to.files){
   }
   colnames(cDataAll) <- (file.names)
   rownames(cDataAll) <- file[,1]
-  
+
   ### checkpoint
   print("Checkpoint 2")
   
@@ -328,14 +328,16 @@ DESeq2.function <- function(path.to.files){
   newdata.subset <- rbind(up, down)
   newdata.subset$features <- rownames(newdata.subset)
   newdata.subset$negLog10 <- -log10(newdata.subset$padj)
-  tsRNAs.df <- subset(newdata.subset, startsWith(as.character(features), "chr"))
+  genes.df <- subset(newdata.subset, startsWith(as.character(features), "ENS"))
+  tsRNAs.df <- newdata.subset[ !(newdata.subset$features %in% genes.df$features), ] # newdata.susbet minus all rows in genes.df (to get tsRNAs.df)
+  #tsRNAs.df <- subset(newdata.subset, startsWith(as.character(features), "chr"))
   # If there are more than 20 features, show top 20
   if(nrow(tsRNAs.df) > 20){
     tsRNAs.df.subset <- head(tsRNAs.df, n = 20)
   } else {
     tsRNAs.df.subset <- tsRNAs.df
   }
-  genes.df <- subset(newdata.subset, startsWith(as.character(features), "ENS"))
+
   # If there are more than 20 features, show top 20
   if(nrow(genes.df) > 20){
     genes.df.subset <- head(genes.df, n = 20)
