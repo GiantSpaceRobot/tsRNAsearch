@@ -203,21 +203,22 @@ for f in $inDir/*; do
 	filename="$( cut -d '.' -f 1 <<< "$file_base" )" 
 	analysis="Beginning analysis of $filename using tsRNAsearch"
 	string_padder $analysis
-	tsRNAsearch.sh -g "$genome" -s "$f" -o "$outDir/$filename" -t "$threads" -A "$Plots"
+	./newtsRNAsearch.sh -g "$genome" -s "$f" -o "$outDir/$filename" -t "$threads" -A "$Plots"
 	wait
-	cat $outDir/$filename/FCount-count-output/*.count | grep -v ^__ | sort -k1,1 > $outDir/Data/Intermediate-files/$filename.all-features.count	
-	readsMapped=$(awk '{sum+=$2} END{print sum;}' $outDir/Data/Intermediate-files/$filename.all-features.count)
-	cp $outDir/$filename/Data_and_Plots/$filename.all-features.rpm.count $outDir/Data/	
-	cp $outDir/$filename/FCount-count-output/$filename.all-features.count $outDir/Data/Intermediate-files/ 
+	#cat $outDir/$filename/FCount-count-output/*.count | grep -v ^__ | sort -k1,1 > $outDir/Data/Intermediate-files/$filename.all-features.count	
+	#readsMapped=$(awk '{sum+=$2} END{print sum;}' $outDir/Data/Intermediate-files/$filename.all-features.count)
+	#cp $outDir/$filename/Data_and_Plots/$filename.all-features.rpm.count $outDir/Data/	
+	readsMapped=$(awk '{sum+=$2} END{print sum;}' $outDir/$filename/FCount-count-output/$filename.collapsed.all-features.count)
+	cp $outDir/$filename/FCount-count-output/$filename.collapsed.all-features.count $outDir/Data/Intermediate-files/ 
 done
 
 ### Gather raw count files
-awk '{print $1}' $outDir/Data/Intermediate-files/$filename.all-features.count > $outDir/Data/Intermediate-files/FCount.all-features # Get feature names
+awk '{print $1}' $outDir/Data/Intermediate-files/$filename.collapsed.all-features.count > $outDir/Data/Intermediate-files/FCount.all-features # Get feature names
 for f in $outDir/Data/Intermediate-files/*count; do
 	awk '{print $2}' $f | paste $outDir/Data/Intermediate-files/FCount.all-features - >> $outDir/Data/Intermediate-files/FCount.temp
 	mv $outDir/Data/Intermediate-files/FCount.temp $outDir/Data/Intermediate-files/FCount.all-features
 done
-mv $outDir/Data/Intermediate-files/FCount.all-features $outDir/Data/FCount.all-features.raw.count
+mv $outDir/Data/Intermediate-files/FCount.all-features $outDir/Data/Intermediate-files/FCount.all-features.raw.Count
 
 ### Carry out DESeq2 analysis
 string_padder "Carrying out DESeq2 analysis..."
@@ -300,9 +301,10 @@ wait
 
 ### Get names of differentially expressed features
 cat $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/*regulated.csv | grep -v ^,base | awk -F ',' '{print $1}' | awk -F ' ' '{print $1}' > $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt
-grep ENS $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt > $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_ENSGs.txt
-grep -v ENS $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt | awk -F '-' '{print $2}' | sort | uniq > $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_tRNAs.txt 
-cat $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_ENSGs.txt $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_tRNAs.txt > $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_short-names.txt
+cp $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_short-names.txt
+#grep ENS $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt > $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_ENSGs.txt
+#grep -v ENS $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt | awk -F '-' '{print $2}' | sort | uniq > $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_tRNAs.txt 
+#cat $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_ENSGs.txt $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_tRNAs.txt > $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_short-names.txt
 ### Get names of features with highest distribution scores 
 cat $myPath/$outDir/Data/Intermediate-files/DataTransformations/*high-distribution-score.sorted.txt | grep -v ^feat | awk '{print $1}' > $myPath/$outDir/Data/Intermediate-files/DataTransformations/High-distribution-scores_feature-names.txt 
 ### Get names of features that are likely cleaved
@@ -352,16 +354,16 @@ else
 fi
 wait
 
-string_padder "Gathering RPM count files and cleaning up..."
+#string_padder "Gathering RPM count files and cleaning up..."
 ### Gather RPM count files
-awk '{print $1}' $outDir/Data/$filename.all-features.rpm.count > $outDir/Data/Intermediate-files/FCount.rpm.all-features # Get feature names
-for f in $outDir/Data/*rpm.count; do
-	awk '{print $2}' $f | paste $outDir/Data/Intermediate-files/FCount.rpm.all-features - >> $outDir/Data/Intermediate-files/FCount.rpm.temp
-	mv $outDir/Data/Intermediate-files/FCount.rpm.temp $outDir/Data/Intermediate-files/FCount.rpm.all-features
-done
-rm $outDir/Data/*rpm.count
+#awk '{print $1}' $outDir/Data/$filename.all-features.rpm.count > $outDir/Data/Intermediate-files/FCount.rpm.all-features # Get feature names
+#for f in $outDir/Data/*rpm.count; do
+#	awk '{print $2}' $f | paste $outDir/Data/Intermediate-files/FCount.rpm.all-features - >> $outDir/Data/Intermediate-files/FCount.rpm.temp
+#	mv $outDir/Data/Intermediate-files/FCount.rpm.temp $outDir/Data/Intermediate-files/FCount.rpm.all-features
+#done
+#rm $outDir/Data/*rpm.count
 #mv $outDir/Data/Intermediate-files/FCount.rpm.all-features $outDir/Data/FCount.all-features.rpm.count
-mv $myPath/$outDir/Data/*count $myPath/$outDir/Data/Intermediate-files/
+#mv $myPath/$outDir/Data/*count $myPath/$outDir/Data/Intermediate-files/
 
 ### Move DESeq results to Data directory
 mv $myPath/$outDir/Data/Intermediate-files/DE_Results/ $myPath/$outDir/Data/
