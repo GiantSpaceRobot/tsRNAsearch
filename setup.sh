@@ -52,7 +52,7 @@ function human_genome () {
 	gunzip Homo_sapiens.GRCh37.dna.primary_assembly.fa.gz &
 	wait
 	python bin/GTF_DuplicateRemover.py additional-files/Homo-sapiens_All-ncRNAs.txt Homo_sapiens.GRCh37.87.gtf Homo_sapiens.GRCh37.87.NoDuplicates.gtf
-	rm Homo_sapiens.GRCh37.87.gtf &
+	rm Homo_sapiens.GRCh37.87.gtf
 	mv Homo_sapiens.GRCh37.87.NoDuplicates.gtf DBs/Homo_sapiens.GRCh37.87.gtf
 	echo "Building human genome index..."
 	mkdir -p DBs/genome_index
@@ -73,7 +73,7 @@ function mouse_genome () {
 	gunzip Mus_musculus.GRCm38.dna.primary_assembly.fa.gz &
 	wait
 	python bin/GTF_DuplicateRemover.py additional-files/Mus-musculus_All-ncRNAs.txt Mus_musculus.GRCm38.95.gtf Mus_musculus.GRCm38.95.NoDuplicates.gtf
-	rm Mus_musculus.GRCm38.95.gtf &
+	rm Mus_musculus.GRCm38.95.gtf 
 	mv Mus_musculus.GRCm38.95.NoDuplicates.gtf DBs/Mus_musculus.GRCm38.95.gtf
 	echo "Building mouse genome index..."
 	mkdir -p DBs/genome_index
