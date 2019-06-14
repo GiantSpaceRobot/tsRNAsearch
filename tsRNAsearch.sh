@@ -508,8 +508,13 @@ python bin/FCount-to-RPM.py $outDir/FCount-count-output/mRNA-ncRNA-alignment.cou
 wait
 sleep 5  # Make sure everything is finished running
 
+### Collapse count file
+string_padder "Collapsing count files..."
+python bin/CollapseCountfile.py $outDir/FCount-count-output/$singleFile_basename.all-features.count $outDir/FCount-count-output/$singleFile_basename.collapsed.all-features.count  # For DESeq2
+python bin/CollapseCountfile.py $outDir/FCount-to-RPM/$singleFile_basename.all-features.rpm.count $outDir/FCount-to-RPM/$singleFile_basename.collapsed.all-features.rpm.count # For Cleavage + Distribution algorithms
+
 ### Move results to Data_and_Plots
-cp $outDir/FCount-to-RPM/$singleFile_basename.all-features.rpm.count $outDir/Data_and_Plots/
+cp $outDir/FCount-to-RPM/$singleFile_basename.collapsed.all-features.rpm.count $outDir/Data_and_Plots/
 if [[ $Plots == "yes" ]]; then
 	### If extra plotting parameter (-A) was selected, copy these files 
 	Rscript bin/Bedgraph_plotter.R $outDir/tRNA-alignment/$singleFile_basename.tRNAs-almost-mapped_RPM.depth $outDir/tRNA-alignment/Multi-mappers_tsRNAs_Coverage-plots.pdf 0

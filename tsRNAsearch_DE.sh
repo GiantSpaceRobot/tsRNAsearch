@@ -192,24 +192,23 @@ else
 	Plots="yes"
 fi
 
+mkdir -p $outDir
+mkdir -p $outDir/Data
+mkdir -p $outDir/Data/Intermediate-files
+mkdir -p $outDir/Data/Intermediate-files/DataTransformations
+mkdir -p $outDir/Plots
+
 ### Create dir substructure
 for f in $inDir/*; do
-	mkdir -p $outDir
-	mkdir -p $outDir/Data
-	mkdir -p $outDir/Data/Intermediate-files
-	mkdir -p $outDir/Data/Intermediate-files/DataTransformations
-	mkdir -p $outDir/Plots
 	file_base=$(basename $f)
 	filename="$( cut -d '.' -f 1 <<< "$file_base" )" 
 	analysis="Beginning analysis of $filename using tsRNAsearch"
 	string_padder $analysis
-	./newtsRNAsearch.sh -g "$genome" -s "$f" -o "$outDir/$filename" -t "$threads" -A "$Plots"
+	tsRNAsearch.sh -g "$genome" -s "$f" -o "$outDir/$filename" -t "$threads" -A "$Plots"
 	wait
-	#cat $outDir/$filename/FCount-count-output/*.count | grep -v ^__ | sort -k1,1 > $outDir/Data/Intermediate-files/$filename.all-features.count	
-	#readsMapped=$(awk '{sum+=$2} END{print sum;}' $outDir/Data/Intermediate-files/$filename.all-features.count)
-	#cp $outDir/$filename/Data_and_Plots/$filename.all-features.rpm.count $outDir/Data/	
 	readsMapped=$(awk '{sum+=$2} END{print sum;}' $outDir/$filename/FCount-count-output/$filename.collapsed.all-features.count)
 	cp $outDir/$filename/FCount-count-output/$filename.collapsed.all-features.count $outDir/Data/Intermediate-files/ 
+	cp $outDir/$filename/Data_and_Plots/$filename.collapsed.all-features.rpm.count $outDir/Data/Intermediate-files/$filename.collapsed.all-features.RPM.Count
 done
 
 ### Gather raw count files
@@ -234,7 +233,7 @@ DataTransformations $myPath/$outDir/Data/Intermediate-files/predicted_exp_layout
 
 ### Get distribution scores (standard deviation of RPM difference between samples multiplied 
 ### by standard deviation of percent difference between samples, divided by 1000) of the features
-string_padder "tsRNAs: Generating Distribution Scores..."
+string_padder "Generating Distribution Scores..."
 
 ### Concatenate horizontally to make a dataframe
 paste $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_tsRNA.${condition1}_concatenated.depth.mean $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_tsRNA.${condition2}_concatenated.depth.mean > $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.mean
@@ -253,7 +252,6 @@ python bin/Mean-to-RelativeDifference.py $myPath/$outDir/Data/Intermediate-files
 #cat $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.multi-mappers.cond1-vs-cond2.all-features.txt | awk 'NR<2{print $0;next}{print $0| "sort -k11,11nr"}' > $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.multi-mappers.cond1-vs-cond2.all-features.sorted.txt
 ###
 
-string_padder "snoRNAs/miRNAs: Generating Distribution Scores..."
 ### snomiRNAs
 ### Concatenate horizontally to make a dataframe
 paste $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_snomiRNA.${condition1}_concatenated.depth.mean $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_snomiRNA.${condition2}_concatenated.depth.mean > $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2.mean
@@ -300,7 +298,7 @@ Rscript bin/Mean_Stdev.R $myPath/$outDir/Data/Intermediate-files/snomiRNA.${cond
 wait
 
 ### Get names of differentially expressed features
-cat $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/*regulated.csv | grep -v ^,base | awk -F ',' '{print $1}' | awk -F ' ' '{print $1}' > $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt
+cat $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/*regulated.csv | grep -v ^, | awk -F ',' '{print $1}' | awk -F ' ' '{print $1}' > $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt
 cp $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_short-names.txt
 #grep ENS $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt > $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_ENSGs.txt
 #grep -v ENS $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt | awk -F '-' '{print $2}' | sort | uniq > $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_tRNAs.txt 
@@ -354,15 +352,15 @@ else
 fi
 wait
 
-#string_padder "Gathering RPM count files and cleaning up..."
+string_padder "Gathering RPM count files and cleaning up..."
 ### Gather RPM count files
-#awk '{print $1}' $outDir/Data/$filename.all-features.rpm.count > $outDir/Data/Intermediate-files/FCount.rpm.all-features # Get feature names
-#for f in $outDir/Data/*rpm.count; do
-#	awk '{print $2}' $f | paste $outDir/Data/Intermediate-files/FCount.rpm.all-features - >> $outDir/Data/Intermediate-files/FCount.rpm.temp
-#	mv $outDir/Data/Intermediate-files/FCount.rpm.temp $outDir/Data/Intermediate-files/FCount.rpm.all-features
-#done
+awk '{print $1}' $outDir/Data/Intermediate-files/$filename.collapsed.all-features.RPM.Count > $outDir/Data/Intermediate-files/FCount.rpm.all-features # Get feature names
+for f in $outDir/Data/Intermediate-files/*RPM.Count; do
+	awk '{print $2}' $f | paste $outDir/Data/Intermediate-files/FCount.rpm.all-features - >> $outDir/Data/Intermediate-files/FCount.rpm.temp
+	mv $outDir/Data/Intermediate-files/FCount.rpm.temp $outDir/Data/Intermediate-files/FCount.rpm.all-features
+done
 #rm $outDir/Data/*rpm.count
-#mv $outDir/Data/Intermediate-files/FCount.rpm.all-features $outDir/Data/FCount.all-features.rpm.count
+mv $outDir/Data/Intermediate-files/FCount.rpm.all-features $outDir/Data/FCount.all-features.RPM.Count
 #mv $myPath/$outDir/Data/*count $myPath/$outDir/Data/Intermediate-files/
 
 ### Move DESeq results to Data directory

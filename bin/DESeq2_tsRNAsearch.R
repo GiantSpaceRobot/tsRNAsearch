@@ -6,9 +6,9 @@
 ##
 ## Author: Dr Paul Donovan
 ##
-## Date Created: 2-1-2018 (2nd of Jan 2018)
+## Date Created: 2-1-2019 (2nd of Jan 2019)
 ##
-## Version: 10
+## Version: 11
 ##
 ## Copyright: MIT license
 ##
@@ -110,12 +110,12 @@ if (file.exists(paste0(myPath, "DE_Results/DESeq2"))){
 }
 
 ### If replicate number = 1, stop analysis
-if(ReplicateNumber1==1) {
-  file.create(paste0(myPath, "DE_Results/DESeq2/upregulated.csv"))
-  file.create(paste0(myPath, "DE_Results/DESeq2/downregulated.csv"))
-  quit.message <- "Replicate number is 1, cannot continue DESeq2 analysis"
-  stop(quit.message)
-}
+#if(ReplicateNumber1==1) {
+#  file.create(paste0(myPath, "DE_Results/DESeq2/upregulated.csv"))
+#  file.create(paste0(myPath, "DE_Results/DESeq2/downregulated.csv"))
+#  quit.message <- "Replicate number is 1, cannot continue DESeq2 analysis"
+#  stop(quit.message)
+#}
 
 #-----------------#
 #    Libraries    #
@@ -163,7 +163,33 @@ DESeq2.function <- function(path.to.files){
   
   ### checkpoint
   print("Checkpoint 3")
-
+  if((ReplicateNumber1==1) & (ReplicateNumber2==1)) {    # If replicate number = 1, stop analysis
+    print("    Single replicate analysis, skipping formal DESeq2 analysis and carrying out single Log2 fold comparison instead...")
+    log2FC.cutoff <- 1.5  # Log2FC cut-off can be changed here
+    log2.df <- log2(tpm)  # Log2 transformation
+    log2.df[which(!is.finite(log2.df))] <- 0 # Convert all Inf/-Inf/NA to 0
+    log2FC <- (log2.df[,1] - log2.df[,2]) # Get Log2 fold change
+    log2FC.df <- data.frame(log2.df[,1], log2.df[,2], log2FC)
+    up <- (log2FC.df[!is.na(log2FC.df$log2FC) & log2FC.df$log2FC >= log2FC.cutoff, ])    
+    down <- (log2FC.df[!is.na(log2FC.df$log2FC) & log2FC.df$log2FC <= -log2FC.cutoff, ]) 
+    colnames(log2FC.df) <- c(Condition1, Condition2, "Log2FC")
+    colnames(up) <- c(Condition1, Condition2, "Log2FC")
+    colnames(down) <- c(Condition1, Condition2, "Log2FC")
+    write.csv(log2FC.df, file=paste0(path.to.files, "DE_Results/DESeq2/", ResultsFile, "_DESeq2-output.csv"))
+    write.table(x = up,
+                sep = ",",
+                file=paste0(path.to.files, "DE_Results/DESeq2/", ResultsFile, "_DESeq2-output-upregulated.csv"), 
+                col.names=NA,
+                row.names=TRUE, 
+                quote = FALSE)
+    write.table(x = down,
+                sep = ",",
+                file=paste0(path.to.files, "DE_Results/DESeq2/", ResultsFile, "_DESeq2-output-downregulated.csv"), 
+                col.names=NA,
+                row.names=TRUE, 
+                quote = FALSE)
+      
+  } else {
   ### Create a density plot
   pdf(paste0(path.to.files, "DE_Results/", ResultsFile, "_Density-Plot.pdf"),
       width=12,height=12)
@@ -387,8 +413,8 @@ DESeq2.function <- function(path.to.files){
          y = "-Log10 of padj", 
          subtitle = "Max number of features shown is 20"))
   dev.off()
-
-  }
+  } # Checkpoint 3 - single replicate analysis if statement
+  } # End of function
 
 
 #--------------------#
