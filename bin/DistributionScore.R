@@ -186,8 +186,9 @@ for(subset in df) {
 results.df <- results.df[order(-results.df$distribution.score),]
 newdata <- results.df[complete.cases(results.df), ]  # Remove NAs
 newdata <- newdata[!grepl("Inf", newdata$distribution.score),] # Remove Inf
+newdata$feature <- factor(newdata$feature, levels = newdata$feature[order(newdata$distribution.score)])
 
-# If there are more than 50 features, show top 50
+# If there are more than 50 features, show top 20
 if(nrow(newdata) > 20){
   newdata.subset <- head(newdata, n = 20)
 } else {
@@ -201,18 +202,20 @@ write.table(newdata,
             row.names = FALSE,
             col.names = TRUE)
 
+#my.max <- max(newdata.subset$distribution.score)
 pdf.width <- nrow(newdata.subset)*0.2 + 3
 pdf(file = paste0(args[2], ".high-distribution-score.pdf"), width = pdf.width, height = 5)
 ggplot(data = newdata.subset, mapping = aes(feature, `distribution.score`, color=`distribution.score`)) +
   geom_point() +
-  scale_y_continuous(trans='log2') +
-  ggtitle("Feature Distribution Score") +
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size=8)) +
+  #scale_y_continuous(trans='log2') +
+  #scale_y_continuous(breaks=seq(0, my.max, by = round(my.max/5))) +
+  ggtitle("Distribution Score") +
+  theme(axis.text.x = element_text(angle = 0, vjust = 0, hjust=0, size=8)) +
   scale_color_gradient(low="blue", high="red") +
+  coord_flip() +
   labs(colour = "Distribution\nscore", 
-       x = "ncRNA/gene", 
+       x = "ncRNA", 
        y = "Distribution score", 
-       subtitle = "Distribution score = Diff. in area between conditions multiplied\nby std.dev of relative diff. between conditions (%)\nMax number of features shown is 20")
+       subtitle = "Max number of features shown = 20")
 dev.off()
-
 
