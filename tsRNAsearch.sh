@@ -1,12 +1,10 @@
 #!/bin/bash
-
-# Usage: tsRNAsearch.sh -h
-# Author: Paul Donovan
+# Author: Paul Donovan 
 # Email: pauldonovan@rcsi.com
-# 19-Oct-2018
+# 12-12-2018
 
 asciiArt() { echo '
-
+  
  _        _____ _   _   ___                          _     
 | |      | ___ \ \ | | / _ \                        | |    
 | |_ ___ | |_/ /  \| |/ /_\ \___  ___  __ _ _ __ ___| |__  
@@ -14,33 +12,32 @@ asciiArt() { echo '
 | |_\__ \| |\ \| |\  || | | \__ \  __/ (_| | | | (__| | | |
  \__|___/\_| \_\_| \_/\_| |_/___/\___|\__,_|_|  \___|_| |_|
                                                           
+   
+   ' 1>&1; }
+usage() { echo "
+Comparison of two conditions:
+	Usage: $0 -g human/mouse -d Path/To/Input/Files -o OutputDirectory/ -e ExperimentLayout.csv -t num-of-threads
 
-	' 1>&1; }
-usage() { echo "Usage (single-end): $0 -o OutputDirectory/ -s /path/to/SeqFile.fastq.gz
-" 1>&2; }
+Analysis of a single RNA-seq file:
+	Usage: $0 -g human/mouse -f Path/To/InputFile.fastq -o OutputDirectory/ -t num-of-number
+	" 1>&2; }
 info() { echo "
-Options:
+Options
 
 	-h	Print the usage and options information
-	-g	Analyse data against 'human' or 'mouse'? {default: human}
-	-s	Single-end file for analysis
+	-g	Analyse datasets against 'human' or 'mouse'? {default: human}
+	-d	Directory containing the files for analysis. Directory should have no other contents.
+	-f	A single file for analysis
 	-o	Output directory for the results and log files
-	-A	Plot all features? yes/no {default: yes}
+	-e	CSV file containing file names and file groups (see examples in additional-files/)
 	-t	Number of threads to use {default is to calculate the number of processors and use 75%}
-	
+	-A	Plot all features? yes/no {default: no (only plot differentially expressed features)}
+	-S	Skip pre-processing of data (i.e. skip FastQC and Trim_Galore) {default: no}
 
-	Input file format should be FASTQ (.fq/.fastq) or gzipped FASTQ (.gz)
 	" 1>&2; }
 
-if [ $# -eq 0 ]; then
-    echo "No arguments provided"
-    asciiArt
-	usage
-	info
-	exit 1
-fi
-
-while getopts ":hg:t:s:o:A:" o; do
+skip="no"
+while getopts ":hg:A:t:d:f:S:e:o:" o; do
     case "${o}" in
 		h)
 			asciiArt
@@ -51,8 +48,15 @@ while getopts ":hg:t:s:o:A:" o; do
 		g)
 			genome="$OPTARG"
 			;;
-		s)
-			singleFile="$OPTARG"
+		d)
+			inDir="$OPTARG"
+			;;
+		f)
+			inFile="$OPTARG"
+			Plots="yes"
+			;;
+		e)
+			expFile="$OPTARG"
 			;;
 		o)
 			outDir="$OPTARG"
@@ -63,6 +67,9 @@ while getopts ":hg:t:s:o:A:" o; do
 		A)
 			Plots="$OPTARG"
 			;;
+		S)
+			skip="$OPTARG"
+			;;
 		*)
             echo "Error in input parameters!"
 			usage
@@ -72,59 +79,38 @@ while getopts ":hg:t:s:o:A:" o; do
     esac
 done
 
-######### Make sure that the absolute paths of files and directories have been specified
+
+### If no command line arguments provided, quit
+if [ -z "$*" ] ; then
+	asciiArt
+	usage
+    info
+    echo "No command line parameters provided!"
+	exit 1
+fi
+
+### If the pathname specified by $inDir does not begin with a slash, quit (we need full path name)
+#if [[ ! $inDir = /* ]]; then
+#	echo "Error: File paths must absolute. Please specify the full path for the input directory."
+#	exit 1
+#fi
+
 ### If the pathname specified by $outDir does not begin with a slash, quit (we need full path name)
 #if [[ ! $outDir = /* ]]; then
-#    echo "Error: File paths must absolute. Please specify the full path for the output directory."
-#    exit 1
+#	echo "Error: File paths must absolute. Please specify the full path for the output directory."
+#	exit 1
 #fi
 
 ### If the pathname specified by $expFile does not begin with a slash, quit (we need full path name)
-#if [ "$singleFile" ]; then
-#    if [[ ! $singleFile = /* ]]; then
-#        echo "Error: File paths must absolute. Please specify the full path for the FASTQ input file."
+#if [ "$expFile" ]; then
+#    if [[ ! $expFile = /* ]]; then
+#        echo "Error: File path must absolute. Please specify the full path for the experiment layout file."
 #        exit 1
 #    fi
 #fi
-#########
 
-echo "Started analysing "$singleFile" on $(date)" # Print pipeline start-time
-
-### Are we analysing Human or Mouse? -g parameter
-if [ "$genome" ]; then
-    if [[ $genome == "human" ]]; then
-		genomeDB="DBs/genome_index/human/"
-		ncRNADB="DBs/genome_index/human-ncRNAs/"
-		genomeGTF="DBs/Homo_sapiens.GRCh37.87.gtf"
-		tRNAGTF="DBs/hg19-wholetRNA-CCA_cdhit.gtf"
-		snomiRNAGTF="DBs/hg19-snomiRNA_cdhit.gtf"
-		tRNA_introns="additional-files/tRNA-introns-for-removal_hg19.tsv"
-		empty_tRNAs="additional-files/hg19_empty_tRNA.count"
-		empty_snomiRNAs="additional-files/hg19_empty_snomiRNA.count"
-		empty_mRNAs="additional-files/hg19_empty_mRNA-ncRNA.count"
-	elif [[ $genome == "mouse" ]]; then
-		genomeDB="DBs/genome_index/mouse/"
-		ncRNADB="DBs/genome_index/mouse-ncRNAs/"
-		genomeGTF="DBs/Mus_musculus.GRCm38.95.gtf"
-		tRNAGTF="DBs/mm10-tRNAs_renamed_cdhit.gtf"
-		snomiRNAGTF="DBs/mouse_snomiRNAs_relative_cdhit.gtf"
-		tRNA_introns="additional-files/tRNA-introns-for-removal_mm10.tsv"
-		empty_tRNAs="additional-files/mm10_empty_tRNA.count"
-		empty_snomiRNAs="additional-files/mm10_empty_snomiRNA.count"
-		empty_mRNAs="additional-files/mm10_empty_mRNA-ncRNA.count"
-	fi
-else # If genome was not specified, default to use human genome/files
-	genome="human"
-	genomeDB="DBs/genome_index/human/"
-	ncRNADB="DBs/genome_index/human-ncRNAs/"
-	genomeGTF="DBs/Homo_sapiens.GRCh37.87.gtf"
-	tRNAGTF="DBs/hg19-wholetRNA-CCA_cdhit.gtf"
-	snomiRNAGTF="DBs/hg19-snomiRNA_cdhit.gtf"
-	tRNA_introns="additional-files/tRNA-introns-for-removal_hg19.tsv"
-	empty_tRNAs="additional-files/hg19_empty_tRNA.count"
-	empty_snomiRNAs="additional-files/hg19_empty_snomiRNA.count"
-	empty_mRNAs="additional-files/hg19_empty_mRNA-ncRNA.count"
-fi
+### Get working dir to recreate full path for R script execution
+myPath=$(pwd) 
 
 ### Define functions
 # Function to pad text with characters to make sentences stand out more
@@ -142,389 +128,348 @@ function string_padder () {
 	"
 }
 
-function SAMcollapse () {
-	string_padder "Collapsing SAM file..."
-	### How many chunks to create:
-	readNumber=$(grep -v ^@ $1 | awk '{print $1}' | uniq | wc -l)
-	if (( $readNumber > 100000 )); then
-		chunksRaw=$(( readNumber / 10000 )) # 10,000 lines per SAM chunk
-		chunks=$( echo $chunksRaw | awk '{print int($1+0.5)}' )
-		echo "Over 100,000 unique reads in SAM file. Splitting SAM into $chunks files..."
-	elif (( readNumber>=10000 && readNumber<=100000 )); then
-		chunksRaw=$(( readNumber / 5000 )) # 5000 lines per SAM chunk
-		chunks=$( echo $chunksRaw | awk '{print int($1+0.5)}' )
-		echo "Between 10,000 and 100,000 unique reads in SAM file. Splitting SAM into $chunks files..."
-	elif (( readNumber>=1000 && readNumber<=10000 )); then
-		chunks=10 #
-		echo "Between 1,000 and 10,000 unique reads in SAM file. Splitting SAM into $chunks files..."
-	else
-		chunks=2
-		echo "Less than 1,000 unique reads in SAM file. Splitting SAM into $chunks files..."
-	fi
-	### Define variables
-	cores=$threads
-	if (( $cores > $chunks )); then
-		# make sure cores is not set higher than no. of files after split
-		cores=$chunks
-	fi
-	echo "
-		Threads: $cores
-		# Split SAM files: $chunks"
-	fileLen=$(< "$1" wc -l)
-	division1=$((fileLen/chunks))
-	division=$((division1 + 1))
-	myFile="tempFile"
-	mkdir -p $outDir/tempDir
-
-	### Remove header
-	grep ^@ $1 > $outDir/tempDir/myHeader.txt &
-	grep -v ^@ $1 > $outDir/tempDir/mySAM.sam &
+function DataTransformations () {
+### Given half of a layout file, transform data
+count=0
+for fname in $(cat $1); do
+	count=$((count + 1))
+	cond1="$(cut -d ',' -f1 <<< $fname)"
+	cond1base="$(cut -d '.' -f1 <<< $cond1)"
+	echo "Finding file for $fname ($cond1base)..."
+	find $myPath/$outDir/ -type f -name "$cond1base*tsRNA.depth" -exec cp {} $myPath/$outDir/Data/Intermediate-files/$2_file$count.tsRNA.depth \; & # Gather tsRNAs
+	find $myPath/$outDir/ -type f -name "$cond1base*snomiRNA.depth" -exec cp {} $myPath/$outDir/Data/Intermediate-files/$2_file$count.snomiRNA.depth \; & # Gather sno/miRNAs
 	wait
-	### 
-	fileToCollapse=$outDir/tempDir/mySAM.sam
-	### Split file
-	echo "Splitting SAM..."
-	split -l $division $fileToCollapse $outDir/tempDir/splitFile_
-	### Gather first and last read from every split file and add to separate file. Remove these reads from the split files.
-	echo "Gathering the names of the first and last reads from every SAM chunk..."
-	for i in $outDir/tempDir/splitFile_*; do
-		base=$(basename $i)
-		first=$(awk 'NR==1' $i | awk '{print $1}') 
-		echo $first >> $outDir/tempDir/${myFile}_HeadsAndTails.txt
-		last=$(awk 'END{print}' $i | awk '{print $1}') 
-		echo $last >> $outDir/tempDir/${myFile}_HeadsAndTails.txt
-	done
-	echo "Gathering unique set of read names from first/last read names..."
-	sort $outDir/tempDir/${myFile}_HeadsAndTails.txt | uniq > $outDir/tempDir/${myFile}_HeadsAndTails_uniq.txt #remove duplicates
-	sed -i 's/$/\t/' $outDir/tempDir/${myFile}_HeadsAndTails_uniq.txt # Add tab to end of every line to match pattern exactly
-	grep -f $outDir/tempDir/${myFile}_HeadsAndTails_uniq.txt $fileToCollapse > $outDir/tempDir/edit_heads-and-tails #grep all patterns from the heads/tails file
-	echo "Extracting alignments for first/last reads from all files..."
-	for i in $outDir/tempDir/splitFile_*; do
-		base=$(basename $i)
-		grep -v -f  $outDir/tempDir/${myFile}_HeadsAndTails_uniq.txt $i > $outDir/tempDir/edit_${base}
-	done
-	### Run SAMcollapse.py. This loop will only run $cores processes at once
-	COUNTER=1
-	chunksDiv=$((chunks/10))
-	echo "Collapsing every chunk of SAM..."
-	for i in $outDir/tempDir/edit_*; 
-	do
-		base=$(basename $i)
-		python bin/SAMcollapse.py $i ${fileToCollapse}_${base} >> $outDir/tRNA-alignment/collapsed-reads.txt & 
-		if (( $COUNTER % $chunksDiv == 0 )); then
-			echo "Started job $COUNTER of $chunks"
-		fi
-		numjobs=($(jobs | wc -l))
-		#echo Running job number ${COUNTER} of ${chunks}... 
-		COUNTER=$[$COUNTER + 1]
-		#counter2=$COUNTER
-		while (( $numjobs == $cores )); do
-			#if (( $COUNTER == $counter2)); then
-			#	echo There are $numjobs jobs now. Waiting for jobs to finish...
-			#fi
-			#counter2=$[$counter2 + 1]
-			numjobs=($(jobs | wc -l))
-			sleep 5 #Enter next loop iteration
-		done
-	done
-	wait
-	readsCollapsedSpecies=$(awk '{split($0,a," "); sum += a[1]} END {print sum}' $outDir/tRNA-alignment/collapsed-reads.txt)
-	readsCollapsedGroup=$(awk '{split($0,a," "); sum += a[2]} END {print sum}' $outDir/tRNA-alignment/collapsed-reads.txt)
-	echo -e "SAM collapse results:\n\t$readsCollapsedSpecies reads collapsed at the tRNA species level (e.g. 2 gene copies of ProCCG)\n\t$readsCollapsedGroup reads collapsed at the tRNA group level (e.g. ProCCG and ProAAG)"
-
-	### Concatenate results
-	echo "Gathering reads that were mapped to similar tRNAs..."
-	echo -e "tRNA.group\tread.start\tread.end.approx\tread.name" > $outDir/tRNA-alignment/tRNAs-almost-mapped.txt
-	cat $outDir/tempDir/*tRNAs-almost-mapped* | sort >> $outDir/tRNA-alignment/tRNAs-almost-mapped.txt
-	mkdir $outDir/tempDir/tRNAsAlmostMapped
-	mv $outDir/tempDir/*tRNAs-almost-mapped* $outDir/tempDir/tRNAsAlmostMapped/
-	echo "Concatenating SAM header with collapsed files..."
-	cat $outDir/tempDir/myHeader.txt ${fileToCollapse}*_edit_* > $outDir/Collapsed.sam
-	rm -rf $outDir/tempDir/ # Remove temp directory
-	echo "Finished collapsing SAM file"
+	mapped=$(grep "mapped" $myPath/$outDir/$cond1base/Stats.log | awk '{print $3}')
+	mv $myPath/$outDir/Data/Intermediate-files/$2_file$count.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/$2_file$count.tsRNA.depth.readspermil
+	mv $myPath/$outDir/Data/Intermediate-files/$2_file$count.snomiRNA.depth $myPath/$outDir/Data/Intermediate-files/$2_file$count.snomiRNA.depth.readspermil
+	#echo "Converting raw counts to RPM..."
+	#python bin/Depth-to-Depth_RPM.py "$myPath/$outDir/Data/Intermediate-files/$2_file$count.tsRNA.depth" "$mapped" "$myPath/$outDir/Data/Intermediate-files/$2_file$count.tsRNA.depth.readspermil" &
+	#python bin/Depth-to-Depth_RPM.py "$myPath/$outDir/Data/Intermediate-files/$2_file$count.snomiRNA.depth" "$mapped" "$myPath/$outDir/Data/Intermediate-files/$2_file$count.snomiRNA.depth.readspermil" &
+	### Left-over reads:
+	cp $myPath/$outDir/$cond1base/tRNA-alignment/$cond1base.tRNAs-almost-mapped_RPM.depth $myPath/$outDir/Data/Intermediate-files/$2.$cond1base.tRNAs-almost-mapped_RPM.depth
+done
+wait
+### Concatenate data horizontally
+paste $myPath/$outDir/Data/Intermediate-files/$2_file*.tsRNA.depth.readspermil > $myPath/$outDir/Data/Intermediate-files/tsRNA.$2_concatenated.depth &
+paste $myPath/$outDir/Data/Intermediate-files/$2_file*.snomiRNA.depth.readspermil > $myPath/$outDir/Data/Intermediate-files/snomiRNA.$2_concatenated.depth &
+paste $myPath/$outDir/Data/Intermediate-files/$2.*.tRNAs-almost-mapped_RPM.depth > $myPath/$outDir/Data/Intermediate-files/Combined.$2.tRNAs-almost-mapped_RPM.depth & # leftover reads
+### Concatenate data vertically
+cat $myPath/$outDir/Data/Intermediate-files/$2_file*.tsRNA.depth.readspermil | sort -k1,1 -k2,2n > $myPath/$outDir/Data/Intermediate-files/tsRNA.$2_concatenated.depthVert &
+cat $myPath/$outDir/Data/Intermediate-files/$2_file*.snomiRNA.depth.readspermil | sort -k1,1 -k2,2n > $myPath/$outDir/Data/Intermediate-files/snomiRNA.$2_concatenated.depthVert &
+wait
+### Leftovers:
+python bin/MeanCalculator.py $myPath/$outDir/Data/Intermediate-files/Combined.$2.tRNAs-almost-mapped_RPM.depth $myPath/$outDir/Data/Intermediate-files/DataTransformations/Combined.$2.tRNAs-almost-mapped_RPM.depth.mean 
+sort -k1,1 -k2,2n $myPath/$outDir/Data/Intermediate-files/DataTransformations/Combined.$2.tRNAs-almost-mapped_RPM.depth.mean > $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_Combined.$2.tRNAs-almost-mapped_RPM.depth.mean 
+### Calculate mean
+python bin/MeanCalculator.py $myPath/$outDir/Data/Intermediate-files/tsRNA.$2_concatenated.depth $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.$2_concatenated.depth.mean &
+python bin/MeanCalculator.py $myPath/$outDir/Data/Intermediate-files/snomiRNA.$2_concatenated.depth $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.$2_concatenated.depth.mean &
+wait
+### Sort output
+sort -k1,1 -k2,2n $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.$2_concatenated.depth.mean > $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_tsRNA.$2_concatenated.depth.mean &
+sort -k1,1 -k2,2n $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.$2_concatenated.depth.mean > $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_snomiRNA.$2_concatenated.depth.mean &
+wait
 }
 
-function bam_to_plots () {  ### Steps for plotting regions with high variation in coverage
-	### Output coverage of all features we are interested in (e.g. tRNAs)
-	samtools depth -d 100000000 -aa $1/accepted_hits.bam > $1/accepted_hits.depth   # A lot faster than bedtools genomecov
-	cp $1/accepted_hits.depth $1/accepted_hits_raw.depth
-	### Normalise by reads per million (RPM)
-	python bin/Depth-to-Depth_RPM.py $1/accepted_hits_raw.depth $mapped $1/accepted_hits.depth 
-	### If we are working with tRNAs, collapse all tRNAs based on same isoacceptor
-	if [[ $3 = "tsRNA" ]]; then
-		### Remove introns from tRNA counts (as these will interfere with the read counts of collapsed tRNAs)
-		Rscript bin/Remove-introns.R $1/accepted_hits.depth $tRNA_introns $1/accepted_hits_intron-removed.depth 
-		### Flip the read coverage of tRNAs that are in the minus orientation
-		Rscript bin/Coverage-flipper.R $1/accepted_hits_intron-removed.depth $tRNAGTF $1/accepted_hits_flipped.depth	
-		### Collapse tRNAs from the same tRNA species
-		python bin/Bedgraph_collapse-tRNAs.py $1/accepted_hits_flipped.depth $1/accepted_hits_collapsed.depth
-		### Rename input depth file
-		mv $1/accepted_hits.depth $1/accepted_hits_original.depth 
-		### Copy the collapsed depth file and name it so that the remaining steps below do not have errors
-		cp $1/accepted_hits_collapsed.depth $1/accepted_hits.depth	
-	fi
-	### Sort by feature name and nucleotide position
-	sort -k1,1 -k2,2n $1/accepted_hits.depth > $1/accepted_hits_sorted.depth
-	### If -A parameter was provided, plot everything
-	if [[ $Plots == "yes" ]]; then # Plot everything
-		### Plot the coverage of all features (arg 3 is mean coverage in RPM) and
-		### Create plot and txt file describing relationship between 5' and 3' regions of feature
-		if [[ $3 = "snomiRNA" ]]; then
-			Rscript bin/Bedgraph_plotter.R $1/accepted_hits_sorted.depth $1/$2_$3_Coverage-plots.pdf 0 $snomiRNAGTF
-			Rscript bin/Single-replicate-analysis.R $1/accepted_hits_sorted.depth $1/$2_$3_Results $snomiRNAGTF &
-		elif [[ $3 == "tsRNA" ]]; then
-			Rscript bin/Bedgraph_plotter.R $1/accepted_hits_sorted.depth $1/$2_$3_Coverage-plots.pdf 0
-			Rscript bin/Single-replicate-analysis.R $1/accepted_hits_sorted.depth $1/$2_$3_Results &
-		else
-			Rscript bin/Bedgraph_plotter.R $1/accepted_hits_sorted.depth $1/$2_$3_Coverage-plots.pdf 1000 $genomeGTF
-			Rscript bin/Single-replicate-analysis.R $1/accepted_hits_sorted.depth $1/$2_$3_Results &
-		fi
-		cp $1/$2_$3_Coverage-plots.pdf $outDir/Data_and_Plots/$2_$3_Coverage-plots.pdf
-	fi
-	### Output the mean, standard deviation and coefficient of variance of each ncRNA/gene
-	python bin/Bedgraph-analyser.py $1/accepted_hits_sorted.depth $1/accepted_hits_sorted.tsv
-	### Gather all ncRNAs/genes with a mean coverage greater than 0 (pointless step but the cutoff used to be higher than 0)
-	awk '$2>0' $1/accepted_hits_sorted.tsv > $1/accepted_hits_sorted_mean-std.tsv
-	### Sort the remaining ncRNAs/genes by coef. of variance
-	sort -k4,4nr $1/accepted_hits_sorted_mean-std.tsv > $1/$2_$3_accepted_hits_sorted_mean-std_sorted.tsv
-	### Move finalised data for further analysis
-	cp $1/accepted_hits_sorted.depth $outDir/Data_and_Plots/$2_$3.depth &
-	cp $1/$2_$3_accepted_hits_sorted_mean-std_sorted.tsv $outDir/Data_and_Plots/$2_$3_depth.inf
-	echo -e "Feature\tMean\tStandard Deviation\tCoefficient of Variation\n" > $outDir/Data_and_Plots/Header.txt
-	cat $outDir/Data_and_Plots/Header.txt $outDir/Data_and_Plots/$2_$3_depth.inf > $outDir/Data_and_Plots/$2_$3_depth.stats
-	rm $outDir/Data_and_Plots/$2_$3_depth.stats $outDir/Data_and_Plots/Header.txt
-	wait
-}
+                 #############################
+                 ##### Start of pipeline #####
+                 #############################
 
-# If -A parameter was not provided, default is to plot everything
+pipeline_start="Started project analysis on $date"
+string_padder "$pipeline_start"
+StartTime="Pipeline initiated at $(date)"
+
+### Are we analysing Human or Mouse? -g parameter
+if [ "$genome" ]; then
+	if [[ $genome == "human" ]]; then
+		snomiRNAGTF="DBs/hg19-snomiRNA_cdhit.gtf"
+	elif [[ $genome == "mouse" ]]; then
+		snomiRNAGTF="DBs/mouse_snomiRNAs_relative_cdhit.gtf"
+	fi
+else
+	snomiRNAGTF="DBs/hg19-snomiRNA_cdhit.gtf"
+	genome="human"
+fi
+
+### Print parameters used
+echo -e "Parameters:
+	Genome (-g): $genome
+	Input directory containing fastq/fastq.gz files (-d): $indir
+	Experiment layout file (-e): $expFile
+	Output directory that tsRNAsearch will create and populate with results (-o): $outDir
+	Number of threads to use for the analysis (-t): $threads
+	"
+
+### If -A parameter was not provided, default is to only plot differentially expressed features
 if [ ! "$Plots" ]; then
-    Plots="yes"
-fi
-
-# Estimate threads to use if a number has no been provided
-if [ -z "$threads" ]; then 
-	# Determine max number of threads available
-	maxthreads=$(grep -c ^processor /proc/cpuinfo)
-	# If the variable "threads" is not an integer, default to use a value of 1
-	re='^[0-9]+$'
-	if ! [[ $maxthreads =~ $re ]] ; then
-		echo "Error: Variable 'maxthreads' is not an integer" >&2
-		maxthreads=1
-	fi
-	threads=$(echo "$maxthreads * 0.75" | bc | awk '{print int($1+0.5)}') # Use 75% of max CPU number
-fi
-
-# The documentation for featureCounts says to use 4 threads max.
-# This if statement ensures this.
-# On revisiting this, I cannot find any such documentation. To be cautious, I'll go for a max of 8 threads
-if (( $threads > 8 )); then 
-	featureCountthreads=8
+	Plots="no"
 else
-	featureCountthreads=$threads
+	Plots="yes"
 fi
 
-# Check if the output directory exists. If not, create it
-string_padder "Creating directory structure"
+### Create dir substructure
 mkdir -p $outDir
-mkdir -p $outDir/trim_galore_output
-mkdir -p $outDir/FastQC
-mkdir -p $outDir/tRNA-alignment
-mkdir -p $outDir/snomiRNA-alignment
-mkdir -p $outDir/mRNA-ncRNA-alignment
-mkdir -p $outDir/FCount-count-output
-mkdir -p $outDir/FCount-to-RPM
-mkdir -p $outDir/Data_and_Plots
+mkdir -p $outDir/Data
+mkdir -p $outDir/Data/Intermediate-files
+mkdir -p $outDir/Data/Intermediate-files/DataTransformations
+mkdir -p $outDir/Plots
 
-singleFile_base=${singleFile##*/}    # Remove pathname
-singleFile_basename="$( cut -d '.' -f 1 <<< "$singleFile_base" )" # Get filename before first occurence of .
-if [[ $singleFile == *".gz"* ]]; then
-	suffix="fq.gz"
-	STARparam="--readFilesCommand zcat"
-else
-	suffix="fq"
-	STARparam=""
-fi
-printf -v trimmedFile "%s_trimmed.%s" "$singleFile_basename" "$suffix"
-printf -v myFile "%s.fq" "$singleFile_basename"
-printf -v fastqcFile "%s_trimmed_fastqc.html" "$singleFile_basename"
-
-# Run Trim_Galore
-string_padder "Trimming reads using Trim Galore"
-if [ ! -f $outDir/trim_galore_output/$trimmedFile ]; then
-	bin/trim_galore --stringency 10 --length 15 -o $outDir/trim_galore_output/ $singleFile
-	string_padder "Trimming complete. Moving on to FastQC analysis"
-else
-	string_padder "Found trimmed file. Skipping this step"
+###
+# Run tsRNAsearch on a single file (only have one script, not two
+if [ "$inFile" ]; then
+	bin/tsRNAsearch_single.sh -g "$genome" -s "$inFile" -o "$myPath/$outDir/$filename" -t "$threads" -A "$Plots" -S "$skip"
+	exit 0 # Exit successfully
 fi
 
-# Run FastQC on newly trimmed file
-if [ ! -f $outDir/FastQC/$fastqcFile ]; then
-	fastqc -o $outDir/FastQC/ -f fastq $outDir/trim_galore_output/$trimmedFile
-	string_padder "Finished running FastQC. Moving onto alignment to tRNA database"
-else
-	string_padder "Found FastQC file. Skipping this step."
-fi
-
-# Align trimmed reads to tRNA database using HISAT2/Tophat2
-
-string_padder "Running tRNA/snomiRNA alignment step..."
-
-### STAR ###
-STAR --runThreadN $threads --genomeDir $ncRNADB --readFilesIn $outDir/trim_galore_output/$trimmedFile --outFileNamePrefix $outDir/tRNA-alignment/ --outSAMattributes AS nM HI NH --outFilterMultimapScoreRange 0 --outReadsUnmapped Fastx --outFilterMatchNmin 15 $STARparam
-grep "Number of input reads" $outDir/tRNA-alignment/Log.final.out | awk -F '\t' '{print $2}' | tr -d '\040\011\012\015' > $outDir/Stats.log # the tr command removes all types of spaces
-echo " reads; of these:" >> $outDir/Stats.log
-## Collapse SAM files:
-SAMcollapse $outDir/tRNA-alignment/Aligned.out.sam #Collapse reads aligned to the same tRNA species 
-mv $outDir/Collapsed.sam $outDir/tRNA-alignment/aligned_tRNAdb.sam # match hisat2 naming convention
-mv $outDir/tRNA-alignment/Unmapped.out.mate1 $outDir/tRNA-alignment/unmapped.fastq
-## Or don't collapse SAM files (comment out three lines above and uncomment line below)
-#mv $outDir/tRNA-alignment/Aligned.out.sam $outDir/tRNA-alignment/aligned_tRNAdb.sam
-#### STAR ###
-
-if [ -f $outDir/tRNA-alignment/aligned_tRNAdb.sam ]; then  #If STAR successfully mapped reads, convert to bam and index
-	### Split the resulting SAM file into reads aligned to tRNAs and snomiRNAs
-	grep ^@ $outDir/tRNA-alignment/aligned_tRNAdb.sam > $outDir/tRNA-alignment/SamHeader.sam &
-	grep ENS $outDir/tRNA-alignment/aligned_tRNAdb.sam > $outDir/tRNA-alignment/snomiRNAs.sam &
-	grep -v ENS $outDir/tRNA-alignment/aligned_tRNAdb.sam > $outDir/tRNA-alignment/tsRNAs_aligned.sam &
+### Run tsRNAsearch on each RNA-seq file
+for f in $inDir/*; do
+	file_base=$(basename $f)
+	filename="$( cut -d '.' -f 1 <<< "$file_base" )" 
+	analysis="Beginning analysis of $filename using tsRNAsearch"
+	string_padder $analysis
+	bin/tsRNAsearch_single.sh -g "$genome" -s "$f" -o "$myPath/$outDir/$filename" -t "$threads" -A "$Plots" -S "$skip"
 	wait
-	cat $outDir/tRNA-alignment/SamHeader.sam $outDir/tRNA-alignment/snomiRNAs.sam > $outDir/tRNA-alignment/snomiRNAs_aligned.sam
-	wait
-	samtools view -bS $outDir/tRNA-alignment/tsRNAs_aligned.sam > $outDir/tRNA-alignment/accepted_hits_unsorted.bam
-	samtools sort $outDir/tRNA-alignment/accepted_hits_unsorted.bam > $outDir/tRNA-alignment/accepted_hits.bam 
-	samtools index $outDir/tRNA-alignment/accepted_hits.bam &
-	mv $outDir/tRNA-alignment/unmapped.fastq $outDir/tRNA-alignment/$myFile
-	### Move snomiRNA BAM to directory
-	samtools view -bS $outDir/tRNA-alignment/snomiRNAs.sam > $outDir/snomiRNA-alignment/accepted_hits_unsorted.bam
-	samtools sort $outDir/snomiRNA-alignment/accepted_hits_unsorted.bam > $outDir/snomiRNA-alignment/accepted_hits.bam 
-	samtools index $outDir/snomiRNA-alignment/accepted_hits.bam &
-	rm $outDir/tRNA-alignment/SamHeader.sam $outDir/tRNA-alignment/snomiRNAs.sam $outDir/tRNA-alignment/aligned_tRNAdb.sam &	
-else
-	echo "
-	Alignment output not found. Reads likely did not map to tRNA/sno/miRNA reference. 
-	Using trimmed reads from Trim_Galore output.
-	"
-	cp $outDir/trim_galore_output/$trimmedFile $outDir/tRNA-alignment/$trimmedFile
-fi
-string_padder "Running mRNA/ncRNA alignment step..."
+	readsMapped=$(awk '{sum+=$2} END{print sum;}' $outDir/$filename/FCount-count-output/$filename.collapsed.all-features.count)
+	cp $outDir/$filename/FCount-count-output/$filename.collapsed.all-features.count $outDir/Data/Intermediate-files/ 
+	cp $outDir/$filename/Data_and_Plots/$filename.collapsed.all-features.rpm.count $outDir/Data/Intermediate-files/$filename.collapsed.all-features.RPM.Count
+done
 
-### HISAT2 ###
-#hisat2 -p $threads -x $genomeDB $outDir/tRNA-alignment/$trimmedFile -S $outDir/mRNA-ncRNA-alignment/aligned.sam --summary-file $outDir/mRNA-ncRNA-alignment/align_summary.txt --un $outDir/mRNA-ncRNA-alignment/unmapped.fastq
-### HISAT2 ###
+### Gather raw count files
+awk '{print $1}' $outDir/Data/Intermediate-files/$filename.collapsed.all-features.count > $outDir/Data/Intermediate-files/FCount.all-features # Get feature names
+for f in $outDir/Data/Intermediate-files/*count; do
+	awk '{print $2}' $f | paste $outDir/Data/Intermediate-files/FCount.all-features - >> $outDir/Data/Intermediate-files/FCount.temp
+	mv $outDir/Data/Intermediate-files/FCount.temp $outDir/Data/Intermediate-files/FCount.all-features
+done
+mv $outDir/Data/Intermediate-files/FCount.all-features $outDir/Data/Intermediate-files/FCount.all-features.raw.Count
 
-### STAR ###
-STAR --runThreadN $threads --genomeDir $genomeDB --readFilesIn $outDir/tRNA-alignment/$myFile --outFileNamePrefix $outDir/mRNA-ncRNA-alignment/ --outReadsUnmapped Fastx --outFilterMatchNmin 15 #$STARparam
-mv $outDir/mRNA-ncRNA-alignment/Aligned.out.sam $outDir/mRNA-ncRNA-alignment/aligned.sam
-mv $outDir/mRNA-ncRNA-alignment/Unmapped.out.mate1 $outDir/mRNA-ncRNA-alignment/unmapped.fastq
-### STAR ###
+### Carry out DESeq2 analysis
+string_padder "Carrying out DESeq2 analysis..."
+condition1=$( awk -F ',' 'NR == 1 {print $2}' "$expFile" ) # Get element in first row second column (condition)
+condition2=$( grep -v $condition1 "$expFile" | awk -F ',' 'NR == 1 {print $2}') # Get the second condition using the inverse of the first one
+Rscript --vanilla bin/DESeq2_tsRNAsearch.R "$myPath/$outDir/Data/Intermediate-files/" "${condition1}_vs_${condition2}" "$snomiRNAGTF" "$expFile"
+grep $condition1 "$expFile" > $myPath/$outDir/Data/Intermediate-files/predicted_exp_layout_cond1.csv
+grep $condition2 "$expFile" > $myPath/$outDir/Data/Intermediate-files/predicted_exp_layout_cond2.csv
 
-if [ -f $outDir/mRNA-ncRNA-alignment/aligned.sam ]; then  #If hisat2 successfully mapped reads, convert the unmapped to FASTQ
-	echo -e "\nConverting SAM to BAM and sorting..."
-	samtools view -bS $outDir/mRNA-ncRNA-alignment/aligned.sam > $outDir/mRNA-ncRNA-alignment/accepted_hits_unsorted.bam
-	rm $outDir/mRNA-ncRNA-alignment/aligned.sam &
-	samtools sort $outDir/mRNA-ncRNA-alignment/accepted_hits_unsorted.bam > $outDir/mRNA-ncRNA-alignment/accepted_hits.bam
-	samtools index $outDir/mRNA-ncRNA-alignment/accepted_hits.bam &
-	mv $outDir/mRNA-ncRNA-alignment/unmapped.fastq $outDir/mRNA-ncRNA-alignment/UnmappedReads.fq &
-else
-	echo "
-	mRNA/ncRNA alignment output not found. Reads likely did not map to mRNA/ncRNA reference. 
-	"
-	cp $outDir/tRNA-alignment/$myFile $outDir/mRNA-ncRNA-alignment/$trimmedFile
-fi
+### Transform data 
+DataTransformations $myPath/$outDir/Data/Intermediate-files/predicted_exp_layout_cond1.csv ${condition1} 
+DataTransformations $myPath/$outDir/Data/Intermediate-files/predicted_exp_layout_cond2.csv ${condition2}
 
-# Produce read counts for the three alignment steps. If one of the alignment steps failed, use an empty htseq-count output file.
-string_padder "Alignment steps complete. Moving on to read-counting using FCount-count"
+### Get distribution scores (standard deviation of RPM difference between samples multiplied 
+### by standard deviation of percent difference between samples, divided by 1000) of the features
+string_padder "Generating Distribution Scores..."
 
-# Count for alignment step 3
-if [ ! -f $outDir/mRNA-ncRNA-alignment/accepted_hits.bam ]; then
-	echo "
-No alignment file found for mRNA/ncRNA alignment. Using blank count file instead
-"
-	cp $empty_mRNAs $outDir/FCount-count-output/mRNA-ncRNA-alignment.count &
-else
-	echo "
-Counting mRNA/ncRNA alignment reads
-"
-	bin/featureCounts -T $featureCountthreads -a $genomeGTF -o $outDir/FCount-count-output/mRNA-ncRNA-alignment.fcount $outDir/mRNA-ncRNA-alignment/accepted_hits.bam
-	grep -v featureCounts $outDir/FCount-count-output/mRNA-ncRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/FCount-count-output/mRNA-ncRNA-alignment.count
-fi
-	
-# Count for alignment step 2
-if [ ! -f $outDir/snomiRNA-alignment/accepted_hits.bam ]; then
-	echo "
-No alignment file found for sno/miRNA alignment. Using blank count file instead
-"
-	cp $empty_snomiRNAs $outDir/FCount-count-output/snomiRNA-alignment.count &
-else
-	echo "
-Counting sno/miRNA alignment reads
-"
-	bin/featureCounts -T $featureCountthreads -a $snomiRNAGTF -o $outDir/FCount-count-output/snomiRNA-alignment.fcount $outDir/snomiRNA-alignment/accepted_hits.bam
-	grep -v featureCounts $outDir/FCount-count-output/snomiRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/FCount-count-output/snomiRNA-alignment.count
-fi
+### Concatenate horizontally to make a dataframe
+paste $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_tsRNA.${condition1}_concatenated.depth.mean $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_tsRNA.${condition2}_concatenated.depth.mean > $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.mean
+### Calculate StdDev
+python bin/Mean-to-RelativeDifference.py $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.mean $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.stddev
+### Calculate distribution scores
+Rscript bin/DistributionScore.R $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.stddev $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2 $snomiRNAGTF
+### Sort the output but not the header
+cat $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.high-distribution-score.txt | awk 'NR<2{print $0;next}{print $0| "sort -k5,5nr"}' > $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.high-distribution-score.sorted.txt
+cat $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.all-features.txt | awk 'NR<2{print $0;next}{print $0| "sort -k11,11nr"}' > $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.all-features.sorted.txt
+### Repeat these steps for reads mapped to tRNA groups (multi-mapping reads)
+paste $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_Combined.${condition1}.tRNAs-almost-mapped_RPM.depth.mean $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_Combined.${condition2}.tRNAs-almost-mapped_RPM.depth.mean > $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.multi-mappers.cond1-vs-cond2.mean
+python bin/Mean-to-RelativeDifference.py $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.multi-mappers.cond1-vs-cond2.mean $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.multi-mappers.cond1-vs-cond2.stddev
+#Rscript bin/DistributionScore.R $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.multi-mappers.cond1-vs-cond2.stddev $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.multi-mappers.cond1-vs-cond2 $snomiRNAGTF
+#cat $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.multi-mappers.cond1-vs-cond2.high-distribution-score.txt | awk 'NR<2{print $0;next}{print $0| "sort -k5,5nr"}' > $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.multi-mappers.cond1-vs-cond2.high-distribution-score.sorted.txt
+#cat $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.multi-mappers.cond1-vs-cond2.all-features.txt | awk 'NR<2{print $0;next}{print $0| "sort -k11,11nr"}' > $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.multi-mappers.cond1-vs-cond2.all-features.sorted.txt
+###
 
-# Count for alignment step 1
-if [ ! -f $outDir/tRNA-alignment/accepted_hits.bam ]; then
-	echo "
-No alignment file found for tRNA alignment. Using blank count file instead
-"
-	cp $empty_tRNAs $outDir/FCount-count-output/tRNA-alignment.count &
-else
-	echo "
-Counting tRNA alignment reads
-"
-	bin/featureCounts -T $featureCountthreads -a $tRNAGTF -o $outDir/FCount-count-output/tRNA-alignment.fcount $outDir/tRNA-alignment/accepted_hits.bam
-	grep -v featureCounts $outDir/FCount-count-output/tRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/FCount-count-output/tRNA-alignment.count
-fi
+### snomiRNAs
+### Concatenate horizontally to make a dataframe
+paste $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_snomiRNA.${condition1}_concatenated.depth.mean $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_snomiRNA.${condition2}_concatenated.depth.mean > $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2.mean
+### Calculate StdDev
+python bin/Mean-to-RelativeDifference.py $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2.mean $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2.stddev
+### Calculate distribution score
+Rscript bin/DistributionScore.R $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2.stddev $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2 $snomiRNAGTF
+### Sort the output but not the header
+cat $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2.high-distribution-score.txt | awk 'NR<2{print $0;next}{print $0| "sort -k6,6nr"}' > $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2.high-distribution-score.sorted.txt
+### Copy txt files illustrating features with very different distributions to the Results directory:
+cp $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.high-distribution-score.sorted.txt $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-tsRNAs.txt 
+cp $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2.high-distribution-score.sorted.txt $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-snomiRNAs.txt
 
+
+string_padder "Generating Cleavage Scores..." 
+### Test whether certain features are cleaved in one condition vs the other
+Rscript bin/CleavageScore.R $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_tsRNA.${condition1}_concatenated.depth.mean $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_tsRNA.${condition2}_concatenated.depth.mean $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_tsRNAs $snomiRNAGTF &
+Rscript bin/CleavageScore.R $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_snomiRNA.${condition1}_concatenated.depth.mean $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_snomiRNA.${condition2}_concatenated.depth.mean $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_snomiRNAs $snomiRNAGTF &
+wait
+### Sort the output but not the header
+cat $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_tsRNAs.high-cleavage-score.txt | awk 'NR<2{print $0;next}{print $0| "sort -k11,11nr"}' > $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_High-cleavage-tsRNAs.txt
+cat $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_snomiRNAs.high-cleavage-score.txt | awk 'NR<2{print $0;next}{print $0| "sort -k11,11nr"}' > $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_High-cleavage-snomiRNAs.txt
+### Copy sorted high distribution files to the Data dir
+cp $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_High-cleavage-snomiRNAs.txt $myPath/$outDir/Data/
+cp $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_High-cleavage-tsRNAs.txt $myPath/$outDir/Data/
+### Copy PDF files to Plots dir
+cp $myPath/$outDir/Data/Intermediate-files/*.pdf $myPath/$outDir/Plots/
+cp $myPath/$outDir/Data/Intermediate-files/DataTransformations/*.pdf $myPath/$outDir/Plots/
+mv $myPath/$outDir/Plots/tsRNA.cond1-vs-cond2.high-distribution-score.pdf $myPath/$outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-distribution-score.pdf
+mv $myPath/$outDir/Plots/snomiRNA.cond1-vs-cond2.high-distribution-score.pdf $myPath/$outDir/Plots/${condition1}_vs_${condition2}_snomiRNAs.high-distribution-score.pdf
+
+### Get mean and standard deviation
+# tRNAs
+Rscript bin/Mean_Stdev.R $myPath/$outDir/Data/Intermediate-files/tsRNA.${condition1}_concatenated.depth $myPath/$outDir/Data/Intermediate-files/condition1_concatenated_mean_stdev.tsRNA.depth &
+Rscript bin/Mean_Stdev.R $myPath/$outDir/Data/Intermediate-files/tsRNA.${condition2}_concatenated.depth $myPath/$outDir/Data/Intermediate-files/condition2_concatenated_mean_stdev.tsRNA.depth &
+# Multi-mapping tRNA reads:
+#Rscript bin/Mean_Stdev.R $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_Combined.${condition1}.tRNAs-almost-mapped_RPM.depth.mean $myPath/$outDir/Data/Intermediate-files/Multimappers.condition1_concatenated_mean_stdev.tsRNA.depth &
+#Rscript bin/Mean_Stdev.R $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_Combined.${condition2}.tRNAs-almost-mapped_RPM.depth.mean $myPath/$outDir/Data/Intermediate-files/Multimappers.condition2_concatenated_mean_stdev.tsRNA.depth &
+Rscript bin/Mean_Stdev.R $myPath/$outDir/Data/Intermediate-files/Combined.${condition1}.tRNAs-almost-mapped_RPM.depth $myPath/$outDir/Data/Intermediate-files/Multimappers.condition1_concatenated_mean_stdev.tsRNA.depth &
+Rscript bin/Mean_Stdev.R $myPath/$outDir/Data/Intermediate-files/Combined.${condition2}.tRNAs-almost-mapped_RPM.depth $myPath/$outDir/Data/Intermediate-files/Multimappers.condition2_concatenated_mean_stdev.tsRNA.depth &
+# snomiRNAs
+Rscript bin/Mean_Stdev.R $myPath/$outDir/Data/Intermediate-files/snomiRNA.${condition1}_concatenated.depth $myPath/$outDir/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth &
+Rscript bin/Mean_Stdev.R $myPath/$outDir/Data/Intermediate-files/snomiRNA.${condition2}_concatenated.depth $myPath/$outDir/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth &
 wait
 
-### Get total reads mapped
-string_padder "Get total number of reads mapped"
-cat $outDir/FCount-count-output/*.count | grep -v ^__ | sort -k1,1 > $outDir/FCount-count-output/$singleFile_basename.all-features.count 
-sed -i '1s/^/Features\t'"$singleFile_basename"'\n/' $outDir/FCount-count-output/$singleFile_basename.all-features.count # Add column headers
-mapped=$(awk '{sum+=$2} END{print sum;}' $outDir/FCount-count-output/$singleFile_basename.all-features.count)
-echo "Reads mapped: $mapped" >> $outDir/Stats.log
-echo "Reads mapped: $mapped"
-wait
+### Get names of differentially expressed features
+cat $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/*regulated.csv | grep -v ^, | awk -F ',' '{print $1}' | awk -F ' ' '{print $1}' > $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt
+cp $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_short-names.txt
+#grep ENS $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt > $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_ENSGs.txt
+#grep -v ENS $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt | awk -F '-' '{print $2}' | sort | uniq > $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_tRNAs.txt 
+#cat $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_ENSGs.txt $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_tRNAs.txt > $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_short-names.txt
+### Get names of features with highest distribution scores 
+cat $myPath/$outDir/Data/Intermediate-files/DataTransformations/*high-distribution-score.sorted.txt | grep -v ^feat | awk '{print $1}' > $myPath/$outDir/Data/Intermediate-files/DataTransformations/High-distribution-scores_feature-names.txt 
+### Get names of features that are likely cleaved
+cat $myPath/$outDir/Data/Intermediate-files/*high-cleavage-score.txt | grep -v ^feat | awk '{print $1}' > $myPath/$outDir/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt
 
-### Plot everything
-string_padder "Generate depth files and plot features"
-bam_to_plots $outDir/tRNA-alignment $singleFile_basename tsRNA &
-bam_to_plots $outDir/snomiRNA-alignment $singleFile_basename snomiRNA &
-#bam_to_plots $outDir/mRNA-ncRNA-alignment $singleFile_basename mRNA &  
+### Get unique set of differentially expressed features, features with high distribution scores, and high cleavage scores...
+echo -e "#This is a collection of features that are differentially expressed, have large differences in distribution between the conditions, or are likely cleaved. Ordered alphanumerically." > $myPath/$outDir/Data/All-Features-Identified.txt
+cat $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_short-names.txt $myPath/$outDir/Data/Intermediate-files/DataTransformations/High-distribution-scores_feature-names.txt $myPath/$outDir/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt | sort | uniq >> $myPath/$outDir/Data/All-Features-Identified.txt
 
-### Process multi-mapping tRNAs
-python bin/Leftovers-to-Bedgraph.py $outDir/tRNA-alignment/tRNAs-almost-mapped.txt additional-files/tRNA-lengths_hg19.txt $outDir/tRNA-alignment/tRNAs-almost-mapped.depth
-python bin/Depth-to-Depth_RPM.py $outDir/tRNA-alignment/tRNAs-almost-mapped.depth $mapped $outDir/tRNA-alignment/$singleFile_basename.tRNAs-almost-mapped_RPM.depth
-sort -k1,1 -k2,2n $outDir/tRNA-alignment/$singleFile_basename.tRNAs-almost-mapped_RPM.depth > $outDir/tRNA-alignment/$singleFile_basename.tRNAs-almost-mapped_RPM.sorted.depth
-mv $outDir/tRNA-alignment/$singleFile_basename.tRNAs-almost-mapped_RPM.sorted.depth $outDir/tRNA-alignment/$singleFile_basename.tRNAs-almost-mapped_RPM.depth
-
-### Get RPM-normalised FCount count data
-string_padder "Get RPM-normalised read-counts"
-python bin/FCount-to-RPM.py $outDir/FCount-count-output/$singleFile_basename.all-features.count $mapped $outDir/FCount-to-RPM/$singleFile_basename.all-features &
-python bin/FCount-to-RPM.py $outDir/FCount-count-output/tRNA-alignment.count $mapped $outDir/FCount-to-RPM/tRNA-alignment & 
-python bin/FCount-to-RPM.py $outDir/FCount-count-output/snomiRNA-alignment.count $mapped $outDir/FCount-to-RPM/snomiRNA-alignment &
-python bin/FCount-to-RPM.py $outDir/FCount-count-output/mRNA-ncRNA-alignment.count $mapped $outDir/FCount-to-RPM/mRNA-ncRNA-alignment &
-wait
-sleep 5  # Make sure everything is finished running
-
-### Collapse count file
-string_padder "Collapsing count files..."
-python bin/CollapseCountfile.py $outDir/FCount-count-output/$singleFile_basename.all-features.count $outDir/FCount-count-output/$singleFile_basename.collapsed.all-features.count  # For DESeq2
-python bin/CollapseCountfile.py $outDir/FCount-to-RPM/$singleFile_basename.all-features.rpm.count $outDir/FCount-to-RPM/$singleFile_basename.collapsed.all-features.rpm.count # For Cleavage + Distribution algorithms
-
-### Move results to Data_and_Plots
-cp $outDir/FCount-to-RPM/$singleFile_basename.collapsed.all-features.rpm.count $outDir/Data_and_Plots/
-if [[ $Plots == "yes" ]]; then
-	### If extra plotting parameter (-A) was selected, copy these files 
-	Rscript bin/Bedgraph_plotter.R $outDir/tRNA-alignment/$singleFile_basename.tRNAs-almost-mapped_RPM.depth $outDir/tRNA-alignment/Multi-mappers_tsRNAs_Coverage-plots.pdf 0
-	cp $outDir/tRNA-alignment/Multi-mappers_tsRNAs_Coverage-plots.pdf $outDir/Data_and_Plots/
-	cp $outDir/tRNA-alignment/*Results.* $outDir/Data_and_Plots/
-	cp $outDir/snomiRNA-alignment/*Results.* $outDir/Data_and_Plots/
+string_padder "Plotting any features identified in the analysis..."
+### If there are differentially expressed/high distribution features, plot these:
+if [[ $(wc -l < $myPath/$outDir/Data/All-Features-Identified.txt) -ge 2 ]]; then
+	### Plot DEGs arg1 and 2 are inputs, arg 3 is list of differentially expressed genes, arg 4 is output pdf, 
+	### arg 5 is mean coverage cutoff (plot features with coverage above this), arg 5 is GTF file for snomiRNAs (arg 5 is not given to tsRNA data)
+	### Plot all tsRNAs
+	cat $myPath/$outDir/Data/Intermediate-files/Multimappers.condition1_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/condition1_concatenated_mean_stdev.tsRNA.depth | sort -k1,1 -k2,2n > $myPath/$outDir/Data/Intermediate-files/Everything.condition1_concatenated_mean_stdev.tsRNA.depth
+	cat $myPath/$outDir/Data/Intermediate-files/Multimappers.condition2_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/condition2_concatenated_mean_stdev.tsRNA.depth | sort -k1,1 -k2,2n > $myPath/$outDir/Data/Intermediate-files/Everything.condition2_concatenated_mean_stdev.tsRNA.depth
+	Rscript bin/Bedgraph_plotter_DEGs.R $myPath/$outDir/Data/Intermediate-files/Everything.condition1_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/Everything.condition2_concatenated_mean_stdev.tsRNA.depth additional-files/Mus-musculus_All-ncRNAs.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_All-tsRNAs.pdf 0 "yes" & # The Mus-musculus file does nothing here, other than act as a non-empty file which prompts the script to plot all features because plot everything = "yes" is provided
+	if [[ $Plots == "yes" ]]; then
+		### Plot all sno/miRNAs if -A 'yes' parameter selected
+		Rscript bin/Bedgraph_plotter_DEGs.R $myPath/$outDir/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_All-snomiRNAs.pdf 0 $Plots $snomiRNAGTF &
+	fi
+	# tsRNAs
+	Rscript bin/Bedgraph_plotter_DEGs.R $myPath/$outDir/Data/Intermediate-files/condition1_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/condition2_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-tsRNAs.pdf 0 "no" &
+	Rscript bin/Bedgraph_plotter_DEGs.R $myPath/$outDir/Data/Intermediate-files/condition1_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/condition2_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/DataTransformations/High-distribution-scores_feature-names.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-tsRNAs.pdf 0 "no" &
+	Rscript bin/Bedgraph_plotter_DEGs.R $myPath/$outDir/Data/Intermediate-files/condition1_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/condition2_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-tsRNAs.pdf 0 "no" &
+	# multi-mapping tsRNAs
+	cat $myPath/$outDir/Data/Intermediate-files/Multimappers.condition1_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/Multimappers.condition2_concatenated_mean_stdev.tsRNA.depth > $myPath/$outDir/Data/Intermediate-files/Multimappers.all.depth
+	sort -k1,1 -k2,2n $myPath/$outDir/Data/Intermediate-files/Multimappers.condition1_concatenated_mean_stdev.tsRNA.depth > $myPath/$outDir/Data/Intermediate-files/sorted_Multimappers.condition1_concatenated_mean_stdev.tsRNA.depth
+	sort -k1,1 -k2,2n $myPath/$outDir/Data/Intermediate-files/Multimappers.condition2_concatenated_mean_stdev.tsRNA.depth > $myPath/$outDir/Data/Intermediate-files/sorted_Multimappers.condition2_concatenated_mean_stdev.tsRNA.depth
+	python bin/Multimappers.py $myPath/$outDir/Data/Intermediate-files/Multimappers.all.depth $myPath/$outDir/Data/Intermediate-files/Multimappers.ReadsMapped.txt $myPath/$outDir/Data/Intermediate-files/Multimappers.All.txt
+	Rscript bin/Bedgraph_plotter_DEGs.R $myPath/$outDir/Data/Intermediate-files/sorted_Multimappers.condition1_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/sorted_Multimappers.condition2_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/Multimappers.ReadsMapped.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_tsRNAs-with-multimapping-reads.pdf 0 "no" 
+	# snomiRNAs
+	Rscript bin/Bedgraph_plotter_DEGs.R $myPath/$outDir/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-snomiRNAs.pdf 0 "no" $snomiRNAGTF &
+	Rscript bin/Bedgraph_plotter_DEGs.R $myPath/$outDir/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Data/Intermediate-files/DataTransformations/High-distribution-scores_feature-names.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-snomiRNAs.pdf 0 "no" $snomiRNAGTF &
+	Rscript bin/Bedgraph_plotter_DEGs.R $myPath/$outDir/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-snomiRNAs.pdf 0 "no" $snomiRNAGTF &
+	# Venn diagram
+	Rscript bin/VennDiagram.R $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_short-names.txt $myPath/$outDir/Data/Intermediate-files/DataTransformations/High-distribution-scores_feature-names.txt $myPath/$outDir/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}
+	mkdir $myPath/$outDir/Data/Intermediate-files/VennDiagramGeneration
+	cp $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_short-names.txt $myPath/$outDir/Data/Intermediate-files/VennDiagramGeneration/DESeq2-Features.txt
+	cp  $myPath/$outDir/Data/Intermediate-files/DataTransformations/High-distribution-scores_feature-names.txt $myPath/$outDir/Data/Intermediate-files/VennDiagramGeneration/Distribution-Algorithm-Features.txt
+	cp $myPath/$outDir/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt $myPath/$outDir/Data/Intermediate-files/VennDiagramGeneration/Cleavage-Algorithm-Features.txt
+	mv $myPath/$outDir/Plots/${condition1}_vs_${condition2}.intersect*txt $myPath/$outDir/Data/
+else
+	string_padder "No features of interest were identified."
+	echo "There were no features identified. No plots were generated." >> $myPath/$outDir/Plots/${condition1}_vs_${condition2}_no-features-to-plot.txt
 fi
-echo "Finised analysing "$singleFile" on $(date)" # Print pipeline end-time
-echo "_____________________________________________________________________________________________________________________
+wait
 
-"
+string_padder "Gathering RPM count files and cleaning up..."
+### Gather RPM count files
+awk '{print $1}' $outDir/Data/Intermediate-files/$filename.collapsed.all-features.RPM.Count > $outDir/Data/Intermediate-files/FCount.rpm.all-features # Get feature names
+for f in $outDir/Data/Intermediate-files/*RPM.Count; do
+	awk '{print $2}' $f | paste $outDir/Data/Intermediate-files/FCount.rpm.all-features - >> $outDir/Data/Intermediate-files/FCount.rpm.temp
+	mv $outDir/Data/Intermediate-files/FCount.rpm.temp $outDir/Data/Intermediate-files/FCount.rpm.all-features
+done
+#rm $outDir/Data/*rpm.count
+mv $outDir/Data/Intermediate-files/FCount.rpm.all-features $outDir/Data/FCount.all-features.RPM.Count
+#mv $myPath/$outDir/Data/*count $myPath/$outDir/Data/Intermediate-files/
+
+### Move DESeq results to Data directory
+mv $myPath/$outDir/Data/Intermediate-files/DE_Results/ $myPath/$outDir/Data/
+cp $myPath/$outDir/Data/DE_Results/*pdf $myPath/$outDir/Plots/ #Copy PDFs to Plots dir
+cp $myPath/$outDir/Data/DE_Results/DESeq2/*regulated.csv $myPath/$outDir/Data/ #Copy DESeq2 results to Data dir
+mv $myPath/$outDir/Plots/*log $myPath/$outDir/Data/Intermediate-files/ #Move Venn Diagram log file to Intermediate-files dir 
+
+### If -A parameter was provided, copy all plots to Plots dir
+if [[ $Plots == "yes" ]]; then 
+	mkdir $myPath/$outDir/Plots/Individual-Runs
+	cp $myPath/$outDir/*/Data_and_Plots/*.pdf $myPath/$outDir/Plots/Individual-Runs/
+fi
+
+### Results Summary
+results=$(string_padder "tsRNAsearch Results Report")
+de_results=$(string_padder "Differential Expression Results")
+dist_results=$(string_padder "Distribution Algorithm Results")
+cleav_results=$(string_padder "Cleavage Algorithm Results")
+vennLocation=$myPath/$outDir/Plots/${condition1}_vs_${condition2}_VennDiagram.pdf
+topFiveUpDE="$(grep -v ^,baseMean $myPath/$outDir/Data/DE_Results/DESeq2/*upregulated.csv | sort -t ',' -k7,7gr | awk -F ',' '{print $1}' | head -5)"
+topFiveDownDE="$(grep -v ^,baseMean $myPath/$outDir/Data/DE_Results/DESeq2/*downregulated.csv | sort -t ',' -k7,7gr | awk -F ',' '{print $1}' | head -5)"
+topDistribution_tRNAs="$(grep -v ^feature $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-tsRNAs.txt | head -5 | awk '{print $1}')"
+topDistribution_snomiRNAs="$(grep -v ^feature $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-snomiRNAs.txt | head -5 | awk '{print $1}')"
+topCleavage_tRNAs="$(grep -v ^feature $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-cleavage-tsRNAs.txt | head -5 | awk '{print $1}')"
+topCleavage_snomiRNAs="$(grep -v ^feature $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-cleavage-snomiRNAs.txt | head -5 | awk '{print $1}')"
+echo "$results
+
+For a comparison of all three methods, see venn diagram:
+	$vennLocation
+	Details of the intersections can be found here: 
+		$myPath/$outDir/Data
+	Files used to generate the Venn Diagram can be found here:
+		$myPath/$outDir/Data/Intermediate-files/VennDiagramGeneration
+
+$de_results
+
+Top 5 differentially upregulated features in ${condition1} versus ${condition2}:
+
+$topFiveUpDE
+
+Full results here: $myPath/$outDir/Data/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output-upregulated.csv
+
+Top 5 differentially downregulated features in ${condition1} versus ${condition2}:
+
+$topFiveDownDE
+
+Full results here: $myPath/$outDir/Data/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output-downregulated.csv
+
+$dist_results
+
+Top scoring tRNAs:
+
+$topDistribution_tRNAs
+
+Full results here: $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-tsRNAs.txt
+
+Top scoring snomiRNAs:
+
+$topDistribution_snomiRNAs
+
+Full results here: $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-snomiRNAs.txt
+
+$cleav_results
+
+Top scoring tRNAs:
+
+$topCleavage_tRNAs
+
+Full results here: $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-cleavage-tsRNAs.txt
+
+Top scoring snomiRNAs:
+		
+$topCleavage_snomiRNAs
+
+Full results here: $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-cleavage-snomiRNAs.txt
 
 
+More results:
+	All tRNA plots can be found here: 
+		$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_All-tsRNAs.pdf
+	All snoRNA/miRNA plots: 
+		$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-snomiRNAs.pdf
+		$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-cleavage-snomiRNAs.pdf
+" > $myPath/$outDir/${condition1}_vs_${condition2}.Results-Summary.txt
+
+cat $myPath/$outDir/${condition1}_vs_${condition2}.Results-Summary.txt
+
+finished="Finished project analysis on $(date)"
+string_padder "$finished"
