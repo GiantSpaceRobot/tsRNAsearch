@@ -110,9 +110,9 @@ for(subset1 in df1) {
   ##### Average both cond1 and cond2 std/mean relationships:
   ### Linear penalty function
   penalty <- mean(c(std1.size, std2.size))/100 # The amount that the distribution score will be penalised 
-  ifelse(std1.size > 85 || std2.size > 85, 
+  ifelse(std1.size > 80 || std2.size > 80, 
          penalty <- 1, 
-         penalty <- penalty) # If either condition have a stdev over 90% of mean, increase penalty to max (1)
+         penalty <- penalty) # If either condition have a stdev over 80% of mean, increase penalty to max (1)
   relative.penalty <- cleavage.score.raw*penalty
   cleavage.score <- cleavage.score.raw - relative.penalty
     results.df[nrow(results.df) + 1,] = list(feature,
@@ -146,6 +146,7 @@ newdata <- newdata[newdata$`5vs3.ratio.percent` > 125, ] # Get high 5' / 3' rati
 newdata <- newdata[newdata$`penalty (%)` < 75, ] # Remove features with high penalty
 newdata <- newdata[ which(newdata$mean.coverage > 1), ] # Mean RPM must be 10 or more across both conditions for each feature 
 newdata <- newdata[order(-newdata$cleavage.score),]
+newdata$feature <- factor(newdata$feature, levels = newdata$feature[order(newdata$cleavage.score)])
 
 write.table(results.df, 
             file = paste0(args[3], ".all-features.txt"),
@@ -173,15 +174,16 @@ ggplot(data = newdata.subset, mapping = aes(feature,
                                             newdata.subset$cleavage.score, 
                                             color=newdata.subset$cleavage.score)) +
   geom_point() +
-  ggtitle("Feature cleavage analysis") +
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size=7)) +
+  ggtitle("Cleavage score") +
+  theme(axis.text.x = element_text(angle = 0, vjust = 0, hjust=0, size=8)) +
   scale_color_gradient(low="blue", high="red") +
   #scale_y_continuous(trans='log2') +   # Change y axis to log scale
   scale_x_discrete(limits = (levels(newdata.subset$cleavage.score))) +
-  labs(colour = "Cleavage\nscore", 
-       x = "ncRNA/gene", 
+  coord_flip() +
+  labs(colour = "Cleavage\n   score", 
+       x = "ncRNA", 
        y = "Cleavage score", 
-       subtitle = "Cleavage score = Ratio between 5' ratio (condition 1 vs 2) and\n3' ratio (condition 1 vs 2) multiplied by mean coverage (RPM)\nMax number of features shown is 20")
+       subtitle = "Max number of features shown = 20")
 dev.off()
 
 
