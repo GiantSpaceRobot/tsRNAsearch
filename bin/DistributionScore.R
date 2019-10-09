@@ -213,7 +213,7 @@ ggplot(data = newdata.subset, mapping = aes(feature, `distribution.score`, color
   theme(axis.text.x = element_text(angle = 0, vjust = 0, hjust=0, size=8)) +
   scale_color_gradient(low="blue", high="red") +
   coord_flip() +
-  labs(colour = "Distribution\nscore", 
+  labs(colour = "Distribution\n    score", 
        x = "ncRNA", 
        y = "Distribution score", 
        subtitle = "Max number of features shown = 20")
