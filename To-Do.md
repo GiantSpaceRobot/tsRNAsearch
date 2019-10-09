@@ -6,5 +6,4 @@
 * Use GRCh38 ncRNA sequences
 * Place the pipeline in a docker container?
 * Make Distribution algorithm slightly more stringent
-* Make cleavage score more stringent (it always identifies more features than the other two methods)
 * Count total number of tsRNA/miRNA reads as a proportion of total reads in dataset. Make a pie chart. Compare disease vs control

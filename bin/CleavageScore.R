@@ -142,8 +142,8 @@ results.df <- results.df[order(-as.numeric(results.df$`cleavage.score`)),]
 # Remove crud from full dataframe
 newdata <- results.df[complete.cases(results.df), ]  # Remove NAs
 newdata <- newdata[!grepl("Inf", newdata$`5vs3.ratio.percent`),] # Remove Inf
-newdata <- newdata[newdata$`5vs3.ratio.percent` > 125, ] # Get high 5' / 3' ratios
-newdata <- newdata[newdata$`penalty (%)` < 75, ] # Remove features with high penalty
+newdata <- newdata[newdata$`5vs3.ratio.percent` > 130, ] # Get high 5' / 3' ratios
+newdata <- newdata[newdata$`penalty (%)` < 80, ] # Remove features with high penalty
 newdata <- newdata[ which(newdata$mean.coverage > 1), ] # Mean RPM must be 10 or more across both conditions for each feature 
 newdata <- newdata[order(-newdata$cleavage.score),]
 newdata$feature <- factor(newdata$feature, levels = newdata$feature[order(newdata$cleavage.score)])
