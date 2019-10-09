@@ -56,24 +56,19 @@ for k,v in myDict.iteritems():
                     break
                 elif int(aligned[1]) == 16: # read aligned in - orientation
                     newLine = aligned
-                    #break
                 elif int(aligned[1]) == 256: # read aligned in + orientation (secondary alignment) 
                     newLine = aligned
                     break
                 elif int(aligned[1]) == 272: # read aligned in - orientation (secondary alignment) 
                     newLine = aligned
-                    #break
                 else:
                     print ("ERROR in SAMcollapse.py: Alignment below does not have correct flag:\n%s" % (aligned))
-            #print "%s\n%s\n\n" % (v[0], aligned)
             newLine = tRNAgroup + "\t" + newLine[3] + "\t" + str(len(newLine[9]) + int(newLine[3])) + "\t" + newLine[0]
             if tRNAgroup in tRNAgroupDict.keys():
                 tRNAgroupDict[tRNAgroup].append(newLine)
             else:
                 myList = [newLine]
                 tRNAgroupDict[tRNAgroup] = (myList)
-        #for line in v:
-        #    Output.write(line + "\n")
 
 Output.close()
 
@@ -81,7 +76,6 @@ print counter, counterGroup
 #print "SAMcollapse.py results:\n%s reads collapsed at the tRNA species level (e.g. 2 gene copies of ProCCG)\n%s reads collapsed at the tRNA group level (e.g. ProCCG and ProAAG)" % (counter, counterGroup)
 
 leftovers = open(sys.argv[2] + "_tRNAs-almost-mapped.txt", "w")
-#leftovers.write("tRNA.group\tread.start\tread.end.approx\tread.name\n")
 for k,v in tRNAgroupDict.iteritems():
     for values in v:
         leftovers.write(values + "\n")
