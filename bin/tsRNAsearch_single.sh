@@ -356,7 +356,7 @@ if [ $skip = "no" ]; then
 	#mkdir -p $outDir/FastQC
 	# Run fastp
 	string_padder "Pre-processing reads using Fastp"
-	bin/fastp -w $threads -i $singleFile -o $outDir/pre-processing/$trimmedFile
+	bin/fastp -w $threads -i $singleFile -o $outDir/pre-processing/$trimmedFile -j $outDir/pre-processing/fastp.output.json -h $outDir/pre-processing/fastp.output.html
 	# Run Trim_Galore
 	#string_padder "Trimming reads using Trim Galore"
 	#if [ ! -f $outDir/trim_galore_output/$trimmedFile ]; then
