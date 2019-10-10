@@ -334,14 +334,20 @@ cat $myPath/$outDir/Data/Intermediate-files/*high-cleavage-score.txt | grep -v ^
 echo -e "#This is a collection of features that are differentially expressed, have large differences in distribution between the conditions, or are likely cleaved. Ordered alphanumerically." > $myPath/$outDir/Data/All-Features-Identified.txt
 cat $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_short-names.txt $myPath/$outDir/Data/Intermediate-files/DataTransformations/High-distribution-scores_feature-names.txt $myPath/$outDir/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt | sort | uniq >> $myPath/$outDir/Data/All-Features-Identified.txt
 
+### Create files with all RPM values for every coordindate of every feature in each condition
+# Condition 1
+cat $myPath/$outDir/Data/Intermediate-files/Multimappers.condition1_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/condition1_concatenated_mean_stdev.tsRNA.depth | sort -k1,1 -k2,2n > $myPath/$outDir/Data/Intermediate-files/Everything.condition1_concatenated_mean_stdev.tsRNA.depth
+cat $myPath/$outDir/Data/Intermediate-files/Everything.condition1_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/condition1_concatenated_mean_stdev.snomiRNA.depth > $myPath/$outDir/Data/Intermediate-files/Everything.cond1.depth 
+# Condition 2
+cat $myPath/$outDir/Data/Intermediate-files/Multimappers.condition2_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/condition2_concatenated_mean_stdev.tsRNA.depth | sort -k1,1 -k2,2n > $myPath/$outDir/Data/Intermediate-files/Everything.condition2_concatenated_mean_stdev.tsRNA.depth
+cat $myPath/$outDir/Data/Intermediate-files/Everything.condition2_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/condition2_concatenated_mean_stdev.snomiRNA.depth > $myPath/$outDir/Data/Intermediate-files/Everything.cond2.depth 
+
 string_padder "Plotting any features identified in the analysis..."
 ### If there are differentially expressed/high distribution features, plot these:
 if [[ $(wc -l < $myPath/$outDir/Data/All-Features-Identified.txt) -ge 2 ]]; then
 	### Plot DEGs arg1 and 2 are inputs, arg 3 is list of differentially expressed genes, arg 4 is output pdf, 
 	### arg 5 is mean coverage cutoff (plot features with coverage above this), arg 5 is GTF file for snomiRNAs (arg 5 is not given to tsRNA data)
-	### Plot all tsRNAs
-	cat $myPath/$outDir/Data/Intermediate-files/Multimappers.condition1_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/condition1_concatenated_mean_stdev.tsRNA.depth | sort -k1,1 -k2,2n > $myPath/$outDir/Data/Intermediate-files/Everything.condition1_concatenated_mean_stdev.tsRNA.depth
-	cat $myPath/$outDir/Data/Intermediate-files/Multimappers.condition2_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/condition2_concatenated_mean_stdev.tsRNA.depth | sort -k1,1 -k2,2n > $myPath/$outDir/Data/Intermediate-files/Everything.condition2_concatenated_mean_stdev.tsRNA.depth
+	### Plot all tsRNAs	
 	Rscript bin/Bedgraph_plotter_DEGs.R $myPath/$outDir/Data/Intermediate-files/Everything.condition1_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/Everything.condition2_concatenated_mean_stdev.tsRNA.depth additional-files/Mus-musculus_All-ncRNAs.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_All-tsRNAs.pdf 0 "yes" & # The Mus-musculus file does nothing here, other than act as a non-empty file which prompts the script to plot all features because plot everything = "yes" is provided
 	if [[ $Plots == "yes" ]]; then
 		### Plot all sno/miRNAs if -A 'yes' parameter selected
