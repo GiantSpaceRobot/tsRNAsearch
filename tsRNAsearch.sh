@@ -32,7 +32,7 @@ Options
 	-e	CSV file containing file names and file groups (see examples in additional-files/)
 	-t	Number of threads to use {default is to calculate the number of processors and use 75%}
 	-A	Plot all features? yes/no {default: no (only plot differentially expressed features)}
-	-S	Skip pre-processing of data (i.e. skip FastQC and Trim_Galore) {default: no}
+	-S	Skip pre-processing of data (i.e. skip Fastp) {default: no}
 
 	" 1>&2; }
 

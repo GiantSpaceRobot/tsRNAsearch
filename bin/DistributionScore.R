@@ -39,8 +39,6 @@ my.list = list("feature",
                "distribution.score.raw",
                "distribution.score.penalty",
                "distribution.score",
-               #"ks.test_p.value",
-               #"chi.square.test_p.value",
                "more.reads.in:")
 write.table(my.list, 
             file = paste0(args[2], ".all-features.txt"),
@@ -78,8 +76,6 @@ for(subset in df) {
     stddev.of.difference <- "NA"
     sum.of.percent <- "NA"
     mean.of.percent <- "NA"
-    #ks.pvalue <- "NA"
-    #chi.pvalue <- "NA"
     stddev.of.percent <- "NA"
     coef.of.variation <- "NA"
     coef.of.var.of.difference <- "NA"
@@ -95,10 +91,6 @@ for(subset in df) {
     sum.of.difference <- sum(abs(subset$V7), na.rm = TRUE)
     sum.of.percent <- sum(abs(subset$V4), na.rm = TRUE)
     mean.of.percent <- mean((subset$V4), na.rm = TRUE)
-    #ks.output <- ks.test(subset$V2, subset$V3)
-    #ks.pvalue <- ks.output$p.value
-    #chi.output <- chisq.test(subset$V2, subset$V3)
-    #chi.pvalue <- chi.output$p.value
     stddev.of.percent <- sd(subset$V4, na.rm = TRUE)
     if(is.na(stddev.of.percent)) {
       stddev.of.percent = 0
@@ -107,39 +99,43 @@ for(subset in df) {
     stddev.of.difference <- sd(subset$V7)
     coef.of.variation <- ((abs(stddev.of.percent)/mean.of.percent) * 100)
     coef.of.var.of.difference <- ((stddev.of.difference/mean.of.difference) * 100)
-    #area.diff <- (stddev.of.difference*stddev.of.percent)/1000
-    #distribution.score <- (area.diff*mean.coverage)/1000
     area.diff <- (sum.of.difference/sum.total)*100
     distribution.score.raw <- area.diff*stddev.of.percent
     
     ##### Calculating distribution score penalty (this is penalty is expressed as the relationship between the mean and stdev)
+    
     ### Condition 1
     mean1.sum <- sum(subset$V2)
-    std1.sum <- sum(subset$V5)
-    std1.size <-
-      (std1.sum / mean1.sum)  # Calculate the relationship between sum of mean and sum of standard deviation
+    std1.sum <- ifelse(sum(subset$V5) > 0, sum(subset$V5), 1) # If the sum of the standard deviation is zero, use 1 as pseudovalue
+    std1.size <- ifelse((std1.sum/mean1.sum) == Inf, 0.8, std1.sum/mean1.sum) 
+      # Calculate the relationship between sum of mean and sum of standard deviation
+      # If the mean is zero, use 0.8 (standard deviation is 80%) as pseudovalue for std1.size
+
     ### Condition 2
     mean2.sum <- sum(subset$V3)
-    std2.sum <- sum(subset$V6)
-    std2.size <-
-      (std2.sum / mean2.sum)  # Calculate the relationship between sum of mean and sum of standard deviation
+    std2.sum <- ifelse(sum(subset$V6) > 0, sum(subset$V6), 1) # If the sum of the standard deviation is zero, use 1 as pseudovalue
+    std2.size <- ifelse((std2.sum/mean2.sum) == Inf, 0.8, std2.sum/mean2.sum)
+      # Calculate the relationship between sum of mean and sum of standard deviation
+      # If the mean is zero, use 0.8 (standard deviation is 80%) as pseudovalue for std1.size
     
     ##### Average both cond1 and cond2 std/mean relationships:
+    
     ### Linear penalty function
     penalty <- mean(c(std1.size, std2.size)) # The amount that the distribution score will be penalised 
     ifelse(std1.size > 0.9 || std2.size > 0.9, 
            penalty <- 1, 
            penalty <- penalty) # If either condition have a stdev over 90% of mean, increase penalty to max (1)
     relative.penalty <- distribution.score.raw*penalty
+    
     ### Exponential penalty function
     #penalty <- (mean(c(std1.size, std2.size)))*10 # The amount that the distribution score will be penalised 
     #penalty <- (penalty^2)/100 
     #relative.penalty <- distribution.score.raw*penalty
+    
     ### Distribution score with penalty applied:
     distribution.score <- distribution.score.raw - relative.penalty
     
     ### 
-    #sum.of.percent.no.abs <- sum(subset$V4, na.rm = TRUE)
     if (mean.of.difference > 0) {
       condition <- "Condition 1"
     } else {
@@ -160,8 +156,6 @@ for(subset in df) {
                   distribution.score.raw,
                   relative.penalty,
                   distribution.score,
-                  #ks.pvalue,
-                  #chi.pvalue,
                   condition)
   write.table(my.list, 
               file = paste0(args[2], ".all-features.txt"),
@@ -182,7 +176,7 @@ for(subset in df) {
   }
 }
 
-
+### Clean up the results and subset
 results.df <- results.df[order(-results.df$distribution.score),]
 newdata <- results.df[complete.cases(results.df), ]  # Remove NAs
 newdata <- newdata[!grepl("Inf", newdata$distribution.score),] # Remove Inf
@@ -195,6 +189,7 @@ if(nrow(newdata) > 20){
   newdata.subset <- newdata
 }
 
+### Write the high-scoring ncRNAs to file
 write.table(newdata, 
             file = paste0(args[2], ".high-distribution-score.txt"),
             quote = FALSE, 
@@ -202,7 +197,6 @@ write.table(newdata,
             row.names = FALSE,
             col.names = TRUE)
 
-#my.max <- max(newdata.subset$distribution.score)
 pdf.width <- nrow(newdata.subset)*0.2 + 3
 pdf(file = paste0(args[2], ".high-distribution-score.pdf"), width = pdf.width, height = 5)
 ggplot(data = newdata.subset, mapping = aes(feature, `distribution.score`, color=`distribution.score`)) +
