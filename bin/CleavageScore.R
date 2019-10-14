@@ -69,21 +69,21 @@ for(subset1 in df1) {
   cond1.threeprime.avg <- mean(cond1.three.distribution) 
   cond2.fiveprime.avg <- mean(cond2.five.distribution) 
   cond2.threeprime.avg <- mean(cond2.three.distribution) 
-  if(cond1.fiveprime.avg=="NaN"){
-    cond1.fiveprime.avg <- 0
+  if(cond1.fiveprime.avg=="NaN" | cond1.fiveprime.avg==0){
+    cond1.fiveprime.avg <- 1
   } 
-  if(cond1.threeprime.avg=="NaN"){
-    cond1.threeprime.avg <- 0
+  if(cond1.threeprime.avg=="NaN" | cond1.threeprime.avg==0){
+    cond1.threeprime.avg <- 1
   } 
-  if(cond2.fiveprime.avg=="NaN"){
-    cond2.fiveprime.avg <- 0
+  if(cond2.fiveprime.avg=="NaN" | cond2.fiveprime.avg==0){
+    cond2.fiveprime.avg <- 1
   } 
-  if(cond2.threeprime.avg=="NaN"){
-    cond2.threeprime.avg <- 0
+  if(cond2.threeprime.avg=="NaN" | cond2.threeprime.avg==0){
+    cond2.threeprime.avg <- 1
   } 
   #ratio of 5' compared to 3'
-  ratio5prime <- mean(cond1.five.distribution)/mean(cond2.five.distribution)
-  ratio3prime <- mean(cond1.three.distribution)/mean(cond2.three.distribution)
+  ratio5prime <- cond1.fiveprime.avg/cond2.fiveprime.avg
+  ratio3prime <- cond1.threeprime.avg/cond2.threeprime.avg
   if(ratio5prime=="NaN"){
     ratio5vs3 <- 0
   } else if(ratio3prime=="NaN"){
@@ -96,16 +96,20 @@ for(subset1 in df1) {
   cleavage.score.raw <- mean.coverage*ratio5vs3
   
   ##### Calculating cleavage score penalty (this is penalty is expressed as the relationship between the mean and stdev)
+  
   ### Condition 1
   mean1.sum <- sum(mean(subset1$V3))
   std1.sum <- sum(subset1$V4)
-  std1.size <-
-    (std1.sum / mean1.sum)  # Calculate the relationship between sum of mean and sum of standard deviation
+  std1.size <- ifelse(is.na(std1.sum/mean1.sum), 80, std1.sum/mean1.sum) 
+    # Calculate the relationship between sum of mean and sum of standard deviation
+    # If the mean is zero, use standard deviation of 80% as pseudovalue for std1.size
+  
   ### Condition 2
   mean2.sum <- sum(mean(subset2$V3))
   std2.sum <- sum(subset2$V4)
-  std2.size <-
-    (std2.sum / mean2.sum)  # Calculate the relationship between sum of mean and sum of standard deviation
+  std2.size <- ifelse(is.na(std2.sum/mean2.sum), 80, std2.sum/mean2.sum) 
+    # Calculate the relationship between sum of mean and sum of standard deviation
+    # If the mean is zero, use standard deviation of 80% as pseudovalue for std1.size
   
   ##### Average both cond1 and cond2 std/mean relationships:
   ### Linear penalty function
