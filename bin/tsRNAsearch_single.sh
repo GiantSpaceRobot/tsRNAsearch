@@ -359,27 +359,9 @@ printf -v fastqcFile "%s_trimmed_fastqc.html" "$singleFile_basename"
 if [ $skip = "no" ]; then
 	# Make directories for pre-processing
 	mkdir -p $outDir/pre-processing
-	#mkdir -p $outDir/trim_galore_output
-	#mkdir -p $outDir/FastQC
 	# Run fastp
 	string_padder "Pre-processing reads using Fastp"
 	bin/fastp -w $fastp_threads -i $singleFile -o $outDir/pre-processing/$trimmedFile -j $outDir/pre-processing/fastp.output.json -h $outDir/pre-processing/fastp.output.html
-	# Run Trim_Galore
-	#string_padder "Trimming reads using Trim Galore"
-	#if [ ! -f $outDir/trim_galore_output/$trimmedFile ]; then
-	#	bin/trim_galore --stringency 10 --length 15 -o $outDir/trim_galore_output/ $singleFile
-	#	string_padder "Trimming complete. Moving on to FastQC analysis"
-	#else
-	#	string_padder "Found trimmed file. Skipping this step"
-	#fi
-
-	## Run FastQC on newly trimmed file
-	#if [ ! -f $outDir/FastQC/$fastqcFile ]; then
-	#	fastqc -o $outDir/FastQC/ -f fastq $outDir/trim_galore_output/$trimmedFile
-	#	string_padder "Finished running FastQC. Moving onto alignment to tRNA database"
-	#else
-	#	string_padder "Found FastQC file. Skipping this step."
-	#fi
 	readsForAlignment=$outDir/pre-processing/$trimmedFile
 else
 	# Skip pre-processing by using the provided RNA-seq file
@@ -426,10 +408,6 @@ else
 	cp $outDir/trim_galore_output/$trimmedFile $outDir/tRNA-alignment/$trimmedFile
 fi
 string_padder "Running mRNA/ncRNA alignment step..."
-
-### HISAT2 ###
-#hisat2 -p $threads -x $genomeDB $outDir/tRNA-alignment/$trimmedFile -S $outDir/mRNA-ncRNA-alignment/aligned.sam --summary-file $outDir/mRNA-ncRNA-alignment/align_summary.txt --un $outDir/mRNA-ncRNA-alignment/unmapped.fastq
-### HISAT2 ###
 
 ### STAR ###
 #STAR --runThreadN $threads --genomeDir $genomeDB --readFilesIn $outDir/tRNA-alignment/$myFile --outFileNamePrefix $outDir/mRNA-ncRNA-alignment/ --outReadsUnmapped Fastx --outFilterMatchNmin 15 #$STARparam
