@@ -27,7 +27,7 @@ Options:
 	-o	Output directory for the results and log files
 	-A	Plot all features? yes/no {default: yes}
 	-t	Number of threads to use {default is to calculate the number of processors and use 75%}
-	-S	Skip pre-processing of data (i.e. skip FastQC and Trim_Galore) {default: no}
+	-S	Skip pre-processing of data (i.e. skip Fastp) {default: no}
 
 	Input file format should be FASTQ (.fq/.fastq) or gzipped FASTQ (.gz)
 	" 1>&2; }
@@ -432,9 +432,9 @@ string_padder "Running mRNA/ncRNA alignment step..."
 ### HISAT2 ###
 
 ### STAR ###
-STAR --runThreadN $threads --genomeDir $genomeDB --readFilesIn $outDir/tRNA-alignment/$myFile --outFileNamePrefix $outDir/mRNA-ncRNA-alignment/ --outReadsUnmapped Fastx --outFilterMatchNmin 15 #$STARparam
-mv $outDir/mRNA-ncRNA-alignment/Aligned.out.sam $outDir/mRNA-ncRNA-alignment/aligned.sam
-mv $outDir/mRNA-ncRNA-alignment/Unmapped.out.mate1 $outDir/mRNA-ncRNA-alignment/unmapped.fastq
+#STAR --runThreadN $threads --genomeDir $genomeDB --readFilesIn $outDir/tRNA-alignment/$myFile --outFileNamePrefix $outDir/mRNA-ncRNA-alignment/ --outReadsUnmapped Fastx --outFilterMatchNmin 15 #$STARparam
+#mv $outDir/mRNA-ncRNA-alignment/Aligned.out.sam $outDir/mRNA-ncRNA-alignment/aligned.sam
+#mv $outDir/mRNA-ncRNA-alignment/Unmapped.out.mate1 $outDir/mRNA-ncRNA-alignment/unmapped.fastq
 ### STAR ###
 
 if [ -f $outDir/mRNA-ncRNA-alignment/aligned.sam ]; then  #If hisat2 successfully mapped reads, convert the unmapped to FASTQ
@@ -455,18 +455,18 @@ fi
 string_padder "Alignment steps complete. Moving on to read-counting using FCount-count"
 
 # Count for alignment step 3
-if [ ! -f $outDir/mRNA-ncRNA-alignment/accepted_hits.bam ]; then
-	echo "
-No alignment file found for mRNA/ncRNA alignment. Using blank count file instead
-"
-	cp $empty_mRNAs $outDir/FCount-count-output/mRNA-ncRNA-alignment.count &
-else
-	echo "
-Counting mRNA/ncRNA alignment reads
-"
-	bin/featureCounts -T $featureCount_threads -a $genomeGTF -o $outDir/FCount-count-output/mRNA-ncRNA-alignment.fcount $outDir/mRNA-ncRNA-alignment/accepted_hits.bam
-	grep -v featureCounts $outDir/FCount-count-output/mRNA-ncRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/FCount-count-output/mRNA-ncRNA-alignment.count
-fi
+#if [ ! -f $outDir/mRNA-ncRNA-alignment/accepted_hits.bam ]; then
+#	echo "
+#No alignment file found for mRNA/ncRNA alignment. Using blank count file instead
+#"
+#	cp $empty_mRNAs $outDir/FCount-count-output/mRNA-ncRNA-alignment.count &
+#else
+#	echo "
+#Counting mRNA/ncRNA alignment reads
+#"
+#	bin/featureCounts -T $featureCount_threads -a $genomeGTF -o $outDir/FCount-count-output/mRNA-ncRNA-alignment.fcount $outDir/mRNA-ncRNA-alignment/accepted_hits.bam
+#	grep -v featureCounts $outDir/FCount-count-output/mRNA-ncRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/FCount-count-output/mRNA-ncRNA-alignment.count
+#fi
 	
 # Count for alignment step 2
 if [ ! -f $outDir/snomiRNA-alignment/accepted_hits.bam ]; then
@@ -511,7 +511,6 @@ wait
 string_padder "Generate depth files and plot features"
 bam_to_plots $outDir/tRNA-alignment $singleFile_basename tsRNA &
 bam_to_plots $outDir/snomiRNA-alignment $singleFile_basename snomiRNA &
-#bam_to_plots $outDir/mRNA-ncRNA-alignment $singleFile_basename mRNA &  
 
 ### Process multi-mapping tRNAs
 python bin/Leftovers-to-Bedgraph.py $outDir/tRNA-alignment/tRNAs-almost-mapped.txt additional-files/tRNA-lengths_hg19.txt $outDir/tRNA-alignment/tRNAs-almost-mapped.depth
@@ -524,7 +523,7 @@ string_padder "Get RPM-normalised read-counts"
 python bin/FCount-to-RPM.py $outDir/FCount-count-output/$singleFile_basename.all-features.count $mapped $outDir/FCount-to-RPM/$singleFile_basename.all-features &
 python bin/FCount-to-RPM.py $outDir/FCount-count-output/tRNA-alignment.count $mapped $outDir/FCount-to-RPM/tRNA-alignment & 
 python bin/FCount-to-RPM.py $outDir/FCount-count-output/snomiRNA-alignment.count $mapped $outDir/FCount-to-RPM/snomiRNA-alignment &
-python bin/FCount-to-RPM.py $outDir/FCount-count-output/mRNA-ncRNA-alignment.count $mapped $outDir/FCount-to-RPM/mRNA-ncRNA-alignment &
+#python bin/FCount-to-RPM.py $outDir/FCount-count-output/mRNA-ncRNA-alignment.count $mapped $outDir/FCount-to-RPM/mRNA-ncRNA-alignment &
 wait
 sleep 5  # Make sure everything is finished running
 

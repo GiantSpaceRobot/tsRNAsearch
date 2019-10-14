@@ -13,3 +13,4 @@ Update now:
 * Create volcano plot with DESeq2 script
 * Create one .txt or .csv with all summary results.
 	e.g. ValCAC	DESeq2 Log2FC	DESeq2 padj	Distribution score	Cleavage score	Overall fisher p-val
+* Remove genomes from setup
