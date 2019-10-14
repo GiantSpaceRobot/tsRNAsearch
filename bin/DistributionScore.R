@@ -171,7 +171,7 @@ for(subset in df) {
               row.names = FALSE,
               col.names = FALSE)
   if (mean.coverage > 10) {  # Mean coverage must be over 10
-    if (distribution.score > 500) { # Distribution score must be over 500 to be plotted
+    if (distribution.score > 1000) { # Distribution score must be over 1000 to be plotted
       results.df[nrow(results.df) + 1,] = list(feature,
                                                mean.coverage,
                                                stddev.of.percent,
