@@ -166,13 +166,13 @@ function SAMcollapse () {
 		echo "Less than 1,000 unique reads in SAM file. Splitting SAM into $chunks files..."
 	fi
 	### Define variables
-	cores=$threads
-	if (( $cores > $chunks )); then
-		# make sure cores is not set higher than no. of files after split
-		cores=$chunks
+	threads_available_for_chunks=$threads
+	if (( $threads_available_for_chunks > $chunks )); then
+		# make sure the number of threads is not set higher than no. of files (chunks) after split
+		threads_available_for_chunks=$chunks
 	fi
 	echo "
-		Threads: $cores
+		Threads: $threads_available_for_chunks
 		# Split SAM files: $chunks"
 	fileLen=$(< "$1" wc -l)
 	division1=$((fileLen/chunks))
@@ -207,7 +207,7 @@ function SAMcollapse () {
 		base=$(basename $i)
 		grep -v -f  $outDir/tempDir/${myFile}_HeadsAndTails_uniq.txt $i > $outDir/tempDir/edit_${base}
 	done
-	### Run SAMcollapse.py. This loop will only run $cores processes at once
+	### Run SAMcollapse.py. This loop will only run $threads_available_for_chunks processes at once
 	COUNTER=1
 	chunksDiv=$((chunks/10))
 	echo "Collapsing every chunk of SAM..."
@@ -222,7 +222,7 @@ function SAMcollapse () {
 		#echo Running job number ${COUNTER} of ${chunks}... 
 		COUNTER=$[$COUNTER + 1]
 		#counter2=$COUNTER
-		while (( $numjobs == $cores )); do
+		while (( $numjobs == $threads_available_for_chunks )); do
 			#if (( $COUNTER == $counter2)); then
 			#	echo There are $numjobs jobs now. Waiting for jobs to finish...
 			#fi
@@ -320,9 +320,16 @@ fi
 
 ### Do not exceed 32 threads for featureCounts as per user manual guidelines
 if (( $threads > 32 )); then 
-	featureCountthreads=32
+	featureCount_threads=32
 else
-	featureCountthreads=$threads
+	featureCount_threads=$threads
+fi
+
+### Do not exceed 16 threads for fastp as per user manual guidelines
+if (( $threads > 16 )); then 
+	fastp_threads=16
+else
+	fastp_threads=$threads
 fi
 
 # Check if the output directory exists. If not, create it
@@ -356,7 +363,7 @@ if [ $skip = "no" ]; then
 	#mkdir -p $outDir/FastQC
 	# Run fastp
 	string_padder "Pre-processing reads using Fastp"
-	bin/fastp -w $threads -i $singleFile -o $outDir/pre-processing/$trimmedFile -j $outDir/pre-processing/fastp.output.json -h $outDir/pre-processing/fastp.output.html
+	bin/fastp -w $fastp_threads -i $singleFile -o $outDir/pre-processing/$trimmedFile -j $outDir/pre-processing/fastp.output.json -h $outDir/pre-processing/fastp.output.html
 	# Run Trim_Galore
 	#string_padder "Trimming reads using Trim Galore"
 	#if [ ! -f $outDir/trim_galore_output/$trimmedFile ]; then
@@ -457,7 +464,7 @@ else
 	echo "
 Counting mRNA/ncRNA alignment reads
 "
-	bin/featureCounts -T $featureCountthreads -a $genomeGTF -o $outDir/FCount-count-output/mRNA-ncRNA-alignment.fcount $outDir/mRNA-ncRNA-alignment/accepted_hits.bam
+	bin/featureCounts -T $featureCount_threads -a $genomeGTF -o $outDir/FCount-count-output/mRNA-ncRNA-alignment.fcount $outDir/mRNA-ncRNA-alignment/accepted_hits.bam
 	grep -v featureCounts $outDir/FCount-count-output/mRNA-ncRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/FCount-count-output/mRNA-ncRNA-alignment.count
 fi
 	
@@ -471,7 +478,7 @@ else
 	echo "
 Counting sno/miRNA alignment reads
 "
-	bin/featureCounts -T $featureCountthreads -a $snomiRNAGTF -o $outDir/FCount-count-output/snomiRNA-alignment.fcount $outDir/snomiRNA-alignment/accepted_hits.bam
+	bin/featureCounts -T $featureCount_threads -a $snomiRNAGTF -o $outDir/FCount-count-output/snomiRNA-alignment.fcount $outDir/snomiRNA-alignment/accepted_hits.bam
 	grep -v featureCounts $outDir/FCount-count-output/snomiRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/FCount-count-output/snomiRNA-alignment.count
 fi
 
@@ -485,7 +492,7 @@ else
 	echo "
 Counting tRNA alignment reads
 "
-	bin/featureCounts -T $featureCountthreads -a $tRNAGTF -o $outDir/FCount-count-output/tRNA-alignment.fcount $outDir/tRNA-alignment/accepted_hits.bam
+	bin/featureCounts -T $featureCount_threads -a $tRNAGTF -o $outDir/FCount-count-output/tRNA-alignment.fcount $outDir/tRNA-alignment/accepted_hits.bam
 	grep -v featureCounts $outDir/FCount-count-output/tRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/FCount-count-output/tRNA-alignment.count
 fi
 
