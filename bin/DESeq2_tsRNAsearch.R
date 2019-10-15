@@ -8,7 +8,7 @@
 ##
 ## Date Created: 2-1-2019 (2nd of Jan 2019)
 ##
-## Version: 11
+## Version: 13
 ##
 ## Copyright: MIT license
 ##
@@ -109,14 +109,6 @@ if (file.exists(paste0(myPath, "DE_Results/DESeq2"))){
   dir.create(paste0(myPath, "DE_Results/DESeq2"))
 }
 
-### If replicate number = 1, stop analysis
-#if(ReplicateNumber1==1) {
-#  file.create(paste0(myPath, "DE_Results/DESeq2/upregulated.csv"))
-#  file.create(paste0(myPath, "DE_Results/DESeq2/downregulated.csv"))
-#  quit.message <- "Replicate number is 1, cannot continue DESeq2 analysis"
-#  stop(quit.message)
-#}
-
 #-----------------#
 #    Libraries    #
 #-----------------#
@@ -124,10 +116,14 @@ if (file.exists(paste0(myPath, "DE_Results/DESeq2"))){
 # If libraries not installed, install them
 #source("http://bioconductor.org/biocLite.R")
 #biocLite(DESeq2)
+#library(devtools)
+#devtools::install_github('kevinblighe/EnhancedVolcano')
 
 library(DESeq2)
 library(gplots)
 library(ggplot2)
+library(EnhancedVolcano)
+
 
 #------------------------------#
 #    Define DESeq2 function    #
@@ -189,7 +185,7 @@ DESeq2.function <- function(path.to.files){
                 row.names=TRUE, 
                 quote = FALSE)
       
-  } else {
+  } else {   # If replicate numbers are greater than 1:
   ### Create a density plot
   pdf(paste0(path.to.files, "DE_Results/", ResultsFile, "_Density-Plot.pdf"),
       width=12,height=12)
@@ -309,6 +305,7 @@ DESeq2.function <- function(path.to.files){
   ### Covnert ncRNA names into gene names
   print("Converting gene IDs to gene names")
   GTF <- read.table(args[3], sep = "\t") # Read in GTF for name conversion
+  #GTF <- read.table("/home/paul/Documents/Pipelines/tsRNAsearch/DBs/mouse_snomiRNAs_relative_cdhit.gtf", sep = "\t")
   GTF$NewNames <- paste0(GTF$V1, " (", as.character(sub(".*gene_name *(.*?) *; gene_source.*", "\\1", GTF$V9)), ")") # Add new column with gene names
   GTF <- GTF[!duplicated(GTF$NewNames),]  # Remove duplicates based on NewNames
   results.DF <- as.data.frame(res)
@@ -413,6 +410,21 @@ DESeq2.function <- function(path.to.files){
          y = "-Log10 of padj", 
          subtitle = "Max number of features shown is 20"))
   dev.off()
+  
+  ### checkpoint
+  print("Checkpoint 12")
+  
+  ### Create Volcano plot using EnhancedVolcano fro Kevin Blighe
+  volcano <- EnhancedVolcano(res,
+                  lab = rownames(res),
+                  x = 'log2FoldChange',
+                  y = 'pvalue',
+                  xlim = c(-5, 8),  
+                  pCutoff = 0.1, 
+                  FCcutoff = 0.5)
+  volcano + 
+    labs(subtitle = "") # Remove automatic subtitle
+  ggsave(filename = paste0(path.to.files, args[2], "_VolcanoPlot.pdf"), plot = volcano) # Save plot using ggplot2 ggsave (error occured using normal R PDF save)
   } # Checkpoint 3 - single replicate analysis if statement
   } # End of function
 
@@ -422,3 +434,4 @@ DESeq2.function <- function(path.to.files){
 #--------------------#
 
 DESeq2.function(myPath)
+
