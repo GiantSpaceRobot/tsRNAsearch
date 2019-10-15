@@ -21,11 +21,6 @@ input1 <- read.table(args[1])
 input2 <- read.table(args[1])
 GTF <- read.table(args[3], sep = "\t")
 
-#input1 <- read.table("/home/paul/Documents/Pipelines/tsRNAsearch/Runs/Test_again/Data/Intermediate-files/Everything.cond1.depth")
-#input2 <- read.table("/home/paul/Documents/Pipelines/tsRNAsearch/Runs/Test_again/Data/Intermediate-files/Everything.cond2.depth")
-#GTF <- read.table("/home/paul/Documents/Pipelines/tsRNAsearch/DBs/hg19-snomiRNA_cdhit.gtf", sep = "\t")
-
-
 col.num1 <- ncol(input1) # Get no. of columns 
 input1 <- input1[,-((col.num1 - 1):col.num1), drop = FALSE] #Drop last 2 columns (mean and std)
 
@@ -50,8 +45,6 @@ results.df <- setNames(data.frame(matrix(ncol = 3, nrow = 0)), c("feature",
 ### Loop over feature subsets
 for(subset1 in df1) {
   feature <- as.character(subset1[1,1])
-  #feature <- "GlyGCC"
-  #subset1 <- df1[[feature]]
   subset2 <- df2[[feature]]
   if(startsWith(feature, "ENS")) {
     featureRows <- GTF[grep(feature, GTF$V9),]
@@ -103,16 +96,6 @@ results.df.copy <- results.df
 results.df <- results.df.copy
 results.df$Fishers.method.pvalue <- as.numeric(levels(results.df$Fishers.method.pvalue))[results.df$Fishers.method.pvalue]
 results.df$negLog10.pval <- as.numeric(format(-log10(results.df$Fishers.method.pvalue), scientific = F, digits = 2))
-#results.df$feature.length.2 <- as.numeric(levels(results.df$feature.length))[results.df$feature.length]
-#results.df <- results.df[order(results.df$feature.length),]
-#results.df$negLog10.pval <- format(-log10(results.df$Fishers.method.pvalue.2), scientific = F, digits = 2)
-#super.df <- results.df[results.df$negLog10.pval > 0,]
-#plot(super.df$feature.length.2, super.df$negLog10.pval, 
-#     log = "x", 
-#     main = "ncRNA feature length vs -log10 of Fisher method p-value", 
-#     xlab = "Feature Length", ylab = "-log10 p-value (Fisher method)")
-#cor(super.df$feature.length.2, as.numeric(super.df$negLog10.pval))
-
 results.df <- results.df[order(-results.df$negLog10.pval),]
 newdata <- results.df[complete.cases(results.df), ]  # Remove NAs
 newdata <- newdata[!grepl("Inf", newdata$negLog10.pval),] # Remove Inf
