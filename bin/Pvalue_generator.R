@@ -8,6 +8,7 @@
 
 library(ggplot2)
 library(metap)
+require(methods)
 
 args = commandArgs(trailingOnly=TRUE)
 
@@ -18,7 +19,7 @@ if (length(args)==0) {
 
 #### Input files
 input1 <- read.table(args[1])
-input2 <- read.table(args[1])
+input2 <- read.table(args[2])
 GTF <- read.table(args[3], sep = "\t")
 
 col.num1 <- ncol(input1) # Get no. of columns 
@@ -26,10 +27,6 @@ input1 <- input1[,-((col.num1 - 1):col.num1), drop = FALSE] #Drop last 2 columns
 
 col.num2 <- ncol(input2) # Get no. of columns 
 input2 <- input2[,-((col.num2 - 1):col.num2), drop = FALSE] #Drop last 2 columns (mean and std)
-### Read in GTF for name conversions
-#if (length(args)==3) {
-#  GTF <- read.table(args[3], sep = "\t")
-#} 
 
 df1 <- split( input1 , f = input1$V1 )  # Split dataframe based on column 1 elements
 df2 <- split( input2 , f = input2$V1 )  # Split dataframe based on column 1 elements
@@ -38,9 +35,6 @@ df2 <- split( input2 , f = input2$V1 )  # Split dataframe based on column 1 elem
 results.df <- setNames(data.frame(matrix(ncol = 3, nrow = 0)), c("feature",
                                                                  "p.value",
                                                                  "p.adj"))  
-
-#test1 <- input1
-#test1 <- cbind(subset1, subset2)
 
 ### Loop over feature subsets
 for(subset1 in df1) {
@@ -54,35 +48,33 @@ for(subset1 in df1) {
   } 
   rpm1 <- subset(subset1, select = c(rep(FALSE,2), TRUE))
   rpm2 <- subset(subset2, select = c(rep(FALSE,2), TRUE))
-  raw.p.vals <- setNames(data.frame(matrix(ncol = 2, nrow = 0)), c("feature", # Create empty dataframe
-                                                                   "p.value"))  
-  for(rowNum in rownames(subset1)) { # For each specific row in the feature subset DFs
-    condition1 <- as.numeric(rpm1[rowNum,])
-    condition2 <- as.numeric(rpm2[rowNum,])
-    ### If the number of replicates is greater than 1 for each condition, run t-test, otherwise assign p-value as 1.
-    if (length(condition1) == 1 || length(condition2) == 1) { # 
+  reps.condition1 <- length(as.numeric(rpm1[1,])) #Get no. of replicates in condition 1
+  reps.condition2 <- length(as.numeric(rpm2[1,])) #Get no. of replicates in condition 2
+  ### If the number of replicates is greater than 1 for each condition, run t-test, otherwise assign p-value as 1.
+  if (reps.condition1 == 1 | reps.condition2 == 1) { # 
       # Use an alternative to t-test? Or calculate nothing? Go with nothing for now 
-      new.p.val <- 1
-      raw.p.vals[nrow(raw.p.vals) + 1,] = list(feature, new.p.val)
+      raw.p.vals <- data.frame("p.value" = matrix(1, nrow = nrow(rpm1), ncol = 1))  # Create column of pval = 1
+      raw.p.vals$feature <- feature
     } else {
       ### t.test
-      t.test.results <- t.test(condition1, condition2, paired = F) # Run a t-test comparing conditions. These data points are not paired
-      new.p.val <- ifelse(is.nan(t.test.results$p.value), 1, t.test.results$p.value) # If the p-value couldn't be calculated, use 1 as p-val
-      raw.p.vals[nrow(raw.p.vals) + 1,] = list(feature, new.p.val)
-      ### Wilcoxon test
-      #wilcoxon.results <- wilcox.test(condition1, condition2, paired = T)
-      #raw.p.vals[nrow(raw.p.vals) + 1,] = list(feature, wilcoxon.results$p.value)
-      #new.p.val <- ifelse(is.nan(wilcoxon.results$p.value), 1, wilcoxon.results$p.value) # If the p-value couldn't be calculated, use 1 as p-val
-      #raw.p.vals[nrow(raw.p.vals) + 1,] = list(feature, new.p.val)
+      mapply.df <- data.frame(t(data.frame(mapply(t.test, data.frame(t(rpm1)), data.frame(t(rpm2)), paired = F, SIMPLIFY = T))))
+        ### Compare condition1 and 2 dataframes using t.test with mapply. Convert to DF. Transpose. Convert to DF.  
+      pvals <- mapply.df$p.value
+      raw.p.vals <- data.frame("p.value" = matrix(unlist(pvals), nrow=length(pvals), byrow=T))
+      write.table(x = raw.p.vals, file = "/home/paul/Documents/Pipelines/tsRNAsearch/v2_pvals.txt", append = T, sep = "\t")
+      raw.p.vals$feature <- feature
     }
+  numeric.raw.p.vals <- raw.p.vals[complete.cases(raw.p.vals), ] # Remove all Na/NaN/Inf
+  if (nrow(numeric.raw.p.vals) == 0) {  # If entire DF was Na/NaN/Inf, use Fisher's method p.value of 1
+    new.row <- cbind(feature, "Fishers.method.pvalue" = 1)
+  } else {  # If t.test p.values are available, calculate Fisher's method
+    #all.test <- allmetap(numeric.raw.p.vals$p.value, method = "all") # Test all p-value combination methods from metap package
+    #edgington.method1 <- sump(numeric.raw.p.vals$p.value) # Combine p-values using Edgington's method
+    fishers.method1 <- sumlog(numeric.raw.p.vals$p.value) # Combine p-values using Fisher's method
+    new.row <- cbind(feature, "Fishers.method.pvalue" = fishers.method1$p) # Create new row for results dataframe
   }
-  numeric.raw.p.vals <- raw.p.vals[complete.cases(raw.p.vals), ]
-  #all.test <- allmetap(numeric.raw.p.vals$p.value, method = "all")
-  fishers.method1 <- sumlog(numeric.raw.p.vals$p.value) # Combine p-values using Fisher's method
-  #edgington.method1 <- sump(numeric.raw.p.vals$p.value) # Combine p-values using Edgington's method
-  new.row <- cbind(feature, "Fishers.method.pvalue" = fishers.method1$p) # Create new row for results dataframe
   results.df <- rbind(results.df, new.row) # Add new to existing dataframe
-  
+
 }
 
 write.table(results.df, 
@@ -92,8 +84,9 @@ write.table(results.df,
             row.names = FALSE,
             col.names = TRUE)
 
-results.df.copy <- results.df
-results.df <- results.df.copy
+#results.df.copy <- results.df
+#results.df <- results.df.copy
+
 results.df$Fishers.method.pvalue <- as.numeric(levels(results.df$Fishers.method.pvalue))[results.df$Fishers.method.pvalue]
 results.df$negLog10.pval <- as.numeric(format(-log10(results.df$Fishers.method.pvalue), scientific = F, digits = 2))
 results.df <- results.df[order(-results.df$negLog10.pval),]
@@ -122,13 +115,13 @@ ggplot(data = newdata.subset, mapping = aes(feature, `negLog10.pval`, color=`neg
   geom_point() +
   #scale_y_continuous(trans='log2') +
   #scale_y_continuous(breaks=seq(0, my.max, by = round(my.max/5))) +
-  ggtitle("Combined p-values using Fishers method") +
+  ggtitle("Combined p-values using Fisher's method") +
   theme(axis.text.x = element_text(angle = 0, vjust = 0, hjust=0, size=8)) +
   scale_color_gradient(low="blue", high="red") +
   coord_flip() +
-  labs(colour = "Fishers\nmethod\np-value", 
+  labs(colour = "", 
        x = "ncRNA", 
-       y = "Fishers method p-value", 
+       y = "Fisher's method (-Log10 p-val)", 
        subtitle = "Max number of features shown = 20")
 dev.off()
 
