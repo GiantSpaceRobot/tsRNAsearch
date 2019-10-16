@@ -153,7 +153,7 @@ newdata <- newdata[order(-newdata$cleavage.score),]
 newdata$feature <- factor(newdata$feature, levels = newdata$feature[order(newdata$cleavage.score)])
 
 write.table(results.df, 
-            file = paste0(args[3], ".all-features.txt"),
+            file = paste0(args[3], ".cleavage-score.all-features.txt"),
             quote = FALSE, 
             sep = "\t",
             row.names = FALSE,
