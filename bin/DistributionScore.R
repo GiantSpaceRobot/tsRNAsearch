@@ -158,7 +158,7 @@ for(subset in df) {
                   distribution.score,
                   condition)
   write.table(my.list, 
-              file = paste0(args[2], ".all-features.txt"),
+              file = paste0(args[2], ".distribution-score.all-features.txt"),
               append = TRUE, 
               quote = FALSE, 
               sep = "\t",

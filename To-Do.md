@@ -12,3 +12,4 @@ Update now:
 	e.g. ValCAC	DESeq2 Log2FC	DESeq2 padj	Distribution score	Cleavage score	Overall fisher p-val
 * Remove genomes from setup
 * Change Log2FC and padj cut-offs for DESeq2? If so, also edit Volcano plot cut-offs
+* Create a PDF summarising results. Incorporate simple text file as table
