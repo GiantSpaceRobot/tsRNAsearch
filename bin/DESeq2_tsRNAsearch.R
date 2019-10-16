@@ -8,7 +8,7 @@
 ##
 ## Date Created: 2-1-2019 (2nd of Jan 2019)
 ##
-## Version: 13
+## Version: 14
 ##
 ## Copyright: MIT license
 ##
@@ -120,13 +120,19 @@ if (file.exists(paste0(myPath, "DE_Results/DESeq2"))){
 #devtools::install_github('kevinblighe/EnhancedVolcano')
 
 library(DESeq2)
+library(dplyr)
 library(gplots)
 library(ggplot2)
 library(EnhancedVolcano)
+library(reshape2)
 
+### Reading in gene mapping file
+GTF <- read.table(args[3], sep = "\t") # Read in GTF for name conversion
+GTF$NewNames <- paste0(GTF$V1, " (", as.character(sub(".*gene_name *(.*?) *; gene_source.*", "\\1", GTF$V9)), ")") # Add new column with gene names
+GTF <- GTF[!duplicated(GTF$NewNames),]  # Remove duplicates based on NewNames
 
 #------------------------------#
-#    Define DESeq2 function    #
+#       Define functions       #
 #------------------------------#
 
 ### Function to carry out DESeq2 analysis on provided files
@@ -302,12 +308,8 @@ DESeq2.function <- function(path.to.files){
   ### checkpoint
   print("Checkpoint 8")
 
-  ### Covnert ncRNA names into gene names
+  ### Convert ncRNA names into gene names
   print("Converting gene IDs to gene names")
-  GTF <- read.table(args[3], sep = "\t") # Read in GTF for name conversion
-  #GTF <- read.table("/home/paul/Documents/Pipelines/tsRNAsearch/DBs/mouse_snomiRNAs_relative_cdhit.gtf", sep = "\t")
-  GTF$NewNames <- paste0(GTF$V1, " (", as.character(sub(".*gene_name *(.*?) *; gene_source.*", "\\1", GTF$V9)), ")") # Add new column with gene names
-  GTF <- GTF[!duplicated(GTF$NewNames),]  # Remove duplicates based on NewNames
   results.DF <- as.data.frame(res)
   results.DF$features <- rownames(results.DF) # Add column with gene IDs
   # Map names in GTF to gene ENSG IDs
@@ -425,9 +427,71 @@ DESeq2.function <- function(path.to.files){
   volcano + 
     labs(subtitle = "") # Remove automatic subtitle
   ggsave(filename = paste0(path.to.files, args[2], "_VolcanoPlot.pdf"), plot = volcano) # Save plot using ggplot2 ggsave (error occured using normal R PDF save)
+  
+  ### checkpoint
+  print("Checkpoint 13")
+  
+  ### Create barplots for all features identified
+  my.levels <- as.character(levels.default(groups)) # Get names of levels
+  level1 <- my.levels[1] # get name of level 1
+  level2 <- my.levels[2] # get name of level 2
+  level1.df <- select(data.frame(cDataAll), contains(level1)) # Subset main count matrix using condition 1
+  level2.df <- select(data.frame(cDataAll), contains(level2)) # Subset main count matrix using condition 2
+  level1.df$total.raw <- rowSums(level1.df) #Calculate total read count for condition 1
+  level2.df$total.raw <- rowSums(level2.df) #Calculate total read count for condition 1
+  level1.df$total.rpm <- level1.df$total.raw/(sum(level1.df$total.raw)/1000000) # Calculate reads per million
+  level2.df$total.rpm <- level2.df$total.raw/(sum(level2.df$total.raw)/1000000) # Calculate reads per million
+  rpm.plot <- create.barplot(level1.df$total.rpm, level2.df$total.rpm, "RPM", rownames(level1.df), level1, level2) # Call function
+  raw.plot <- create.barplot(level1.df$total.raw, level2.df$total.raw, "Raw Read Count", rownames(level1.df), level1, level2) # Call function
+  ggsave(filename = paste0(path.to.files, args[2], "_BarPlot_RPM-normalised.pdf"), plot = rpm.plot) # Save plot using ggplot2 ggsave 
+  ggsave(filename = paste0(path.to.files, args[2], "_BarPlot_Raw-readcounts.pdf"), plot = raw.plot) # Save plot using ggplot2 ggsave 
+  
   } # Checkpoint 3 - single replicate analysis if statement
-  } # End of function
+} # End of function
 
+### Function to create barplots
+create.barplot <- function(column.cond1, column.cond2, normalisation.method, my.rownames, name1, name2) {
+  subtitle <- ifelse(normalisation.method == "RPM", "Normalised to reads per million (RPM)", "Raw read counts displayed") # Create subtitle for plot
+  barplot.df <- data.frame(cbind(column.cond1, column.cond2))
+  names(barplot.df)[1] <- "cond1" #level1 # Add correct colname to DF
+  names(barplot.df)[2] <- "cond2" #level2 # Add correct colname to DF
+  rownames(barplot.df) <- my.rownames
+  barplot.df$features <- my.rownames
+  GTF$ncRNA.type <- gsub(".*\\gene_biotype ", "", GTF$V9) # Make a new column with ncRNA type (remove everything before gene_biotype in col 9)
+  GTF$ncRNA.type <- gsub(";.*", "", GTF$ncRNA.type) # Replace the semicolon at the end of string
+  for(row in seq_len(nrow(GTF))) {  
+    barplot.df$mapped[ substr( barplot.df$features, 0, nchar(as.character(GTF$V1[row]))) == GTF$V1[row] ] <- GTF$ncRNA.type[row]
+  }
+  barplot.df$mapped <- as.character(barplot.df$mapped) # Convert from factor to character
+  ### Assign ncRNA labels for as many ncRNA types as possible
+  for(row in seq_len( nrow(barplot.df))) {
+    if(is.na(barplot.df$mapped[row])) {   # If no ncRNA type has been assigned yet:
+      if(startsWith(barplot.df$features[row], "ENS") == TRUE) {  # If the feature has an 'ENS' ID, it is a gene or unknown feature. Ignore for now.
+        barplot.df$mapped[row] <- "other (gene/ncRNA)"
+      } else { # If the feature has no ncRNA type yet and does not start with 'ENS', it is a tRNA
+        barplot.df$mapped[row] <- "tRNA"
+      }
+    } 
+  } ### End of ncRNA label assignment loop
+  #barplot.df <- barplot.df[complete.cases(barplot.df),]
+  barplot.df$mapped <- as.factor(barplot.df$mapped)
+  grouped.df <- barplot.df %>% group_by(mapped) %>% summarise(cond1.sum = sum(cond1), cond2.sum = sum(cond2))
+  names(grouped.df)[1] <- "Feature" # Add correct colname to DF
+  names(grouped.df)[2] <- name1 # Add correct colname to DF
+  names(grouped.df)[3] <- name2 # Add correct colname to DF
+  melted.df <- melt(data = grouped.df, id.vars = "Feature")
+  
+  results.barplot <- ggplot(data = melted.df, mapping = aes(variable, value, fill = Feature)) +
+    geom_bar(stat = "identity", width = 0.5) + 
+    ggtitle(paste0("Features identified in ", name1, " vs ", name2)) +
+    scale_fill_brewer(palette = "RdYlBu") +
+    #theme_minimal() +
+    #coord_flip() +
+    labs(x = "", 
+         y = normalisation.method, 
+         subtitle = subtitle)
+  return(results.barplot)
+}
 
 #--------------------#
 #    Run analysis    #
