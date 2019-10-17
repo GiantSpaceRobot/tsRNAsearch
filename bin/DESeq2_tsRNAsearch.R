@@ -119,12 +119,12 @@ if (file.exists(paste0(myPath, "DE_Results/DESeq2"))){
 #library(devtools)
 #devtools::install_github('kevinblighe/EnhancedVolcano')
 
-library(DESeq2)
-library(dplyr)
-library(gplots)
-library(ggplot2)
-library(EnhancedVolcano)
-library(reshape2)
+suppressMessages(library(DESeq2))
+suppressMessages(library(dplyr))
+suppressMessages(library(gplots))
+suppressMessages(library(ggplot2))
+suppressMessages(library(EnhancedVolcano))
+suppressMessages(library(reshape2))
 
 ### Reading in gene mapping file
 GTF <- read.table(args[3], sep = "\t") # Read in GTF for name conversion
@@ -264,13 +264,16 @@ DESeq2.function <- function(path.to.files){
   #(mycols <- brewer.pal(length(file.names), "Paired")[1:length(unique(file.names))])
   pdf(paste0(path.to.files, "DE_Results/", ResultsFile, "_Distance-Matrix.pdf"),
       width=12,height=12)
+  #par(mar=c(7,4,4,2)+0.1) 
+  par(mar=c(6,4,4,5)+0.1) 
   heatmap.2(as.matrix(sampleDists), key=F, trace="none",
             col=colorpanel(100, "black", "white"),
             #ColSideColors=mycols[file.names], 
             #RowSideColors=mycols[file.names],
             cexRow = 0.8,
             cexCol = 0.8,
-            margin=c(10, 13), 
+            #margin=c(10, 13), 
+            margins=c(12,10),
             srtCol=45,
             main="Sample Distance Matrix")
   garbage <- dev.off()
@@ -294,7 +297,7 @@ DESeq2.function <- function(path.to.files){
        bty="L")
   box()
   legend("right", 
-         inset=c(-0.7,0), 
+         inset=c(-0.1,0), 
          pch=20,
          col=colLabel,
          cex = 0.7, 
@@ -385,11 +388,12 @@ DESeq2.function <- function(path.to.files){
                                               color=tsRNAs.df.subset$negLog10)) +
     geom_point() +
     ggtitle("DE Analysis - tsRNAs") +
-    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size=7)) +
+    theme(axis.text.x = element_text(size=7)) + # Move x axis label down
     scale_color_gradient(low="blue", high="red") +
     #scale_y_continuous(trans='log2') +   # Change y axis to log scale
     scale_x_discrete(limits = (levels(tsRNAs.df.subset$negLog10))) +
-    labs(colour = "-Log10 of padj", 
+    coord_flip() +
+    labs(colour = "-Log10\n   of \n  padj", 
          x = "ncRNA/gene", 
          y = "-Log10 of padj", 
          subtitle = "Max number of features shown is 20"))

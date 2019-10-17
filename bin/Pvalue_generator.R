@@ -8,7 +8,6 @@
 
 library(ggplot2)
 library(metap)
-require(methods)
 
 args = commandArgs(trailingOnly=TRUE)
 
@@ -24,7 +23,6 @@ GTF <- read.table(args[3], sep = "\t")
 
 col.num1 <- ncol(input1) # Get no. of columns 
 input1 <- input1[,-((col.num1 - 1):col.num1), drop = FALSE] #Drop last 2 columns (mean and std)
-
 col.num2 <- ncol(input2) # Get no. of columns 
 input2 <- input2[,-((col.num2 - 1):col.num2), drop = FALSE] #Drop last 2 columns (mean and std)
 
@@ -51,17 +49,15 @@ for(subset1 in df1) {
   reps.condition1 <- length(as.numeric(rpm1[1,])) #Get no. of replicates in condition 1
   reps.condition2 <- length(as.numeric(rpm2[1,])) #Get no. of replicates in condition 2
   ### If the number of replicates is greater than 1 for each condition, run t-test, otherwise assign p-value as 1.
-  if (reps.condition1 == 1 | reps.condition2 == 1) { # 
+  if (reps.condition1 == 1 | reps.condition2 == 1) { 
       # Use an alternative to t-test? Or calculate nothing? Go with nothing for now 
       raw.p.vals <- data.frame("p.value" = matrix(1, nrow = nrow(rpm1), ncol = 1))  # Create column of pval = 1
       raw.p.vals$feature <- feature
-    } else {
-      ### t.test
+    } else {  ### t.test
+      ### Compare condition1 and 2 dataframes using t.test with mapply. Convert to DF. Transpose. Convert to DF.  
       mapply.df <- data.frame(t(data.frame(mapply(t.test, data.frame(t(rpm1)), data.frame(t(rpm2)), paired = F, SIMPLIFY = T))))
-        ### Compare condition1 and 2 dataframes using t.test with mapply. Convert to DF. Transpose. Convert to DF.  
       pvals <- mapply.df$p.value
       raw.p.vals <- data.frame("p.value" = matrix(unlist(pvals), nrow=length(pvals), byrow=T))
-      write.table(x = raw.p.vals, file = "/home/paul/Documents/Pipelines/tsRNAsearch/v2_pvals.txt", append = T, sep = "\t")
       raw.p.vals$feature <- feature
     }
   numeric.raw.p.vals <- raw.p.vals[complete.cases(raw.p.vals), ] # Remove all Na/NaN/Inf
@@ -83,9 +79,6 @@ write.table(results.df,
             sep = "\t",
             row.names = FALSE,
             col.names = TRUE)
-
-#results.df.copy <- results.df
-#results.df <- results.df.copy
 
 results.df$Fishers.method.pvalue <- as.numeric(levels(results.df$Fishers.method.pvalue))[results.df$Fishers.method.pvalue]
 results.df$negLog10.pval <- as.numeric(format(-log10(results.df$Fishers.method.pvalue), scientific = F, digits = 2))
