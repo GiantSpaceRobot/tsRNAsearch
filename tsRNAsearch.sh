@@ -158,15 +158,23 @@ cat $myPath/$outDir/Data/Intermediate-files/$2_file*.tsRNA.depth.readspermil | s
 cat $myPath/$outDir/Data/Intermediate-files/$2_file*.snomiRNA.depth.readspermil | sort -k1,1 -k2,2n > $myPath/$outDir/Data/Intermediate-files/snomiRNA.$2_concatenated.depthVert &
 wait
 ### Leftovers:
-python bin/MeanCalculator.py $myPath/$outDir/Data/Intermediate-files/Combined.$2.tRNAs-almost-mapped_RPM.depth $myPath/$outDir/Data/Intermediate-files/DataTransformations/Combined.$2.tRNAs-almost-mapped_RPM.depth.mean 
+python bin/MeanCalculator.py \
+	$myPath/$outDir/Data/Intermediate-files/Combined.$2.tRNAs-almost-mapped_RPM.depth \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/Combined.$2.tRNAs-almost-mapped_RPM.depth.mean 
 sort -k1,1 -k2,2n $myPath/$outDir/Data/Intermediate-files/DataTransformations/Combined.$2.tRNAs-almost-mapped_RPM.depth.mean > $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_Combined.$2.tRNAs-almost-mapped_RPM.depth.mean 
 ### Calculate mean
-python bin/MeanCalculator.py $myPath/$outDir/Data/Intermediate-files/tsRNA.$2_concatenated.depth $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.$2_concatenated.depth.mean &
-python bin/MeanCalculator.py $myPath/$outDir/Data/Intermediate-files/snomiRNA.$2_concatenated.depth $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.$2_concatenated.depth.mean &
+python bin/MeanCalculator.py \
+	$myPath/$outDir/Data/Intermediate-files/tsRNA.$2_concatenated.depth \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.$2_concatenated.depth.mean &
+python bin/MeanCalculator.py \
+	$myPath/$outDir/Data/Intermediate-files/snomiRNA.$2_concatenated.depth \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.$2_concatenated.depth.mean &
 wait
 ### Sort output
-sort -k1,1 -k2,2n $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.$2_concatenated.depth.mean > $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_tsRNA.$2_concatenated.depth.mean &
-sort -k1,1 -k2,2n $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.$2_concatenated.depth.mean > $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_snomiRNA.$2_concatenated.depth.mean &
+sort -k1,1 -k2,2n \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.$2_concatenated.depth.mean > $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_tsRNA.$2_concatenated.depth.mean &
+sort -k1,1 -k2,2n \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.$2_concatenated.depth.mean > $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_snomiRNA.$2_concatenated.depth.mean &
 wait
 }
 
@@ -258,17 +266,32 @@ DataTransformations $myPath/$outDir/Data/Intermediate-files/predicted_exp_layout
 string_padder "Generating Distribution Scores..."
 
 ### Concatenate horizontally to make a dataframe
-paste $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_tsRNA.${condition1}_concatenated.depth.mean $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_tsRNA.${condition2}_concatenated.depth.mean > $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.mean
+paste \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_tsRNA.${condition1}_concatenated.depth.mean \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_tsRNA.${condition2}_concatenated.depth.mean \
+	> $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.mean
 ### Calculate StdDev
-python bin/Mean-to-RelativeDifference.py $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.mean $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.stddev
+python bin/Mean-to-RelativeDifference.py \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.mean \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.stddev
 ### Calculate distribution scores
-Rscript bin/DistributionScore.R $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.stddev $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2 $snomiRNAGTF
+Rscript bin/DistributionScore.R \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.stddev \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2 \
+	$snomiRNAGTF
 ### Sort the output but not the header
-cat $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.high-distribution-score.txt | awk 'NR<2{print $0;next}{print $0| "sort -k5,5nr"}' > $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.high-distribution-score.sorted.txt
-cat $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.distribution-score.all-features.txt | awk 'NR<2{print $0;next}{print $0| "sort -k11,11nr"}' > $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.distribution-score.all-features.sorted.txt
+cat $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.high-distribution-score.txt | awk 'NR<2{print $0;next}{print $0| "sort -k5,5nr"}' \
+	> $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.high-distribution-score.sorted.txt
+cat $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.distribution-score.all-features.txt | awk 'NR<2{print $0;next}{print $0| "sort -k11,11nr"}' \
+	> $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.distribution-score.all-features.sorted.txt
 ### Repeat these steps for reads mapped to tRNA groups (multi-mapping reads)
-paste $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_Combined.${condition1}.tRNAs-almost-mapped_RPM.depth.mean $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_Combined.${condition2}.tRNAs-almost-mapped_RPM.depth.mean > $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.multi-mappers.cond1-vs-cond2.mean
-python bin/Mean-to-RelativeDifference.py $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.multi-mappers.cond1-vs-cond2.mean $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.multi-mappers.cond1-vs-cond2.stddev
+paste \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_Combined.${condition1}.tRNAs-almost-mapped_RPM.depth.mean \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_Combined.${condition2}.tRNAs-almost-mapped_RPM.depth.mean \
+	> $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.multi-mappers.cond1-vs-cond2.mean
+python bin/Mean-to-RelativeDifference.py \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.multi-mappers.cond1-vs-cond2.mean \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.multi-mappers.cond1-vs-cond2.stddev
 #Rscript bin/DistributionScore.R $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.multi-mappers.cond1-vs-cond2.stddev $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.multi-mappers.cond1-vs-cond2 $snomiRNAGTF
 #cat $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.multi-mappers.cond1-vs-cond2.high-distribution-score.txt | awk 'NR<2{print $0;next}{print $0| "sort -k5,5nr"}' > $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.multi-mappers.cond1-vs-cond2.high-distribution-score.sorted.txt
 #cat $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.multi-mappers.cond1-vs-cond2.all-features.txt | awk 'NR<2{print $0;next}{print $0| "sort -k11,11nr"}' > $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.multi-mappers.cond1-vs-cond2.all-features.sorted.txt
@@ -276,71 +299,154 @@ python bin/Mean-to-RelativeDifference.py $myPath/$outDir/Data/Intermediate-files
 
 ### snomiRNAs
 ### Concatenate horizontally to make a dataframe
-paste $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_snomiRNA.${condition1}_concatenated.depth.mean $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_snomiRNA.${condition2}_concatenated.depth.mean > $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2.mean
+paste \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_snomiRNA.${condition1}_concatenated.depth.mean \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_snomiRNA.${condition2}_concatenated.depth.mean \
+	> $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2.mean
 ### Calculate StdDev
-python bin/Mean-to-RelativeDifference.py $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2.mean $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2.stddev
+python bin/Mean-to-RelativeDifference.py \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2.mean \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2.stddev
 ### Calculate distribution score
-Rscript bin/DistributionScore.R $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2.stddev $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2 $snomiRNAGTF
+Rscript bin/DistributionScore.R \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2.stddev \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2 \
+	$snomiRNAGTF
 ### Sort the output but not the header
-cat $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2.high-distribution-score.txt | awk 'NR<2{print $0;next}{print $0| "sort -k6,6nr"}' > $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2.high-distribution-score.sorted.txt
+cat $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2.high-distribution-score.txt | awk 'NR<2{print $0;next}{print $0| "sort -k6,6nr"}' \
+	> $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2.high-distribution-score.sorted.txt
 ### Copy txt files illustrating features with very different distributions to the Results directory:
-cp $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.high-distribution-score.sorted.txt $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-tsRNAs.txt 
-cp $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2.high-distribution-score.sorted.txt $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-snomiRNAs.txt
+cp $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.high-distribution-score.sorted.txt \
+	$myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-tsRNAs.txt 
+cp $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2.high-distribution-score.sorted.txt \
+	$myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-snomiRNAs.txt
 
 
 string_padder "Generating Cleavage Scores..." 
 ### Test whether certain features are cleaved in one condition vs the other
-Rscript bin/CleavageScore.R $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_tsRNA.${condition1}_concatenated.depth.mean $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_tsRNA.${condition2}_concatenated.depth.mean $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_tsRNAs $snomiRNAGTF &
-Rscript bin/CleavageScore.R $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_snomiRNA.${condition1}_concatenated.depth.mean $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_snomiRNA.${condition2}_concatenated.depth.mean $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_snomiRNAs $snomiRNAGTF &
+Rscript bin/CleavageScore.R \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_tsRNA.${condition1}_concatenated.depth.mean \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_tsRNA.${condition2}_concatenated.depth.mean \
+	$myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_tsRNAs \
+	$snomiRNAGTF &
+Rscript bin/CleavageScore.R \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_snomiRNA.${condition1}_concatenated.depth.mean \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_snomiRNA.${condition2}_concatenated.depth.mean \
+	$myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_snomiRNAs \
+	$snomiRNAGTF &
 wait
 ### Sort the output but not the header
-cat $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_tsRNAs.high-cleavage-score.txt | awk 'NR<2{print $0;next}{print $0| "sort -k11,11nr"}' > $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_High-cleavage-tsRNAs.txt
-cat $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_snomiRNAs.high-cleavage-score.txt | awk 'NR<2{print $0;next}{print $0| "sort -k11,11nr"}' > $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_High-cleavage-snomiRNAs.txt
+cat $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_tsRNAs.high-cleavage-score.txt | awk 'NR<2{print $0;next}{print $0| "sort -k11,11nr"}' \
+	> $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_High-cleavage-tsRNAs.txt
+cat $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_snomiRNAs.high-cleavage-score.txt | awk 'NR<2{print $0;next}{print $0| "sort -k11,11nr"}' \
+	> $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_High-cleavage-snomiRNAs.txt
 ### Copy sorted high distribution files to the Data dir
-cp $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_High-cleavage-snomiRNAs.txt $myPath/$outDir/Data/
-cp $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_High-cleavage-tsRNAs.txt $myPath/$outDir/Data/
+cp $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_High-cleavage-snomiRNAs.txt \
+	$myPath/$outDir/Data/
+cp $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_High-cleavage-tsRNAs.txt \
+	$myPath/$outDir/Data/
+string_padder "Moving PDFs to Plots dir..."
 ### Copy PDF files to Plots dir
-cp $myPath/$outDir/Data/Intermediate-files/*.pdf $myPath/$outDir/Plots/
-cp $myPath/$outDir/Data/Intermediate-files/DataTransformations/*.pdf $myPath/$outDir/Plots/
-mv $myPath/$outDir/Plots/tsRNA.cond1-vs-cond2.high-distribution-score.pdf $myPath/$outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-distribution-score.pdf
-mv $myPath/$outDir/Plots/snomiRNA.cond1-vs-cond2.high-distribution-score.pdf $myPath/$outDir/Plots/${condition1}_vs_${condition2}_snomiRNAs.high-distribution-score.pdf
+cp $myPath/$outDir/Data/Intermediate-files/*.pdf \
+	$myPath/$outDir/Plots/
+cp $myPath/$outDir/Data/Intermediate-files/DataTransformations/*.pdf \
+	$myPath/$outDir/Plots/
+mv $myPath/$outDir/Plots/tsRNA.cond1-vs-cond2.high-distribution-score.pdf \
+	$myPath/$outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-distribution-score.pdf
+mv $myPath/$outDir/Plots/snomiRNA.cond1-vs-cond2.high-distribution-score.pdf \
+	$myPath/$outDir/Plots/${condition1}_vs_${condition2}_snomiRNAs.high-distribution-score.pdf
 
+string_padder "Calculating stats for feature depth coverage..."
 ### Get mean and standard deviation
 # tRNAs
-Rscript bin/Mean_Stdev.R $myPath/$outDir/Data/Intermediate-files/tsRNA.${condition1}_concatenated.depth $myPath/$outDir/Data/Intermediate-files/cond1_concatenated_mean_stdev.tsRNA.depth &
-Rscript bin/Mean_Stdev.R $myPath/$outDir/Data/Intermediate-files/tsRNA.${condition2}_concatenated.depth $myPath/$outDir/Data/Intermediate-files/cond2_concatenated_mean_stdev.tsRNA.depth &
+Rscript bin/Mean_Stdev.R \
+	$myPath/$outDir/Data/Intermediate-files/tsRNA.${condition1}_concatenated.depth \
+	$myPath/$outDir/Data/Intermediate-files/cond1_concatenated_mean_stdev.tsRNA.depth &
+Rscript bin/Mean_Stdev.R \
+	$myPath/$outDir/Data/Intermediate-files/tsRNA.${condition2}_concatenated.depth \
+	$myPath/$outDir/Data/Intermediate-files/cond2_concatenated_mean_stdev.tsRNA.depth &
 # Multi-mapping tRNA reads:
 #Rscript bin/Mean_Stdev.R $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_Combined.${condition1}.tRNAs-almost-mapped_RPM.depth.mean $myPath/$outDir/Data/Intermediate-files/Multimappers.cond1_concatenated_mean_stdev.tsRNA.depth &
 #Rscript bin/Mean_Stdev.R $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_Combined.${condition2}.tRNAs-almost-mapped_RPM.depth.mean $myPath/$outDir/Data/Intermediate-files/Multimappers.cond2_concatenated_mean_stdev.tsRNA.depth &
-Rscript bin/Mean_Stdev.R $myPath/$outDir/Data/Intermediate-files/Combined.${condition1}.tRNAs-almost-mapped_RPM.depth $myPath/$outDir/Data/Intermediate-files/Multimappers.cond1_concatenated_mean_stdev.tsRNA.depth &
-Rscript bin/Mean_Stdev.R $myPath/$outDir/Data/Intermediate-files/Combined.${condition2}.tRNAs-almost-mapped_RPM.depth $myPath/$outDir/Data/Intermediate-files/Multimappers.cond2_concatenated_mean_stdev.tsRNA.depth &
+Rscript bin/Mean_Stdev.R \
+	$myPath/$outDir/Data/Intermediate-files/Combined.${condition1}.tRNAs-almost-mapped_RPM.depth \
+	$myPath/$outDir/Data/Intermediate-files/Multimappers.cond1_concatenated_mean_stdev.tsRNA.depth &
+Rscript bin/Mean_Stdev.R \
+	$myPath/$outDir/Data/Intermediate-files/Combined.${condition2}.tRNAs-almost-mapped_RPM.depth \
+	$myPath/$outDir/Data/Intermediate-files/Multimappers.cond2_concatenated_mean_stdev.tsRNA.depth &
 # snomiRNAs
-Rscript bin/Mean_Stdev.R $myPath/$outDir/Data/Intermediate-files/snomiRNA.${condition1}_concatenated.depth $myPath/$outDir/Data/Intermediate-files/cond1_concatenated_mean_stdev.snomiRNA.depth &
-Rscript bin/Mean_Stdev.R $myPath/$outDir/Data/Intermediate-files/snomiRNA.${condition2}_concatenated.depth $myPath/$outDir/Data/Intermediate-files/cond2_concatenated_mean_stdev.snomiRNA.depth &
+Rscript bin/Mean_Stdev.R \
+	$myPath/$outDir/Data/Intermediate-files/snomiRNA.${condition1}_concatenated.depth \
+	$myPath/$outDir/Data/Intermediate-files/cond1_concatenated_mean_stdev.snomiRNA.depth &
+Rscript bin/Mean_Stdev.R \
+	$myPath/$outDir/Data/Intermediate-files/snomiRNA.${condition2}_concatenated.depth \
+	$myPath/$outDir/Data/Intermediate-files/cond2_concatenated_mean_stdev.snomiRNA.depth &
 wait
 
 ### Get names of differentially expressed features
-cat $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/*regulated.csv | grep -v ^, | awk -F ',' '{print $1}' | awk -F ' ' '{print $1}' > $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt
-cp $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_short-names.txt
+cat $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/*regulated.csv | grep -v ^, | awk -F ',' '{print $1}' | awk -F ' ' '{print $1}' \
+	> $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt
+cp $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt \
+	$myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_short-names.txt
 #grep ENS $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt > $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_ENSGs.txt
 #grep -v ENS $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt | awk -F '-' '{print $2}' | sort | uniq > $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_tRNAs.txt 
 #cat $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_ENSGs.txt $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_tRNAs.txt > $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_short-names.txt
 ### Get names of features with highest distribution scores 
-cat $myPath/$outDir/Data/Intermediate-files/DataTransformations/*high-distribution-score.sorted.txt | grep -v ^feat | awk '{print $1}' > $myPath/$outDir/Data/Intermediate-files/DataTransformations/High-distribution-scores_feature-names.txt 
+cat $myPath/$outDir/Data/Intermediate-files/DataTransformations/*high-distribution-score.sorted.txt | grep -v ^feat | awk '{print $1}' \
+	> $myPath/$outDir/Data/Intermediate-files/DataTransformations/High-distribution-scores_feature-names.txt 
 ### Get names of features that are likely cleaved
-cat $myPath/$outDir/Data/Intermediate-files/*high-cleavage-score.txt | grep -v ^feat | awk '{print $1}' > $myPath/$outDir/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt
+cat $myPath/$outDir/Data/Intermediate-files/*high-cleavage-score.txt | grep -v ^feat | awk '{print $1}' \
+	> $myPath/$outDir/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt
 
 ### Get unique set of differentially expressed features, features with high distribution scores, and high cleavage scores...
 echo -e "#This is a collection of features that are differentially expressed, have large differences in distribution between the conditions, or are likely cleaved. Ordered alphanumerically." > $myPath/$outDir/Data/All-Features-Identified.txt
-cat $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_short-names.txt $myPath/$outDir/Data/Intermediate-files/DataTransformations/High-distribution-scores_feature-names.txt $myPath/$outDir/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt | sort | uniq >> $myPath/$outDir/Data/All-Features-Identified.txt
+cat \
+	$myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_short-names.txt \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/High-distribution-scores_feature-names.txt \
+	$myPath/$outDir/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt | sort | uniq \
+	>> $myPath/$outDir/Data/All-Features-Identified.txt
 
-### Create files with all RPM values for every coordindate of every feature in each condition
+### Create files with all RPM values for every coordinate of every feature in each condition
+string_padder "Concatenating files for p-value generatation..."
 # Condition 1
-cat $myPath/$outDir/Data/Intermediate-files/Multimappers.cond1_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/cond1_concatenated_mean_stdev.tsRNA.depth | sort -k1,1 -k2,2n > $myPath/$outDir/Data/Intermediate-files/Everything.cond1_concatenated_mean_stdev.tsRNA.depth
-cat $myPath/$outDir/Data/Intermediate-files/Everything.cond1_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/cond1_concatenated_mean_stdev.snomiRNA.depth > $myPath/$outDir/Data/Intermediate-files/Everything.cond1.depth 
+cat \
+	$myPath/$outDir/Data/Intermediate-files/Multimappers.cond1_concatenated_mean_stdev.tsRNA.depth \
+	$myPath/$outDir/Data/Intermediate-files/cond1_concatenated_mean_stdev.tsRNA.depth \
+	| sort -k1,1 -k2,2n \
+	> $myPath/$outDir/Data/Intermediate-files/Everything.cond1_concatenated_mean_stdev.tsRNA.depth
+cat \
+	$myPath/$outDir/Data/Intermediate-files/Everything.cond1_concatenated_mean_stdev.tsRNA.depth \
+	$myPath/$outDir/Data/Intermediate-files/cond1_concatenated_mean_stdev.snomiRNA.depth \
+	> $myPath/$outDir/Data/Intermediate-files/Everything.cond1.depth 
 # Condition 2
-cat $myPath/$outDir/Data/Intermediate-files/Multimappers.cond2_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/cond2_concatenated_mean_stdev.tsRNA.depth | sort -k1,1 -k2,2n > $myPath/$outDir/Data/Intermediate-files/Everything.cond2_concatenated_mean_stdev.tsRNA.depth
-cat $myPath/$outDir/Data/Intermediate-files/Everything.cond2_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/cond2_concatenated_mean_stdev.snomiRNA.depth > $myPath/$outDir/Data/Intermediate-files/Everything.cond2.depth 
+cat \
+	$myPath/$outDir/Data/Intermediate-files/Multimappers.cond2_concatenated_mean_stdev.tsRNA.depth \
+	$myPath/$outDir/Data/Intermediate-files/cond2_concatenated_mean_stdev.tsRNA.depth \
+	| sort -k1,1 -k2,2n \
+	> $myPath/$outDir/Data/Intermediate-files/Everything.cond2_concatenated_mean_stdev.tsRNA.depth
+cat \
+	$myPath/$outDir/Data/Intermediate-files/Everything.cond2_concatenated_mean_stdev.tsRNA.depth \
+	$myPath/$outDir/Data/Intermediate-files/cond2_concatenated_mean_stdev.snomiRNA.depth \
+	> $myPath/$outDir/Data/Intermediate-files/Everything.cond2.depth 
+
+### Generating p-values for all features based on coombination of t.tests using Fisher's method
+string_padder "Generating p-values for all features based on coombination of t.tests using Fisher's method..."
+Rscript bin/Pvalue_generator.R \
+	$myPath/$outDir/Data/Intermediate-files/Everything.cond1.depth \
+	$myPath/$outDir/Data/Intermediate-files/Everything.cond2.depth \
+	$snomiRNAGTF \
+	$myPath/$outDir/Data/Intermediate-files/Feature-P-values
+
+### Generating summary text files
+string_padder "Generating summary text files..."
+Rscript bin/ResultsTable.R \
+	$myPath/$outDir/Data/Intermediate-files/Feature-P-values_FisherMethod_pvalues.tsv \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.distribution-score.all-features.txt \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2.distribution-score.all-features.txt \
+	$myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_tsRNAs.cleavage-score.all-features.txt \
+	$myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_snomiRNAs.cleavage-score.all-features.txt \
+	$myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output.csv \
+	$myPath/$outDir/Data/${condition1}_vs_${condition2} &
 
 string_padder "Plotting any features identified in the analysis..."
 ### If there are differentially expressed/high distribution features, plot these:
@@ -348,32 +454,108 @@ if [[ $(wc -l < $myPath/$outDir/Data/All-Features-Identified.txt) -ge 2 ]]; then
 	### Plot DEGs arg1 and 2 are inputs, arg 3 is list of differentially expressed genes, arg 4 is output pdf, 
 	### arg 5 is mean coverage cutoff (plot features with coverage above this), arg 5 is GTF file for snomiRNAs (arg 5 is not given to tsRNA data)
 	### Plot all tsRNAs	
-	Rscript bin/Bedgraph_plotter_DEGs.R $myPath/$outDir/Data/Intermediate-files/Everything.cond1_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/Everything.cond2_concatenated_mean_stdev.tsRNA.depth additional-files/Mus-musculus_All-ncRNAs.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_All-tsRNAs.pdf 0 "yes" & # The Mus-musculus file does nothing here, other than act as a non-empty file which prompts the script to plot all features because plot everything = "yes" is provided
+	Rscript bin/Bedgraph_plotter_DEGs.R \
+		$myPath/$outDir/Data/Intermediate-files/Everything.cond1_concatenated_mean_stdev.tsRNA.depth \
+		$myPath/$outDir/Data/Intermediate-files/Everything.cond2_concatenated_mean_stdev.tsRNA.depth \
+		additional-files/Mus-musculus_All-ncRNAs.txt \
+		$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_All-tsRNAs.pdf \
+		0 \
+		"yes" & # The Mus-musculus file does nothing here, other than act as a non-empty file which prompts the script to plot all features because plot everything = "yes" is provided
 	if [[ $Plots == "yes" ]]; then
 		### Plot all sno/miRNAs if -A 'yes' parameter selected
-		Rscript bin/Bedgraph_plotter_DEGs.R $myPath/$outDir/Data/Intermediate-files/cond1_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Data/Intermediate-files/cond2_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_All-snomiRNAs.pdf 0 $Plots $snomiRNAGTF &
+		Rscript bin/Bedgraph_plotter_DEGs.R \
+			$myPath/$outDir/Data/Intermediate-files/cond1_concatenated_mean_stdev.snomiRNA.depth \
+			$myPath/$outDir/Data/Intermediate-files/cond2_concatenated_mean_stdev.snomiRNA.depth \
+			$myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt \
+			$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_All-snomiRNAs.pdf \
+			0 \
+			$Plots \
+			$snomiRNAGTF &
 	fi
 	# tsRNAs
-	Rscript bin/Bedgraph_plotter_DEGs.R $myPath/$outDir/Data/Intermediate-files/cond1_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/cond2_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-tsRNAs.pdf 0 "no" &
-	Rscript bin/Bedgraph_plotter_DEGs.R $myPath/$outDir/Data/Intermediate-files/cond1_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/cond2_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/DataTransformations/High-distribution-scores_feature-names.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-tsRNAs.pdf 0 "no" &
-	Rscript bin/Bedgraph_plotter_DEGs.R $myPath/$outDir/Data/Intermediate-files/cond1_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/cond2_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-tsRNAs.pdf 0 "no" &
+	Rscript bin/Bedgraph_plotter_DEGs.R \
+		$myPath/$outDir/Data/Intermediate-files/cond1_concatenated_mean_stdev.tsRNA.depth \
+		$myPath/$outDir/Data/Intermediate-files/cond2_concatenated_mean_stdev.tsRNA.depth \
+		$myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt \
+		$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-tsRNAs.pdf \
+		0 \
+		"no" &
+	Rscript bin/Bedgraph_plotter_DEGs.R \
+		$myPath/$outDir/Data/Intermediate-files/cond1_concatenated_mean_stdev.tsRNA.depth \
+		$myPath/$outDir/Data/Intermediate-files/cond2_concatenated_mean_stdev.tsRNA.depth \
+		$myPath/$outDir/Data/Intermediate-files/DataTransformations/High-distribution-scores_feature-names.txt \
+		$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-tsRNAs.pdf \
+		0 \
+		"no" &
+	Rscript bin/Bedgraph_plotter_DEGs.R \
+		$myPath/$outDir/Data/Intermediate-files/cond1_concatenated_mean_stdev.tsRNA.depth \
+		$myPath/$outDir/Data/Intermediate-files/cond2_concatenated_mean_stdev.tsRNA.depth \
+		$myPath/$outDir/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt \
+		$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-tsRNAs.pdf \
+		0 \
+		"no" &
 	# multi-mapping tsRNAs
-	cat $myPath/$outDir/Data/Intermediate-files/Multimappers.cond1_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/Multimappers.cond2_concatenated_mean_stdev.tsRNA.depth > $myPath/$outDir/Data/Intermediate-files/Multimappers.all.depth
-	sort -k1,1 -k2,2n $myPath/$outDir/Data/Intermediate-files/Multimappers.cond1_concatenated_mean_stdev.tsRNA.depth > $myPath/$outDir/Data/Intermediate-files/sorted_Multimappers.cond1_concatenated_mean_stdev.tsRNA.depth
-	sort -k1,1 -k2,2n $myPath/$outDir/Data/Intermediate-files/Multimappers.cond2_concatenated_mean_stdev.tsRNA.depth > $myPath/$outDir/Data/Intermediate-files/sorted_Multimappers.cond2_concatenated_mean_stdev.tsRNA.depth
-	python bin/Multimappers.py $myPath/$outDir/Data/Intermediate-files/Multimappers.all.depth $myPath/$outDir/Data/Intermediate-files/Multimappers.ReadsMapped.txt $myPath/$outDir/Data/Intermediate-files/Multimappers.All.txt
-	Rscript bin/Bedgraph_plotter_DEGs.R $myPath/$outDir/Data/Intermediate-files/sorted_Multimappers.cond1_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/sorted_Multimappers.cond2_concatenated_mean_stdev.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/Multimappers.ReadsMapped.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_tsRNAs-with-multimapping-reads.pdf 0 "no" 
+	cat \
+		$myPath/$outDir/Data/Intermediate-files/Multimappers.cond1_concatenated_mean_stdev.tsRNA.depth \
+		$myPath/$outDir/Data/Intermediate-files/Multimappers.cond2_concatenated_mean_stdev.tsRNA.depth \
+		> $myPath/$outDir/Data/Intermediate-files/Multimappers.all.depth
+	sort -k1,1 -k2,2n \
+		$myPath/$outDir/Data/Intermediate-files/Multimappers.cond1_concatenated_mean_stdev.tsRNA.depth \
+		> $myPath/$outDir/Data/Intermediate-files/sorted_Multimappers.cond1_concatenated_mean_stdev.tsRNA.depth
+	sort -k1,1 -k2,2n \
+		$myPath/$outDir/Data/Intermediate-files/Multimappers.cond2_concatenated_mean_stdev.tsRNA.depth \
+		> $myPath/$outDir/Data/Intermediate-files/sorted_Multimappers.cond2_concatenated_mean_stdev.tsRNA.depth
+	python bin/Multimappers.py \
+		$myPath/$outDir/Data/Intermediate-files/Multimappers.all.depth \
+		$myPath/$outDir/Data/Intermediate-files/Multimappers.ReadsMapped.txt \
+		$myPath/$outDir/Data/Intermediate-files/Multimappers.All.txt
+	Rscript bin/Bedgraph_plotter_DEGs.R \
+		$myPath/$outDir/Data/Intermediate-files/sorted_Multimappers.cond1_concatenated_mean_stdev.tsRNA.depth \
+		$myPath/$outDir/Data/Intermediate-files/sorted_Multimappers.cond2_concatenated_mean_stdev.tsRNA.depth \
+		$myPath/$outDir/Data/Intermediate-files/Multimappers.ReadsMapped.txt \
+		$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_tsRNAs-with-multimapping-reads.pdf \
+		0 \
+		"no" 
 	# snomiRNAs
-	Rscript bin/Bedgraph_plotter_DEGs.R $myPath/$outDir/Data/Intermediate-files/cond1_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Data/Intermediate-files/cond2_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-snomiRNAs.pdf 0 "no" $snomiRNAGTF &
-	Rscript bin/Bedgraph_plotter_DEGs.R $myPath/$outDir/Data/Intermediate-files/cond1_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Data/Intermediate-files/cond2_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Data/Intermediate-files/DataTransformations/High-distribution-scores_feature-names.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-snomiRNAs.pdf 0 "no" $snomiRNAGTF &
-	Rscript bin/Bedgraph_plotter_DEGs.R $myPath/$outDir/Data/Intermediate-files/cond1_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Data/Intermediate-files/cond2_concatenated_mean_stdev.snomiRNA.depth $myPath/$outDir/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-snomiRNAs.pdf 0 "no" $snomiRNAGTF &
+	Rscript bin/Bedgraph_plotter_DEGs.R \
+		$myPath/$outDir/Data/Intermediate-files/cond1_concatenated_mean_stdev.snomiRNA.depth \
+		$myPath/$outDir/Data/Intermediate-files/cond2_concatenated_mean_stdev.snomiRNA.depth \
+		$myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt \
+		$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-snomiRNAs.pdf \
+		0 \
+		"no" \
+		$snomiRNAGTF &
+	Rscript bin/Bedgraph_plotter_DEGs.R \
+		$myPath/$outDir/Data/Intermediate-files/cond1_concatenated_mean_stdev.snomiRNA.depth \
+		$myPath/$outDir/Data/Intermediate-files/cond2_concatenated_mean_stdev.snomiRNA.depth \
+		$myPath/$outDir/Data/Intermediate-files/DataTransformations/High-distribution-scores_feature-names.txt \
+		$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-snomiRNAs.pdf \
+		0 \
+		"no" \
+		$snomiRNAGTF &
+	Rscript bin/Bedgraph_plotter_DEGs.R \
+		$myPath/$outDir/Data/Intermediate-files/cond1_concatenated_mean_stdev.snomiRNA.depth \
+		$myPath/$outDir/Data/Intermediate-files/cond2_concatenated_mean_stdev.snomiRNA.depth \
+		$myPath/$outDir/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt \
+		$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-snomiRNAs.pdf \
+		0 \
+		"no" \
+		$snomiRNAGTF &
 	# Venn diagram
-	Rscript bin/VennDiagram.R $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_short-names.txt $myPath/$outDir/Data/Intermediate-files/DataTransformations/High-distribution-scores_feature-names.txt $myPath/$outDir/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt $myPath/$outDir/Plots/${condition1}_vs_${condition2}
+	Rscript bin/VennDiagram.R \
+		$myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_short-names.txt \
+		$myPath/$outDir/Data/Intermediate-files/DataTransformations/High-distribution-scores_feature-names.txt \
+		$myPath/$outDir/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt \
+		$myPath/$outDir/Plots/${condition1}_vs_${condition2}
 	mkdir $myPath/$outDir/Data/Intermediate-files/VennDiagramGeneration
-	cp $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_short-names.txt $myPath/$outDir/Data/Intermediate-files/VennDiagramGeneration/DESeq2-Features.txt
-	cp  $myPath/$outDir/Data/Intermediate-files/DataTransformations/High-distribution-scores_feature-names.txt $myPath/$outDir/Data/Intermediate-files/VennDiagramGeneration/Distribution-Algorithm-Features.txt
-	cp $myPath/$outDir/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt $myPath/$outDir/Data/Intermediate-files/VennDiagramGeneration/Cleavage-Algorithm-Features.txt
-	mv $myPath/$outDir/Plots/${condition1}_vs_${condition2}.intersect*txt $myPath/$outDir/Data/
+	cp $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_short-names.txt \
+		$myPath/$outDir/Data/Intermediate-files/VennDiagramGeneration/DESeq2-Features.txt
+	cp  $myPath/$outDir/Data/Intermediate-files/DataTransformations/High-distribution-scores_feature-names.txt \
+		$myPath/$outDir/Data/Intermediate-files/VennDiagramGeneration/Distribution-Algorithm-Features.txt
+	cp $myPath/$outDir/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt \
+		$myPath/$outDir/Data/Intermediate-files/VennDiagramGeneration/Cleavage-Algorithm-Features.txt
+	mv $myPath/$outDir/Plots/${condition1}_vs_${condition2}.intersect*txt \
+		$myPath/$outDir/Data/
 else
 	string_padder "No features of interest were identified."
 	echo "There were no features identified. No plots were generated." >> $myPath/$outDir/Plots/${condition1}_vs_${condition2}_no-features-to-plot.txt
@@ -382,13 +564,17 @@ wait
 
 string_padder "Gathering RPM count files and cleaning up..."
 ### Gather RPM count files
-awk '{print $1}' $outDir/Data/Intermediate-files/$filename.collapsed.all-features.RPM.Count > $outDir/Data/Intermediate-files/FCount.rpm.all-features # Get feature names
+awk '{print $1}' $outDir/Data/Intermediate-files/$filename.collapsed.all-features.RPM.Count \
+	> $outDir/Data/Intermediate-files/FCount.rpm.all-features # Get feature names
 for f in $outDir/Data/Intermediate-files/*RPM.Count; do
-	awk '{print $2}' $f | paste $outDir/Data/Intermediate-files/FCount.rpm.all-features - >> $outDir/Data/Intermediate-files/FCount.rpm.temp
-	mv $outDir/Data/Intermediate-files/FCount.rpm.temp $outDir/Data/Intermediate-files/FCount.rpm.all-features
+	awk '{print $2}' $f | paste $outDir/Data/Intermediate-files/FCount.rpm.all-features - \
+		>> $outDir/Data/Intermediate-files/FCount.rpm.temp
+	mv $outDir/Data/Intermediate-files/FCount.rpm.temp \
+		$outDir/Data/Intermediate-files/FCount.rpm.all-features
 done
 #rm $outDir/Data/*rpm.count
-mv $outDir/Data/Intermediate-files/FCount.rpm.all-features $outDir/Data/FCount.all-features.RPM.Count
+mv $outDir/Data/Intermediate-files/FCount.rpm.all-features \
+	$outDir/Data/FCount.all-features.RPM.Count
 #mv $myPath/$outDir/Data/*count $myPath/$outDir/Data/Intermediate-files/
 
 ### Renaming files from pseudo-names to condition names
@@ -396,90 +582,169 @@ find . -iname "*cond1*" -exec rename "s/cond1/${condition1}/g" {} \; # Replace '
 find . -iname "*cond2*" -exec rename "s/cond2/${condition2}/g" {} \;
 
 ### Move DESeq results to Data directory
-mv $myPath/$outDir/Data/Intermediate-files/DE_Results/ $myPath/$outDir/Data/
-cp $myPath/$outDir/Data/DE_Results/*pdf $myPath/$outDir/Plots/ #Copy PDFs to Plots dir
-cp $myPath/$outDir/Data/DE_Results/DESeq2/*regulated.csv $myPath/$outDir/Data/ #Copy DESeq2 results to Data dir
-mv $myPath/$outDir/Plots/*log $myPath/$outDir/Data/Intermediate-files/ #Move Venn Diagram log file to Intermediate-files dir 
+mv $myPath/$outDir/Data/Intermediate-files/DE_Results/ \
+	$myPath/$outDir/Data/
+cp $myPath/$outDir/Data/DE_Results/*pdf \
+	$myPath/$outDir/Plots/ #Copy PDFs to Plots dir
+cp $myPath/$outDir/Data/DE_Results/DESeq2/*regulated.csv \
+	$myPath/$outDir/Data/ #Copy DESeq2 results to Data dir
+mv $myPath/$outDir/Plots/*log \
+	$myPath/$outDir/Data/Intermediate-files/ #Move Venn Diagram log file to Intermediate-files dir 
 
 ### If -A parameter was provided, copy all plots to Plots dir
 if [[ $Plots == "yes" ]]; then 
 	mkdir $myPath/$outDir/Plots/Individual-Runs
-	cp $myPath/$outDir/*/Data_and_Plots/*.pdf $myPath/$outDir/Plots/Individual-Runs/
+	cp $myPath/$outDir/*/Data_and_Plots/*.pdf \
+		$myPath/$outDir/Plots/Individual-Runs/
 fi
 
-### Results Summary
-results=$(string_padder "tsRNAsearch Results Report")
-de_results=$(string_padder "Differential Expression Results")
-dist_results=$(string_padder "Distribution Algorithm Results")
-cleav_results=$(string_padder "Cleavage Algorithm Results")
+### Generate HTML output file
+#echo "
+#<html>
+#<body><h1>tsRNAsearch results</h1>
+#<body><h2>${condition1} versus ${condition2}</h2>" >> $myPath/$outDir/Results-summary.html
+
+### Results summary for HTML
+de_results="Differential Expression Results"
+dist_results="Distribution Algorithm Results"
+cleav_results="Cleavage Algorithm Results"
 vennLocation=$myPath/$outDir/Plots/${condition1}_vs_${condition2}_VennDiagram.pdf
-topFiveUpDE="$(grep -v ^,baseMean $myPath/$outDir/Data/DE_Results/DESeq2/*upregulated.csv | sort -t ',' -k7,7gr | awk -F ',' '{print $1}' | head -5)"
-topFiveDownDE="$(grep -v ^,baseMean $myPath/$outDir/Data/DE_Results/DESeq2/*downregulated.csv | sort -t ',' -k7,7gr | awk -F ',' '{print $1}' | head -5)"
-topDistribution_tRNAs="$(grep -v ^feature $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-tsRNAs.txt | head -5 | awk '{print $1}')"
-topDistribution_snomiRNAs="$(grep -v ^feature $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-snomiRNAs.txt | head -5 | awk '{print $1}')"
-topCleavage_tRNAs="$(grep -v ^feature $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-cleavage-tsRNAs.txt | head -5 | awk '{print $1}')"
-topCleavage_snomiRNAs="$(grep -v ^feature $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-cleavage-snomiRNAs.txt | head -5 | awk '{print $1}')"
-echo "$results
+topFiveUpDE="$(grep -v ^,baseMean $myPath/$outDir/Data/DE_Results/DESeq2/*upregulated.csv | sort -t ',' -k7,7gr | awk -F ',' '{print $1}' | head -5 | sed 's|^|<br />|')"
+topFiveDownDE="$(grep -v ^,baseMean $myPath/$outDir/Data/DE_Results/DESeq2/*downregulated.csv | sort -t ',' -k7,7gr | awk -F ',' '{print $1}' | head -5 | sed 's|^|<br />|')"
+topDistribution_tRNAs="$(grep -v ^feature $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-tsRNAs.txt | head -5 | awk '{print $1}' | sed 's|^|<br />|')"
+topDistribution_snomiRNAs="$(grep -v ^feature $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-snomiRNAs.txt | head -5 | awk '{print $1}' | sed 's|^|<br />|')"
+topCleavage_tRNAs="$(grep -v ^feature $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-cleavage-tsRNAs.txt | head -5 | awk '{print $1}' | sed 's|^|<br />|')"
+topCleavage_snomiRNAs="$(grep -v ^feature $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-cleavage-snomiRNAs.txt | head -5 | awk '{print $1}' | sed 's|^|<br />|')"
+echo "
+<!DOCTYPE html>
+<html>
+<body><h1>tsRNAsearch Report</h1>
+<body><h2>${condition1} versus ${condition2}</h2>
+<br />
+<body><h3>Quantities of ncRNA features identified</h3>
+<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_RPM-normalised.pdf" width="800px" height="800px" />
+<br />
+<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_Raw-readcounts.pdf" width="800px" height="800px" />
+<br />
+<body><h3>Venn diagram comparing the three methods used (DESeq2, distribution algorithm, cleavage algorithm)</h3>
+<img src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_VennDiagram.png" alt="Method comparison venn diagram" width="500" height="500">
+<br />
+<body><h4>Details of the intersections can be found here</h4>
+<ul>
+  <li>$myPath/$outDir/Data/${condition1}_vs_${condition2}.intersect...</li>
+</ul>
+<body><h4>Files used to generate the Venn Diagram can be found here</h4>
+<ul>
+  <li>$myPath/$outDir/Data/Intermediate-files/VennDiagramGeneration</li>
+</ul>
+<br />
+<body><h2>$de_results</h2>
+<br />Principal Component Analysis (PCA) of all samples
+<br />
+<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_tpm-PCA.pdf" width="800px" height="800px" />
+<br />
+<br />Sample distance matrix
+<br />
+<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Distance-Matrix.pdf" width="800px" height="800px" />
+<br />
+<br />Volcano plot showing differentially expressed genes
+<br />
+<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_VolcanoPlot.pdf" width="800px" height="800px" />
+<br />
+<br />Differentially expressed tRNAs
+<br />
+<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-DE-negLog10_padj.pdf" width="800px" height="800px" />
+<br />
+<br />Differentially expressed snoRNAs/miRNAs
+<br />
+<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_snomiRNAs-and-genes.high-DE-negLog10_padj.pdf" width="800px" height="800px" />
+<br />
+<body><h3>Top 5 differentially upregulated features in ${condition1} versus ${condition2}:</h3>
+<br />
+<br />$topFiveUpDE
+<br />
+<br />Full results here: $myPath/$outDir/Data/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output-upregulated.csv
+<br />
+<body><h3>Top 5 differentially downregulated features in ${condition1} versus ${condition2}:</h3>
+<br />
+<br />$topFiveDownDE
+<br />
+<br />Full results here: $myPath/$outDir/Data/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output-downregulated.csv
+<br />
+<br />
+<body><h2>$dist_results</h2>
+<br />
+<br />Highest scoring tRNA fragments identified using the distribution algorithm
+<br />
+<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-distribution-score.pdf" width="800px" height="600px" />
+<br />
+<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-tsRNAs.pdf" width="800px" height="600px" />
+<br />
+<br />Highest scoring snoRNA fragments/miRNAs identified using the distribution algorithm
+<br />
+<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_snomiRNAs.high-distribution-score.pdf" width="800px" height="600px" />
+<br />
+<body><h3>Top scoring tRNAs:</h3>
+<br />$topDistribution_tRNAs
+<br />
+<br />Full results here: $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-tsRNAs.txt
+<br />
+<body><h3>Top scoring snomiRNAs:</h3>
+<br />$topDistribution_snomiRNAs
+<br />
+<br />Full results here: $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-snomiRNAs.txt
+<br />
+<br />
+<body><h2>$cleav_results</h2>
+<br />
+<br />Highest scoring tRNA fragments identified using the cleavage algorithm
+<br />
+<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-cleavage-score.pdf" width="800px" height="600px" />
+<br />Highest scoring snoRNA fragments/miRNAs identified using the cleavage algorithm
+<br />
+<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_snomiRNAs.high-cleavage-score.pdf" width="800px" height="600px" />
+<br />
+<body><h3>Top scoring tRNAs:</h3>
+<br />$topCleavage_tRNAs
+<br />
+<br />Full results here: $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-cleavage-tsRNAs.txt
+<br />
+<body><h3>Top scoring snomiRNAs:</h3>
+<br />$topCleavage_snomiRNAs
+<br />
+<br />Full results here: $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-cleavage-snomiRNAs.txt
+<br />
+<br />
+<body><h2>More results:</h2>
+<br />
+<br />tRNA fragments identified where read origin accurate only to isoacceptor level 
+<br />
+<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_tsRNAs-with-multimapping-reads.pdf" width="800px" height="800px" />
+<br />
+<body><h4>All tRNA plots can be found here</h4> 
+<br />$myPath/$outDir/Data/Intermediate-files/VennDiagramGeneration
+<br />>$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_All-tsRNAs.pdf
+<body><h4>All snoRNA/miRNA plots can be found here</h4> 
+<br />$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-snomiRNAs.pdf
+<br />>$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-cleavage-snomiRNAs.pdf
+<br />
+<br />$StartTime
+</body>
+</html>
+" > $myPath/$outDir/${condition1}_vs_${condition2}.Results-summary.html
 
-For a comparison of all three methods, see venn diagram:
-	$vennLocation
-	Details of the intersections can be found here: 
-		$myPath/$outDir/Data
-	Files used to generate the Venn Diagram can be found here:
-		$myPath/$outDir/Data/Intermediate-files/VennDiagramGeneration
+# The following line prepends <br /> before each line in input
+#sed 's|^|<br />|' $myPath/$outDir/${condition1}_vs_${condition2}.Results-Summary.txt >> $myPath/$outDir/Results-summary.html
 
-$de_results
+#cat $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}.Results-Summary.txt \
+#	>> $myPath/$outDir/Results-summary.html
 
-Top 5 differentially upregulated features in ${condition1} versus ${condition2}:
+#echo "
+#</body>
+#</html>" >> $myPath/$outDir/Results-summary.html
 
-$topFiveUpDE
-
-Full results here: $myPath/$outDir/Data/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output-upregulated.csv
-
-Top 5 differentially downregulated features in ${condition1} versus ${condition2}:
-
-$topFiveDownDE
-
-Full results here: $myPath/$outDir/Data/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output-downregulated.csv
-
-$dist_results
-
-Top scoring tRNAs:
-
-$topDistribution_tRNAs
-
-Full results here: $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-tsRNAs.txt
-
-Top scoring snomiRNAs:
-
-$topDistribution_snomiRNAs
-
-Full results here: $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-snomiRNAs.txt
-
-$cleav_results
-
-Top scoring tRNAs:
-
-$topCleavage_tRNAs
-
-Full results here: $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-cleavage-tsRNAs.txt
-
-Top scoring snomiRNAs:
-		
-$topCleavage_snomiRNAs
-
-Full results here: $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-cleavage-snomiRNAs.txt
-
-
-More results:
-	All tRNA plots can be found here: 
-		$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_All-tsRNAs.pdf
-	All snoRNA/miRNA plots: 
-		$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-snomiRNAs.pdf
-		$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-cleavage-snomiRNAs.pdf
-" > $myPath/$outDir/${condition1}_vs_${condition2}.Results-Summary.txt
-
-cat $myPath/$outDir/${condition1}_vs_${condition2}.Results-Summary.txt
+### Create summary PDF 
+#pdfunite in-1.pdf in-2.pdf in-n.pdf out.pdf
 
 finished="Finished project analysis on $(date)"
 string_padder "$finished"

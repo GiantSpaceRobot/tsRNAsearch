@@ -41,7 +41,7 @@ my.list = list("feature",
                "distribution.score",
                "more.reads.in:")
 write.table(my.list, 
-            file = paste0(args[2], ".all-features.txt"),
+            file = paste0(args[2], ".distribution-score.all-features.txt"),
             quote = FALSE, 
             append = TRUE,
             sep = "\t",
