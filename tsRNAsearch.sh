@@ -37,12 +37,14 @@ Options
 	" 1>&2; }
 
 skip="no"
+version="tsRNAsearch version 0.1"
 while getopts ":hg:A:t:d:f:S:e:o:" o; do
     case "${o}" in
 		h)
 			asciiArt
 			usage
 			info
+			version
 			exit
 			;;
 		g)
@@ -598,32 +600,26 @@ if [[ $Plots == "yes" ]]; then
 		$myPath/$outDir/Plots/Individual-Runs/
 fi
 
-### Generate HTML output file
-#echo "
-#<html>
-#<body><h1>tsRNAsearch results</h1>
-#<body><h2>${condition1} versus ${condition2}</h2>" >> $myPath/$outDir/Results-summary.html
+### Get finish time (approx.)
+FinishTime="Pipeline finished at $(date)"
 
 ### Results summary for HTML
 de_results="Differential Expression Results"
 dist_results="Distribution Algorithm Results"
 cleav_results="Cleavage Algorithm Results"
-#vennLocation=$myPath/$outDir/Plots/${condition1}_vs_${condition2}_VennDiagram.pdf
-#topFiveUpDE="$(grep -v ^,baseMean $myPath/$outDir/Data/DE_Results/DESeq2/*upregulated.csv | sort -t ',' -k7,7gr | awk -F ',' '{print $1}' | head -5 | sed 's|^|<br />|')"
-#topFiveDownDE="$(grep -v ^,baseMean $myPath/$outDir/Data/DE_Results/DESeq2/*downregulated.csv | sort -t ',' -k7,7gr | awk -F ',' '{print $1}' | head -5 | sed 's|^|<br />|')"
-#topDistribution_tRNAs="$(grep -v ^feature $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-tsRNAs.txt | head -5 | awk '{print $1}' | sed 's|^|<br />|')"
-#topDistribution_snomiRNAs="$(grep -v ^feature $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-snomiRNAs.txt | head -5 | awk '{print $1}' | sed 's|^|<br />|')"
-#topCleavage_tRNAs="$(grep -v ^feature $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-cleavage-tsRNAs.txt | head -5 | awk '{print $1}' | sed 's|^|<br />|')"
-#topCleavage_snomiRNAs="$(grep -v ^feature $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-cleavage-snomiRNAs.txt | head -5 | awk '{print $1}' | sed 's|^|<br />|')"
+summary_results=`cat $myPath/$outDir/Data/${condition1}_vs_${condition2}.summarised.top-results.html`
+
 echo "
 <!DOCTYPE html>
 <html>
 <body><h1>tsRNAsearch Report</h1>
 <body><h2>${condition1} versus ${condition2}</h2>
-<br />
 <body><h3>Quantities of ncRNA features identified</h3>
+<br />
+<br />Proportions of ncRNA groups identified (normalised by reads per million)
 <embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_RPM-normalised.pdf" width="800px" height="800px" />
 <br />
+<br />Number of raw reads identified for each ncRNA group  
 <embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_Raw-readcounts.pdf" width="800px" height="800px" />
 <br />
 <body><h3>Venn diagram comparing the three methods used (DESeq2, distribution algorithm, cleavage algorithm)</h3>
@@ -637,6 +633,11 @@ echo "
 <ul>
   <li>$myPath/$outDir/Data/Intermediate-files/VennDiagramGeneration</li>
 </ul>
+<br />
+<body><h4>Summary Report Table</h4>
+<br />Top 20 results shown (sorted by Distribution score)
+$summary_results
+<br />
 <br />
 <body><h2>$de_results</h2>
 <br />Principal Component Analysis (PCA) of all samples
@@ -681,6 +682,10 @@ echo "
 <embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_snomiRNAs.high-distribution-score.pdf" width="600px" height="600px" />
 <br />
 <br />Full results here: $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-snomiRNAs.txt
+<br />Coverage plots of the snoRNA/miRNAs identified by the distribution algorithm can be found here: 
+<ul>
+  <li>$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-snomiRNAs.pdf</li>
+</ul>
 <br />
 <br />
 <body><h2>$cleav_results</h2>
@@ -693,6 +698,10 @@ echo "
 <br />
 <embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_snomiRNAs.high-cleavage-score.pdf" width="600px" height="600px" />
 <br />Full results here: $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-cleavage-snomiRNAs.txt
+<br />Coverage plots of the snoRNA/miRNAs identified by the cleavage algorithm can be found here: 
+<ul>
+  <li>$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-cleavage-snomiRNAs.pdf</li>
+</ul>
 <br />
 <br />
 <body><h2>More results:</h2>
@@ -704,16 +713,12 @@ echo "
 <ul>
   <li>$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_All-tsRNAs.pdf</li>
 </ul>
-<body><h4>All snoRNA/miRNA plots can be found here</h4> 
-<ul>
-  <li>$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-snomiRNAs.pdf</li>
-  <li>$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-cleavage-snomiRNAs.pdf</li>
-</ul>
 <br />
 <br />$StartTime
+<br />$FinishTime
+<br />$version
 </body>
 </html>
 " > $myPath/$outDir/${condition1}_vs_${condition2}.Results-summary.html
 
-finished="Finished project analysis on $(date)"
-string_padder "$finished"
+string_padder "$FinishTime"

@@ -272,8 +272,8 @@ DESeq2.function <- function(path.to.files){
             col=colorpanel(100, "black", "white"),
             #ColSideColors=mycols[file.names], 
             #RowSideColors=mycols[file.names],
-            cexRow = 0.8,
-            cexCol = 0.8,
+            #cexRow = 0.8,
+            #cexCol = 0.8,
             margins=c(12,10),
             srtCol=45,
             main="Sample Distance Matrix")
@@ -288,6 +288,8 @@ DESeq2.function <- function(path.to.files){
   fit=cmdscale(d, eig=TRUE, k=2)
   x=fit$points[,1]
   y=fit$points[,2]
+  names(x) <- gsub(x = names(x), pattern = ".collapsed.all.features.count", replacement = "") # Remove string from names
+  names(y) <- gsub(x = names(y), pattern = ".collapsed.all.features.count", replacement = "") # Remove string from names
   pdf(paste0(path.to.files, "DE_Results/", ResultsFile, "_tpm-PCA.pdf"),
       width=8,height=8)
   par(xpd = T, mar = par()$mar + c(5,4,4,8))
@@ -409,7 +411,7 @@ DESeq2.function <- function(path.to.files){
                                                 genes.df.subset$negLog10, 
                                                 color=genes.df.subset$negLog10)) +
     geom_point() +
-    ggtitle("DE Analysis - Genes and sno/miRNAs") +
+    ggtitle("DE Analysis - sno/miRNAs") +
     theme(axis.text.x = element_text(size=7)) +
     scale_color_gradient(low="blue", high="red") +
     #scale_y_continuous(trans='log2') +   # Change y axis to log scale

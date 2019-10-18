@@ -8,6 +8,7 @@
 
 suppressMessages(library(dplyr))
 suppressMessages(library(plyr))
+suppressMessages(library(xtable))
 
 args = commandArgs(trailingOnly=TRUE)
 
@@ -41,9 +42,22 @@ if(nrow(final.df) > 20){
   top.results <- final.df
 }
 
-### Playing around with data relationships
-#plot(x = abs(final.df$DESeq2.Log2FC), -log10(final.df$DESeq2.pvalue))
-#pairs(final.df)
-
 write.table(x = final.df, file = paste0(args[7], ".summarised.all-results.txt"), quote = F, sep = "\t", row.names = F)
 write.table(x = top.results, file = paste0(args[7], ".summarised.top-results.txt"), quote = F, sep = "\t", row.names = F)
+rownames(top.results) <- top.results$feature # Replace rownames with feature names
+top.results <- top.results %>% select(-feature) # Remove feature names (column 1)
+
+### Write top results as HTML
+print(xtable(top.results,              
+             display=c("s",   # Feature names 
+                       "g",   # Fisher's method p value
+                       "f",   # Distribution score
+                       "f",   # DESeq2 Log2FC
+                       "g",   # DESeq2 p-value
+                       "g",   # DESeq2 padj
+                       "f")), # Cleavage score
+      math.style.exponents = TRUE, 
+      type="html", 
+      file = paste0(args[7], ".summarised.top-results.html")) # Write top results to HTML for HTML report generation
+
+
