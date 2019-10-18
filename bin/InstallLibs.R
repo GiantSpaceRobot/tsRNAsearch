@@ -33,3 +33,30 @@ if(!require(DESeq2)){
   install.packages("devtools") 
   devtools::install_github("mikelove/DESeq2") 
 }
+
+if(!require(EnhancedVolcano)){ 
+  # If DESeq2 still not loaded, try install from github
+  install.packages("devtools") 
+  devtools::install_github("kevinblighe/EnhancedVolcano") 
+}
+
+if(!require(metap)){
+  install.packages("metap")
+  library(metap)
+}
+
+if(!require(plyr)){
+  install.packages("plyr")
+  library(plyr)
+}
+
+if(!require(dplyr)){
+  install.packages("dplyr")
+  library(dplyr)
+}
+
+if(!require(reshape2)){
+  install.packages("reshape2")
+  library(reshape2)
+}
+

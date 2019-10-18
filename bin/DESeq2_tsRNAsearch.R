@@ -261,10 +261,12 @@ DESeq2.function <- function(path.to.files){
   
   ### Sample distance heatmap
   sampleDists <- as.matrix(dist(t(assay(rld))))
+  sampleDists <- data.frame(sampleDists)
+  colnames(sampleDists) <- gsub(x = colnames(sampleDists), pattern = ".collapsed.all.features.count", replacement = "") # Remove string from colnames
+  rownames(sampleDists) <- gsub(x = rownames(sampleDists), pattern = ".collapsed.all.features.count", replacement = "") # Remove string from rownames 
   #(mycols <- brewer.pal(length(file.names), "Paired")[1:length(unique(file.names))])
   pdf(paste0(path.to.files, "DE_Results/", ResultsFile, "_Distance-Matrix.pdf"),
       width=12,height=12)
-  #par(mar=c(7,4,4,2)+0.1) 
   par(mar=c(6,4,4,5)+0.1) 
   heatmap.2(as.matrix(sampleDists), key=F, trace="none",
             col=colorpanel(100, "black", "white"),
@@ -272,7 +274,6 @@ DESeq2.function <- function(path.to.files){
             #RowSideColors=mycols[file.names],
             cexRow = 0.8,
             cexCol = 0.8,
-            #margin=c(10, 13), 
             margins=c(12,10),
             srtCol=45,
             main="Sample Distance Matrix")
@@ -297,7 +298,7 @@ DESeq2.function <- function(path.to.files){
        bty="L")
   box()
   legend("right", 
-         inset=c(-0.1,0), 
+         inset=c(-0.5,0), 
          pch=20,
          col=colLabel,
          cex = 0.7, 
@@ -331,9 +332,9 @@ DESeq2.function <- function(path.to.files){
   
   write.csv(resultsDF, file=paste0(path.to.files, "DE_Results/DESeq2/", ResultsFile, "_DESeq2-output.csv"))
   
-  up <- (resultsDF[!is.na(resultsDF$padj) & resultsDF$padj <= 0.1 &
+  up <- (resultsDF[!is.na(resultsDF$padj) & resultsDF$padj <= 0.05 &
                resultsDF$log2FoldChange >= 0.5, ])
-  down <- (resultsDF[!is.na(resultsDF$padj) & resultsDF$padj <= 0.1 &    
+  down <- (resultsDF[!is.na(resultsDF$padj) & resultsDF$padj <= 0.05 &    
                  resultsDF$log2FoldChange <= -0.5, ]) 
   
   write.table(x = up,
@@ -375,8 +376,10 @@ DESeq2.function <- function(path.to.files){
   ### replace Inf values (extremely low adj p-value) with -Log10 of 300
   tsRNAs.df.subset <- data.frame(lapply(tsRNAs.df.subset, function(x) {gsub(Inf, "300", x)}))
   tsRNAs.df.subset$negLog10 <- as.numeric(levels(tsRNAs.df.subset$negLog10))[tsRNAs.df.subset$negLog10] #Convert factor type to numeric
+  tsRNAs.df.subset$features <- factor(tsRNAs.df.subset$features, levels = tsRNAs.df.subset$features[order(tsRNAs.df.subset$negLog10)])
   genes.df.subset <- data.frame(lapply(genes.df.subset, function(x) {gsub(Inf, "300", x)}))
   genes.df.subset$negLog10 <- as.numeric(levels(genes.df.subset$negLog10))[genes.df.subset$negLog10] #Convert factor type to numeric
+  genes.df.subset$features <- factor(genes.df.subset$features, levels = genes.df.subset$features[order(genes.df.subset$negLog10)])
   
   ### checkpoint
   print("Checkpoint 11")
@@ -407,11 +410,12 @@ DESeq2.function <- function(path.to.files){
                                                 color=genes.df.subset$negLog10)) +
     geom_point() +
     ggtitle("DE Analysis - Genes and sno/miRNAs") +
-    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size=7)) +
+    theme(axis.text.x = element_text(size=7)) +
     scale_color_gradient(low="blue", high="red") +
     #scale_y_continuous(trans='log2') +   # Change y axis to log scale
     scale_x_discrete(limits = (levels(genes.df.subset$negLog10))) +
-    labs(colour = "-Log10 of padj", 
+    coord_flip() +
+    labs(colour = "-Log10\n   of \n  padj", 
          x = "ncRNA/gene", 
          y = "-Log10 of padj", 
          subtitle = "Max number of features shown is 20"))
@@ -426,8 +430,9 @@ DESeq2.function <- function(path.to.files){
                   x = 'log2FoldChange',
                   y = 'pvalue',
                   xlim = c(-5, 8),  
-                  pCutoff = 0.1, 
-                  FCcutoff = 0.5)
+                  pCutoff = 0.05, 
+                  FCcutoff = 0.5,
+                  labSize = 3.0)
   volcano + 
     labs(subtitle = "") # Remove automatic subtitle
   ggsave(filename = paste0(path.to.files, args[2], "_VolcanoPlot.pdf"), plot = volcano) # Save plot using ggplot2 ggsave (error occured using normal R PDF save)
