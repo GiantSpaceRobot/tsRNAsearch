@@ -407,7 +407,7 @@ cat \
 	>> $myPath/$outDir/Data/All-Features-Identified.txt
 
 ### Create files with all RPM values for every coordinate of every feature in each condition
-string_padder "Concatenating files for p-value generatation..."
+string_padder "Concatenating files for p-value generation..."
 # Condition 1
 cat \
 	$myPath/$outDir/Data/Intermediate-files/Multimappers.cond1_concatenated_mean_stdev.tsRNA.depth \
@@ -429,8 +429,8 @@ cat \
 	$myPath/$outDir/Data/Intermediate-files/cond2_concatenated_mean_stdev.snomiRNA.depth \
 	> $myPath/$outDir/Data/Intermediate-files/Everything.cond2.depth 
 
-### Generating p-values for all features based on coombination of t.tests using Fisher's method
-string_padder "Generating p-values for all features based on coombination of t.tests using Fisher's method..."
+### Generating p-values for all features based on combination of t.tests using Fisher's method
+string_padder "Generating p-values for all features based on combination of t.tests using Fisher's method..."
 Rscript bin/Pvalue_generator.R \
 	$myPath/$outDir/Data/Intermediate-files/Everything.cond1.depth \
 	$myPath/$outDir/Data/Intermediate-files/Everything.cond2.depth \
@@ -588,8 +588,8 @@ cp $myPath/$outDir/Data/DE_Results/*pdf \
 	$myPath/$outDir/Plots/ #Copy PDFs to Plots dir
 cp $myPath/$outDir/Data/DE_Results/DESeq2/*regulated.csv \
 	$myPath/$outDir/Data/ #Copy DESeq2 results to Data dir
-mv $myPath/$outDir/Plots/*log \
-	$myPath/$outDir/Data/Intermediate-files/ #Move Venn Diagram log file to Intermediate-files dir 
+#mv $myPath/$outDir/Plots/*log \
+#	$myPath/$outDir/Data/Intermediate-files/ #Move Venn Diagram log file to Intermediate-files dir 
 
 ### If -A parameter was provided, copy all plots to Plots dir
 if [[ $Plots == "yes" ]]; then 
@@ -608,13 +608,13 @@ fi
 de_results="Differential Expression Results"
 dist_results="Distribution Algorithm Results"
 cleav_results="Cleavage Algorithm Results"
-vennLocation=$myPath/$outDir/Plots/${condition1}_vs_${condition2}_VennDiagram.pdf
-topFiveUpDE="$(grep -v ^,baseMean $myPath/$outDir/Data/DE_Results/DESeq2/*upregulated.csv | sort -t ',' -k7,7gr | awk -F ',' '{print $1}' | head -5 | sed 's|^|<br />|')"
-topFiveDownDE="$(grep -v ^,baseMean $myPath/$outDir/Data/DE_Results/DESeq2/*downregulated.csv | sort -t ',' -k7,7gr | awk -F ',' '{print $1}' | head -5 | sed 's|^|<br />|')"
-topDistribution_tRNAs="$(grep -v ^feature $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-tsRNAs.txt | head -5 | awk '{print $1}' | sed 's|^|<br />|')"
-topDistribution_snomiRNAs="$(grep -v ^feature $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-snomiRNAs.txt | head -5 | awk '{print $1}' | sed 's|^|<br />|')"
-topCleavage_tRNAs="$(grep -v ^feature $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-cleavage-tsRNAs.txt | head -5 | awk '{print $1}' | sed 's|^|<br />|')"
-topCleavage_snomiRNAs="$(grep -v ^feature $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-cleavage-snomiRNAs.txt | head -5 | awk '{print $1}' | sed 's|^|<br />|')"
+#vennLocation=$myPath/$outDir/Plots/${condition1}_vs_${condition2}_VennDiagram.pdf
+#topFiveUpDE="$(grep -v ^,baseMean $myPath/$outDir/Data/DE_Results/DESeq2/*upregulated.csv | sort -t ',' -k7,7gr | awk -F ',' '{print $1}' | head -5 | sed 's|^|<br />|')"
+#topFiveDownDE="$(grep -v ^,baseMean $myPath/$outDir/Data/DE_Results/DESeq2/*downregulated.csv | sort -t ',' -k7,7gr | awk -F ',' '{print $1}' | head -5 | sed 's|^|<br />|')"
+#topDistribution_tRNAs="$(grep -v ^feature $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-tsRNAs.txt | head -5 | awk '{print $1}' | sed 's|^|<br />|')"
+#topDistribution_snomiRNAs="$(grep -v ^feature $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-snomiRNAs.txt | head -5 | awk '{print $1}' | sed 's|^|<br />|')"
+#topCleavage_tRNAs="$(grep -v ^feature $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-cleavage-tsRNAs.txt | head -5 | awk '{print $1}' | sed 's|^|<br />|')"
+#topCleavage_snomiRNAs="$(grep -v ^feature $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-cleavage-snomiRNAs.txt | head -5 | awk '{print $1}' | sed 's|^|<br />|')"
 echo "
 <!DOCTYPE html>
 <html>
@@ -653,98 +653,67 @@ echo "
 <br />
 <br />Differentially expressed tRNAs
 <br />
-<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-DE-negLog10_padj.pdf" width="800px" height="800px" />
+<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-DE-negLog10_padj.pdf" width="600px" height="600px" />
 <br />
 <br />Differentially expressed snoRNAs/miRNAs
 <br />
-<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_snomiRNAs-and-genes.high-DE-negLog10_padj.pdf" width="800px" height="800px" />
+<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_snomiRNAs-and-genes.high-DE-negLog10_padj.pdf" width="600px" height="600px" />
 <br />
-<body><h3>Top 5 differentially upregulated features in ${condition1} versus ${condition2}:</h3>
-<br />
-<br />$topFiveUpDE
-<br />
-<br />Full results here: $myPath/$outDir/Data/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output-upregulated.csv
-<br />
-<body><h3>Top 5 differentially downregulated features in ${condition1} versus ${condition2}:</h3>
-<br />
-<br />$topFiveDownDE
-<br />
-<br />Full results here: $myPath/$outDir/Data/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output-downregulated.csv
+<br />Full results for features differentially regulated in ${condition1} versus ${condition2} here:
+<ul>
+  <li>$myPath/$outDir/Data/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output.csv</li>
+  <li>$myPath/$outDir/Data/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output-upregulated.csv</li>
+  <li>$myPath/$outDir/Data/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output-downregulated.csv</li>
+</ul>
 <br />
 <br />
 <body><h2>$dist_results</h2>
-<br />
 <br />Highest scoring tRNA fragments identified using the distribution algorithm
 <br />
-<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-distribution-score.pdf" width="800px" height="600px" />
+<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-distribution-score.pdf" width="600px" height="600px" />
+<br />Full results here: $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-tsRNAs.txt
 <br />
+<body><h4>tRNA coverage plots for all tRNAs with irregular distribution identified by the distribution algorithm</h4>
 <embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-tsRNAs.pdf" width="800px" height="600px" />
 <br />
 <br />Highest scoring snoRNA fragments/miRNAs identified using the distribution algorithm
 <br />
-<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_snomiRNAs.high-distribution-score.pdf" width="800px" height="600px" />
-<br />
-<body><h3>Top scoring tRNAs:</h3>
-<br />$topDistribution_tRNAs
-<br />
-<br />Full results here: $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-tsRNAs.txt
-<br />
-<body><h3>Top scoring snomiRNAs:</h3>
-<br />$topDistribution_snomiRNAs
+<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_snomiRNAs.high-distribution-score.pdf" width="600px" height="600px" />
 <br />
 <br />Full results here: $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-snomiRNAs.txt
 <br />
 <br />
 <body><h2>$cleav_results</h2>
-<br />
 <br />Highest scoring tRNA fragments identified using the cleavage algorithm
 <br />
-<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-cleavage-score.pdf" width="800px" height="600px" />
-<br />Highest scoring snoRNA fragments/miRNAs identified using the cleavage algorithm
-<br />
-<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_snomiRNAs.high-cleavage-score.pdf" width="800px" height="600px" />
-<br />
-<body><h3>Top scoring tRNAs:</h3>
-<br />$topCleavage_tRNAs
-<br />
+<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-cleavage-score.pdf" width="600px" height="600px" />
 <br />Full results here: $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-cleavage-tsRNAs.txt
 <br />
-<body><h3>Top scoring snomiRNAs:</h3>
-<br />$topCleavage_snomiRNAs
+<br />Highest scoring snoRNA fragments/miRNAs identified using the cleavage algorithm
 <br />
+<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_snomiRNAs.high-cleavage-score.pdf" width="600px" height="600px" />
 <br />Full results here: $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-cleavage-snomiRNAs.txt
 <br />
 <br />
 <body><h2>More results:</h2>
-<br />
 <br />tRNA fragments identified where read origin accurate only to isoacceptor level 
 <br />
-<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_tsRNAs-with-multimapping-reads.pdf" width="800px" height="800px" />
+<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_tsRNAs-with-multimapping-reads.pdf" width="800px" height="600px" />
 <br />
 <body><h4>All tRNA plots can be found here</h4> 
-<br />$myPath/$outDir/Data/Intermediate-files/VennDiagramGeneration
-<br />>$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_All-tsRNAs.pdf
+<ul>
+  <li>$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_All-tsRNAs.pdf</li>
+</ul>
 <body><h4>All snoRNA/miRNA plots can be found here</h4> 
-<br />$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-snomiRNAs.pdf
-<br />>$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-cleavage-snomiRNAs.pdf
+<ul>
+  <li>$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-snomiRNAs.pdf</li>
+  <li>$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-cleavage-snomiRNAs.pdf</li>
+</ul>
 <br />
 <br />$StartTime
 </body>
 </html>
 " > $myPath/$outDir/${condition1}_vs_${condition2}.Results-summary.html
-
-# The following line prepends <br /> before each line in input
-#sed 's|^|<br />|' $myPath/$outDir/${condition1}_vs_${condition2}.Results-Summary.txt >> $myPath/$outDir/Results-summary.html
-
-#cat $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}.Results-Summary.txt \
-#	>> $myPath/$outDir/Results-summary.html
-
-#echo "
-#</body>
-#</html>" >> $myPath/$outDir/Results-summary.html
-
-### Create summary PDF 
-#pdfunite in-1.pdf in-2.pdf in-n.pdf out.pdf
 
 finished="Finished project analysis on $(date)"
 string_padder "$finished"

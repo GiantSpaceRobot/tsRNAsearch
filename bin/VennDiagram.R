@@ -3,6 +3,7 @@ args = commandArgs(trailingOnly=TRUE)
 
 library("VennDiagram")
 library("gplots")
+futile.logger::flog.threshold(futile.logger::ERROR, name = "VennDiagramLogger") # Suppress VennDiagram messages/log file generation
 
 # Borrowed this code from https://www.r-bloggers.com/working-with-venn-diagrams/
 
@@ -39,40 +40,14 @@ my.venn <- venn.diagram(geneLists,
                    cat.cex = 1.5,
                    category.names=c("DESeq2", "Distribution", "Cleavage"),
                    main.cex = 1.5,
-                   main="Features identified by the three tsRNAsearch_DE methods")
-grid.newpage() # Create new grid
-pushViewport(viewport(width=unit(0.8, "npc"), height = unit(0.8, "npc"))) # Resize this grid (80%)
+                   main="Features identified by the three tsRNAsearch methods")
 
 png(file = paste0(args[4], "_VennDiagram.png"))
+grid.newpage() # Create new grid
+pushViewport(viewport(width=unit(0.8, "npc"), height = unit(0.8, "npc"))) # Resize this grid (80%)
 grid.draw(my.venn) # Draw venn diagram in new smaller plot
 dev.off()
-#print(venn.diagram(geneLists, 
-#             #filename = paste0(args[4], "_VennDiagram.png"), 
-#             filename = NULL,
-#             #fill=c("darkmagenta", "darkblue", "red"), 
-#             fill=c("#3e4574", "#00a9ff", "#ff0c3e"),
-#             alpha=c(0.5,0.5,0.5), 
-#             cex = 2, 
-#             cat.fontface=4,
-#             imagetype = "png",
-#             #cat.pos = c(340,20,0),
-#             #cat.col = c("#3e4574", "#00a9ff", "#ff0c3e"),
-#             cat.cex = 1.5,
-#             category.names=c("DESeq2", "Distribution", "Cleavage"),
-#             main.cex = 1.5,
-#             main="Features identified by the three tsRNAsearch_DE methods"))
-#pdf(file = "/home/paul/Documents/Pipelines/tsRNAsearch/VennDiagram_test.pdf")
-#venn.diagram(geneLists,
-#             filename = NULL,
-#                   fill=c("#3e4574", "#00a9ff", "#ff0c3e"),
-#                   alpha=c(0.5,0.5,0.5), 
-#                   cex = 2, 
-#                   cat.fontface=4,
-#                   cat.cex = 1.5,
-#                   category.names=c("DESeq2", "Distribution", "Cleavage"),
-#                   main.cex = 1.5,
-#                   main="Features identified by the three tsRNAsearch_DE methods")
-#dev.off()
+
 a <- venn(geneLists, show.plot=FALSE)
 
 # You can inspect the contents of this object with the str() function

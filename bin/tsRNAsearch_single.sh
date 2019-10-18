@@ -199,13 +199,16 @@ function SAMcollapse () {
 		echo $last >> $outDir/tempDir/${myFile}_HeadsAndTails.txt
 	done
 	echo "Gathering unique set of read names from first/last read names..."
-	sort $outDir/tempDir/${myFile}_HeadsAndTails.txt | uniq > $outDir/tempDir/${myFile}_HeadsAndTails_uniq.txt #remove duplicates
+	sort $outDir/tempDir/${myFile}_HeadsAndTails.txt | uniq \
+		> $outDir/tempDir/${myFile}_HeadsAndTails_uniq.txt #remove duplicates
 	sed -i 's/$/\t/' $outDir/tempDir/${myFile}_HeadsAndTails_uniq.txt # Add tab to end of every line to match pattern exactly
-	grep -f $outDir/tempDir/${myFile}_HeadsAndTails_uniq.txt $fileToCollapse > $outDir/tempDir/edit_heads-and-tails #grep all patterns from the heads/tails file
+	grep -f $outDir/tempDir/${myFile}_HeadsAndTails_uniq.txt $fileToCollapse \
+		> $outDir/tempDir/edit_heads-and-tails #grep all patterns from the heads/tails file
 	echo "Extracting alignments for first/last reads from all files..."
 	for i in $outDir/tempDir/splitFile_*; do
 		base=$(basename $i)
-		grep -v -f  $outDir/tempDir/${myFile}_HeadsAndTails_uniq.txt $i > $outDir/tempDir/edit_${base}
+		grep -v -f  $outDir/tempDir/${myFile}_HeadsAndTails_uniq.txt $i \
+			> $outDir/tempDir/edit_${base}
 	done
 	### Run SAMcollapse.py. This loop will only run $threads_available_for_chunks processes at once
 	COUNTER=1
@@ -214,21 +217,18 @@ function SAMcollapse () {
 	for i in $outDir/tempDir/edit_*; 
 	do
 		base=$(basename $i)
-		python bin/SAMcollapse.py $i ${fileToCollapse}_${base} >> $outDir/tRNA-alignment/collapsed-reads.txt & 
+		python bin/SAMcollapse.py \
+			$i \
+			${fileToCollapse}_${base} \
+			>> $outDir/tRNA-alignment/collapsed-reads.txt & 
 		if (( $COUNTER % $chunksDiv == 0 )); then
 			echo "Started job $COUNTER of $chunks"
 		fi
 		numjobs=($(jobs | wc -l))
-		#echo Running job number ${COUNTER} of ${chunks}... 
 		COUNTER=$[$COUNTER + 1]
-		#counter2=$COUNTER
 		while (( $numjobs == $threads_available_for_chunks )); do
-			#if (( $COUNTER == $counter2)); then
-			#	echo There are $numjobs jobs now. Waiting for jobs to finish...
-			#fi
-			#counter2=$[$counter2 + 1]
 			numjobs=($(jobs | wc -l))
-			sleep 5 #Enter next loop iteration
+			sleep 2 #Enter next loop iteration
 		done
 	done
 	wait
@@ -238,64 +238,106 @@ function SAMcollapse () {
 
 	### Concatenate results
 	echo "Gathering reads that were mapped to similar tRNAs..."
-	echo -e "tRNA.group\tread.start\tread.end.approx\tread.name" > $outDir/tRNA-alignment/tRNAs-almost-mapped.txt
-	cat $outDir/tempDir/*tRNAs-almost-mapped* | sort >> $outDir/tRNA-alignment/tRNAs-almost-mapped.txt
+	echo -e "tRNA.group\tread.start\tread.end.approx\tread.name" \
+		> $outDir/tRNA-alignment/tRNAs-almost-mapped.txt
+	cat $outDir/tempDir/*tRNAs-almost-mapped* | sort \
+		>> $outDir/tRNA-alignment/tRNAs-almost-mapped.txt
 	mkdir $outDir/tempDir/tRNAsAlmostMapped
 	mv $outDir/tempDir/*tRNAs-almost-mapped* $outDir/tempDir/tRNAsAlmostMapped/
 	echo "Concatenating SAM header with collapsed files..."
-	cat $outDir/tempDir/myHeader.txt ${fileToCollapse}*_edit_* > $outDir/Collapsed.sam
+	cat $outDir/tempDir/myHeader.txt ${fileToCollapse}*_edit_* \
+		> $outDir/Collapsed.sam
 	rm -rf $outDir/tempDir/ # Remove temp directory
 	echo "Finished collapsing SAM file"
 }
 
 function bam_to_plots () {  ### Steps for plotting regions with high variation in coverage
 	### Output coverage of all features we are interested in (e.g. tRNAs)
-	samtools depth -d 100000000 -aa $1/accepted_hits.bam > $1/accepted_hits.depth   # A lot faster than bedtools genomecov
+	samtools depth \
+		-d 100000000 \
+		-aa $1/accepted_hits.bam \
+		> $1/accepted_hits.depth   # A lot faster than bedtools genomecov
 	cp $1/accepted_hits.depth $1/accepted_hits_raw.depth
 	### Normalise by reads per million (RPM)
-	python bin/Depth-to-Depth_RPM.py $1/accepted_hits_raw.depth $mapped $1/accepted_hits.depth 
+	python bin/Depth-to-Depth_RPM.py \
+		$1/accepted_hits_raw.depth \
+		$mapped \
+		$1/accepted_hits.depth 
 	### If we are working with tRNAs, collapse all tRNAs based on same isoacceptor
 	if [[ $3 = "tsRNA" ]]; then
 		### Remove introns from tRNA counts (as these will interfere with the read counts of collapsed tRNAs)
-		Rscript bin/Remove-introns.R $1/accepted_hits.depth $tRNA_introns $1/accepted_hits_intron-removed.depth 
+		Rscript bin/Remove-introns.R \
+			$1/accepted_hits.depth \
+			$tRNA_introns \
+			$1/accepted_hits_intron-removed.depth 
 		### Flip the read coverage of tRNAs that are in the minus orientation
-		Rscript bin/Coverage-flipper.R $1/accepted_hits_intron-removed.depth $tRNAGTF $1/accepted_hits_flipped.depth	
+		Rscript bin/Coverage-flipper.R \
+			$1/accepted_hits_intron-removed.depth \
+			$tRNAGTF \
+			$1/accepted_hits_flipped.depth
 		### Collapse tRNAs from the same tRNA species
-		python bin/Bedgraph_collapse-tRNAs.py $1/accepted_hits_flipped.depth $1/accepted_hits_collapsed.depth
+		python bin/Bedgraph_collapse-tRNAs.py \
+			$1/accepted_hits_flipped.depth \
+			$1/accepted_hits_collapsed.depth
 		### Rename input depth file
 		mv $1/accepted_hits.depth $1/accepted_hits_original.depth 
 		### Copy the collapsed depth file and name it so that the remaining steps below do not have errors
-		cp $1/accepted_hits_collapsed.depth $1/accepted_hits.depth	
+		cp $1/accepted_hits_collapsed.depth $1/accepted_hits.depth
 	fi
 	### Sort by feature name and nucleotide position
-	sort -k1,1 -k2,2n $1/accepted_hits.depth > $1/accepted_hits_sorted.depth
+	sort -k1,1 -k2,2n $1/accepted_hits.depth \
+		> $1/accepted_hits_sorted.depth
 	### If -A parameter was provided, plot everything
 	if [[ $Plots == "yes" ]]; then # Plot everything
 		### Plot the coverage of all features (arg 3 is mean coverage in RPM) and
 		### Create plot and txt file describing relationship between 5' and 3' regions of feature
 		if [[ $3 = "snomiRNA" ]]; then
-			Rscript bin/Bedgraph_plotter.R $1/accepted_hits_sorted.depth $1/$2_$3_Coverage-plots.pdf 0 $snomiRNAGTF
-			Rscript bin/Single-replicate-analysis.R $1/accepted_hits_sorted.depth $1/$2_$3_Results $snomiRNAGTF &
+			Rscript bin/Bedgraph_plotter.R \
+				$1/accepted_hits_sorted.depth \
+				$1/$2_$3_Coverage-plots.pdf \
+				0 \
+				$snomiRNAGTF
+			Rscript bin/Single-replicate-analysis.R \
+				$1/accepted_hits_sorted.depth \
+				$1/$2_$3_Results \
+				$snomiRNAGTF &
 		elif [[ $3 == "tsRNA" ]]; then
-			Rscript bin/Bedgraph_plotter.R $1/accepted_hits_sorted.depth $1/$2_$3_Coverage-plots.pdf 0
-			Rscript bin/Single-replicate-analysis.R $1/accepted_hits_sorted.depth $1/$2_$3_Results &
+			Rscript bin/Bedgraph_plotter.R \
+				$1/accepted_hits_sorted.depth \
+				$1/$2_$3_Coverage-plots.pdf \
+				0
+			Rscript bin/Single-replicate-analysis.R \
+				$1/accepted_hits_sorted.depth \
+				$1/$2_$3_Results &
 		else
-			Rscript bin/Bedgraph_plotter.R $1/accepted_hits_sorted.depth $1/$2_$3_Coverage-plots.pdf 1000 $genomeGTF
-			Rscript bin/Single-replicate-analysis.R $1/accepted_hits_sorted.depth $1/$2_$3_Results &
+			Rscript bin/Bedgraph_plotter.R \
+				$1/accepted_hits_sorted.depth \
+				$1/$2_$3_Coverage-plots.pdf \
+				1000 \
+				$genomeGTF
+			Rscript bin/Single-replicate-analysis.R \
+				$1/accepted_hits_sorted.depth \
+				$1/$2_$3_Results &
 		fi
 		cp $1/$2_$3_Coverage-plots.pdf $outDir/Data_and_Plots/$2_$3_Coverage-plots.pdf
 	fi
 	### Output the mean, standard deviation and coefficient of variance of each ncRNA/gene
-	python bin/Bedgraph-analyser.py $1/accepted_hits_sorted.depth $1/accepted_hits_sorted.tsv
+	python bin/Bedgraph-analyser.py \
+		$1/accepted_hits_sorted.depth \
+		$1/accepted_hits_sorted.tsv
 	### Gather all ncRNAs/genes with a mean coverage greater than 0 (pointless step but the cutoff used to be higher than 0)
-	awk '$2>0' $1/accepted_hits_sorted.tsv > $1/accepted_hits_sorted_mean-std.tsv
+	awk '$2>0' $1/accepted_hits_sorted.tsv \
+		> $1/accepted_hits_sorted_mean-std.tsv
 	### Sort the remaining ncRNAs/genes by coef. of variance
-	sort -k4,4nr $1/accepted_hits_sorted_mean-std.tsv > $1/$2_$3_accepted_hits_sorted_mean-std_sorted.tsv
+	sort -k4,4nr $1/accepted_hits_sorted_mean-std.tsv \
+		> $1/$2_$3_accepted_hits_sorted_mean-std_sorted.tsv
 	### Move finalised data for further analysis
 	cp $1/accepted_hits_sorted.depth $outDir/Data_and_Plots/$2_$3.depth &
 	cp $1/$2_$3_accepted_hits_sorted_mean-std_sorted.tsv $outDir/Data_and_Plots/$2_$3_depth.inf
-	echo -e "Feature\tMean\tStandard Deviation\tCoefficient of Variation\n" > $outDir/Data_and_Plots/Header.txt
-	cat $outDir/Data_and_Plots/Header.txt $outDir/Data_and_Plots/$2_$3_depth.inf > $outDir/Data_and_Plots/$2_$3_depth.stats
+	echo -e "Feature\tMean\tStandard Deviation\tCoefficient of Variation\n" > \
+		$outDir/Data_and_Plots/Header.txt
+	cat $outDir/Data_and_Plots/Header.txt $outDir/Data_and_Plots/$2_$3_depth.inf \
+		> $outDir/Data_and_Plots/$2_$3_depth.stats
 	rm $outDir/Data_and_Plots/$2_$3_depth.stats $outDir/Data_and_Plots/Header.txt
 	wait
 }
@@ -326,15 +368,16 @@ else
 fi
 
 ### Do not exceed 16 threads for fastp as per user manual guidelines
-if (( $threads > 16 )); then 
-	fastp_threads=16
-else
-	fastp_threads=$threads
-fi
+#if (( $threads > 16 )); then 
+#	fastp_threads=16
+#else
+#	fastp_threads=$threads
+#fi
 
 # Check if the output directory exists. If not, create it
 string_padder "Creating directory structure"
 mkdir -p $outDir
+mkdir -p $outDir/FastQC
 mkdir -p $outDir/tRNA-alignment
 mkdir -p $outDir/snomiRNA-alignment
 mkdir -p $outDir/mRNA-ncRNA-alignment
@@ -359,21 +402,44 @@ printf -v fastqcFile "%s_trimmed_fastqc.html" "$singleFile_basename"
 if [ $skip = "no" ]; then
 	# Make directories for pre-processing
 	mkdir -p $outDir/pre-processing
-	# Run fastp
-	string_padder "Pre-processing reads using Fastp"
-	bin/fastp -w $fastp_threads -i $singleFile -o $outDir/pre-processing/$trimmedFile -j $outDir/pre-processing/fastp.output.json -h $outDir/pre-processing/fastp.output.html
+	string_padder "Pre-processing reads using trim_galore..."
+	#bin/fastp -w $fastp_threads -i $singleFile -o $outDir/pre-processing/$trimmedFile -j $outDir/pre-processing/fastp.output.json -h $outDir/pre-processing/fastp.output.html
+	bin/trim_galore \
+		--stringency 10 \
+		--length 15 \
+		-o $outDir/pre-processing/ \
+		$singleFile
 	readsForAlignment=$outDir/pre-processing/$trimmedFile
 else
 	# Skip pre-processing by using the provided RNA-seq file
 	readsForAlignment=$singleFile
 fi
 
+# Run FastQC on newly trimmed file
+string_padder "Running FastQC on Fastq read file..."
+fastqc \
+	-o $outDir/FastQC/ \
+	-f fastq \
+	$readsForAlignment
+
 ### Align reads to ncRNA database using STAR
 string_padder "Running tRNA/snomiRNA alignment step..."
 
 ### STAR ###
-STAR --runThreadN $threads --genomeDir $ncRNADB --readFilesIn $readsForAlignment --outFileNamePrefix $outDir/tRNA-alignment/ --outSAMattributes AS nM HI NH --outFilterMultimapScoreRange 0 --outReadsUnmapped Fastx --outFilterMatchNmin 15 $STARparam
-grep "Number of input reads" $outDir/tRNA-alignment/Log.final.out | awk -F '\t' '{print $2}' | tr -d '\040\011\012\015' > $outDir/Stats.log # the tr command removes all types of spaces
+STAR \
+	--runThreadN $threads \
+	--genomeDir $ncRNADB \
+	--readFilesIn $readsForAlignment \
+	--outFileNamePrefix $outDir/tRNA-alignment/ \
+	--outSAMattributes AS nM HI NH \
+	--outFilterMultimapScoreRange 0 \
+	--outReadsUnmapped Fastx \
+	--outFilterMatchNmin 15 \
+	$STARparam
+grep "Number of input reads" $outDir/tRNA-alignment/Log.final.out \
+	| awk -F '\t' '{print $2}' \
+	| tr -d '\040\011\012\015' \
+	> $outDir/Stats.log # the tr command removes all types of spaces
 echo " reads; of these:" >> $outDir/Stats.log
 ## Collapse SAM files:
 SAMcollapse $outDir/tRNA-alignment/Aligned.out.sam #Collapse reads aligned to the same tRNA species 
@@ -389,17 +455,27 @@ if [ -f $outDir/tRNA-alignment/aligned_tRNAdb.sam ]; then  #If STAR successfully
 	grep ENS $outDir/tRNA-alignment/aligned_tRNAdb.sam > $outDir/tRNA-alignment/snomiRNAs.sam &
 	grep -v ENS $outDir/tRNA-alignment/aligned_tRNAdb.sam > $outDir/tRNA-alignment/tsRNAs_aligned.sam &
 	wait
-	cat $outDir/tRNA-alignment/SamHeader.sam $outDir/tRNA-alignment/snomiRNAs.sam > $outDir/tRNA-alignment/snomiRNAs_aligned.sam
+	cat $outDir/tRNA-alignment/SamHeader.sam $outDir/tRNA-alignment/snomiRNAs.sam \
+		> $outDir/tRNA-alignment/snomiRNAs_aligned.sam
 	wait
-	samtools view -bS $outDir/tRNA-alignment/tsRNAs_aligned.sam > $outDir/tRNA-alignment/accepted_hits_unsorted.bam
-	samtools sort $outDir/tRNA-alignment/accepted_hits_unsorted.bam > $outDir/tRNA-alignment/accepted_hits.bam 
+	#samtools view -bS $outDir/tRNA-alignment/tsRNAs_aligned.sam > $outDir/tRNA-alignment/accepted_hits_unsorted.bam
+	#samtools sort $outDir/tRNA-alignment/accepted_hits_unsorted.bam > $outDir/tRNA-alignment/accepted_hits.bam 
+	samtools view -bS $outDir/tRNA-alignment/tsRNAs_aligned.sam \
+		| samtools sort \
+		> $outDir/tRNA-alignment/accepted_hits.bam
 	samtools index $outDir/tRNA-alignment/accepted_hits.bam &
 	mv $outDir/tRNA-alignment/unmapped.fastq $outDir/tRNA-alignment/$myFile
 	### Move snomiRNA BAM to directory
-	samtools view -bS $outDir/tRNA-alignment/snomiRNAs.sam > $outDir/snomiRNA-alignment/accepted_hits_unsorted.bam
-	samtools sort $outDir/snomiRNA-alignment/accepted_hits_unsorted.bam > $outDir/snomiRNA-alignment/accepted_hits.bam 
+	#samtools view -bS $outDir/tRNA-alignment/snomiRNAs.sam > $outDir/snomiRNA-alignment/accepted_hits_unsorted.bam
+	#samtools sort $outDir/snomiRNA-alignment/accepted_hits_unsorted.bam > $outDir/snomiRNA-alignment/accepted_hits.bam 
+	samtools view -bS $outDir/tRNA-alignment/snomiRNAs.sam \
+		| samtools sort \
+		> $outDir/snomiRNA-alignment/accepted_hits.bam
 	samtools index $outDir/snomiRNA-alignment/accepted_hits.bam &
-	rm $outDir/tRNA-alignment/SamHeader.sam $outDir/tRNA-alignment/snomiRNAs.sam $outDir/tRNA-alignment/aligned_tRNAdb.sam &	
+	rm \
+		$outDir/tRNA-alignment/SamHeader.sam \
+		$outDir/tRNA-alignment/snomiRNAs.sam \
+		$outDir/tRNA-alignment/aligned_tRNAdb.sam &	
 else
 	echo "
 	Alignment output not found. Reads likely did not map to tRNA/sno/miRNA reference. 
@@ -407,27 +483,27 @@ else
 	"
 	cp $outDir/trim_galore_output/$trimmedFile $outDir/tRNA-alignment/$trimmedFile
 fi
-string_padder "Running mRNA/ncRNA alignment step..."
 
+#string_padder "Running mRNA/ncRNA alignment step..."
 ### STAR ###
 #STAR --runThreadN $threads --genomeDir $genomeDB --readFilesIn $outDir/tRNA-alignment/$myFile --outFileNamePrefix $outDir/mRNA-ncRNA-alignment/ --outReadsUnmapped Fastx --outFilterMatchNmin 15 #$STARparam
 #mv $outDir/mRNA-ncRNA-alignment/Aligned.out.sam $outDir/mRNA-ncRNA-alignment/aligned.sam
 #mv $outDir/mRNA-ncRNA-alignment/Unmapped.out.mate1 $outDir/mRNA-ncRNA-alignment/unmapped.fastq
 ### STAR ###
 
-if [ -f $outDir/mRNA-ncRNA-alignment/aligned.sam ]; then  #If hisat2 successfully mapped reads, convert the unmapped to FASTQ
-	echo -e "\nConverting SAM to BAM and sorting..."
-	samtools view -bS $outDir/mRNA-ncRNA-alignment/aligned.sam > $outDir/mRNA-ncRNA-alignment/accepted_hits_unsorted.bam
-	rm $outDir/mRNA-ncRNA-alignment/aligned.sam &
-	samtools sort $outDir/mRNA-ncRNA-alignment/accepted_hits_unsorted.bam > $outDir/mRNA-ncRNA-alignment/accepted_hits.bam
-	samtools index $outDir/mRNA-ncRNA-alignment/accepted_hits.bam &
-	mv $outDir/mRNA-ncRNA-alignment/unmapped.fastq $outDir/mRNA-ncRNA-alignment/UnmappedReads.fq &
-else
-	echo "
-	mRNA/ncRNA alignment output not found. Reads likely did not map to mRNA/ncRNA reference. 
-	"
-	cp $outDir/tRNA-alignment/$myFile $outDir/mRNA-ncRNA-alignment/$trimmedFile
-fi
+#if [ -f $outDir/mRNA-ncRNA-alignment/aligned.sam ]; then  #If hisat2 successfully mapped reads, convert the unmapped to FASTQ
+#	echo -e "\nConverting SAM to BAM and sorting..."
+#	samtools view -bS $outDir/mRNA-ncRNA-alignment/aligned.sam > $outDir/mRNA-ncRNA-alignment/accepted_hits_unsorted.bam
+#	rm $outDir/mRNA-ncRNA-alignment/aligned.sam &
+#	samtools sort $outDir/mRNA-ncRNA-alignment/accepted_hits_unsorted.bam > $outDir/mRNA-ncRNA-alignment/accepted_hits.bam
+#	samtools index $outDir/mRNA-ncRNA-alignment/accepted_hits.bam &
+#	mv $outDir/mRNA-ncRNA-alignment/unmapped.fastq $outDir/mRNA-ncRNA-alignment/UnmappedReads.fq &
+#else
+#	echo "
+#	mRNA/ncRNA alignment output not found. Reads likely did not map to mRNA/ncRNA reference. 
+#	"
+#	cp $outDir/tRNA-alignment/$myFile $outDir/mRNA-ncRNA-alignment/$trimmedFile
+#fi
 
 # Produce read counts for the three alignment steps. If one of the alignment steps failed, use an empty htseq-count output file.
 string_padder "Alignment steps complete. Moving on to read-counting using FCount-count"
@@ -456,8 +532,15 @@ else
 	echo "
 Counting sno/miRNA alignment reads
 "
-	bin/featureCounts -T $featureCount_threads -a $snomiRNAGTF -o $outDir/FCount-count-output/snomiRNA-alignment.fcount $outDir/snomiRNA-alignment/accepted_hits.bam
-	grep -v featureCounts $outDir/FCount-count-output/snomiRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/FCount-count-output/snomiRNA-alignment.count
+	bin/featureCounts \
+		-T $featureCount_threads \
+		-a $snomiRNAGTF \
+		-o $outDir/FCount-count-output/snomiRNA-alignment.fcount \
+		$outDir/snomiRNA-alignment/accepted_hits.bam
+	grep -v featureCounts $outDir/FCount-count-output/snomiRNA-alignment.fcount \
+		| grep -v ^Geneid \
+		| awk -v OFS='\t' '{print $1, $7}' \
+		> $outDir/FCount-count-output/snomiRNA-alignment.count
 fi
 
 # Count for alignment step 1
@@ -470,15 +553,23 @@ else
 	echo "
 Counting tRNA alignment reads
 "
-	bin/featureCounts -T $featureCount_threads -a $tRNAGTF -o $outDir/FCount-count-output/tRNA-alignment.fcount $outDir/tRNA-alignment/accepted_hits.bam
-	grep -v featureCounts $outDir/FCount-count-output/tRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/FCount-count-output/tRNA-alignment.count
+	bin/featureCounts \
+		-T $featureCount_threads \
+		-a $tRNAGTF \
+		-o $outDir/FCount-count-output/tRNA-alignment.fcount \
+		$outDir/tRNA-alignment/accepted_hits.bam
+	grep -v featureCounts $outDir/FCount-count-output/tRNA-alignment.fcount \
+		| grep -v ^Geneid \
+		| awk -v OFS='\t' '{print $1, $7}' \
+		> $outDir/FCount-count-output/tRNA-alignment.count
 fi
 
 wait
 
 ### Get total reads mapped
 string_padder "Get total number of reads mapped"
-cat $outDir/FCount-count-output/*.count | grep -v ^__ | sort -k1,1 > $outDir/FCount-count-output/$singleFile_basename.all-features.count 
+cat $outDir/FCount-count-output/*.count | grep -v ^__ | sort -k1,1 \
+	> $outDir/FCount-count-output/$singleFile_basename.all-features.count 
 sed -i '1s/^/Features\t'"$singleFile_basename"'\n/' $outDir/FCount-count-output/$singleFile_basename.all-features.count # Add column headers
 mapped=$(awk '{sum+=$2} END{print sum;}' $outDir/FCount-count-output/$singleFile_basename.all-features.count)
 echo "Reads mapped: $mapped" >> $outDir/Stats.log
@@ -491,30 +582,54 @@ bam_to_plots $outDir/tRNA-alignment $singleFile_basename tsRNA &
 bam_to_plots $outDir/snomiRNA-alignment $singleFile_basename snomiRNA &
 
 ### Process multi-mapping tRNAs
-python bin/Leftovers-to-Bedgraph.py $outDir/tRNA-alignment/tRNAs-almost-mapped.txt additional-files/tRNA-lengths_hg19.txt $outDir/tRNA-alignment/tRNAs-almost-mapped.depth
-python bin/Depth-to-Depth_RPM.py $outDir/tRNA-alignment/tRNAs-almost-mapped.depth $mapped $outDir/tRNA-alignment/$singleFile_basename.tRNAs-almost-mapped_RPM.depth
-sort -k1,1 -k2,2n $outDir/tRNA-alignment/$singleFile_basename.tRNAs-almost-mapped_RPM.depth > $outDir/tRNA-alignment/$singleFile_basename.tRNAs-almost-mapped_RPM.sorted.depth
-mv $outDir/tRNA-alignment/$singleFile_basename.tRNAs-almost-mapped_RPM.sorted.depth $outDir/tRNA-alignment/$singleFile_basename.tRNAs-almost-mapped_RPM.depth
+python bin/Leftovers-to-Bedgraph.py \
+	$outDir/tRNA-alignment/tRNAs-almost-mapped.txt \
+	additional-files/tRNA-lengths_hg19.txt \
+	$outDir/tRNA-alignment/tRNAs-almost-mapped.depth
+python bin/Depth-to-Depth_RPM.py \
+	$outDir/tRNA-alignment/tRNAs-almost-mapped.depth \
+	$mapped \
+	$outDir/tRNA-alignment/$singleFile_basename.tRNAs-almost-mapped_RPM.depth
+sort -k1,1 -k2,2n $outDir/tRNA-alignment/$singleFile_basename.tRNAs-almost-mapped_RPM.depth \
+	> $outDir/tRNA-alignment/$singleFile_basename.tRNAs-almost-mapped_RPM.sorted.depth
+mv $outDir/tRNA-alignment/$singleFile_basename.tRNAs-almost-mapped_RPM.sorted.depth \
+	$outDir/tRNA-alignment/$singleFile_basename.tRNAs-almost-mapped_RPM.depth
 
 ### Get RPM-normalised FCount count data
 string_padder "Get RPM-normalised read-counts"
-python bin/FCount-to-RPM.py $outDir/FCount-count-output/$singleFile_basename.all-features.count $mapped $outDir/FCount-to-RPM/$singleFile_basename.all-features &
-python bin/FCount-to-RPM.py $outDir/FCount-count-output/tRNA-alignment.count $mapped $outDir/FCount-to-RPM/tRNA-alignment & 
-python bin/FCount-to-RPM.py $outDir/FCount-count-output/snomiRNA-alignment.count $mapped $outDir/FCount-to-RPM/snomiRNA-alignment &
+python bin/FCount-to-RPM.py \
+	$outDir/FCount-count-output/$singleFile_basename.all-features.count \
+	$mapped \
+	$outDir/FCount-to-RPM/$singleFile_basename.all-features &
+python bin/FCount-to-RPM.py \
+	$outDir/FCount-count-output/tRNA-alignment.count \
+	$mapped \
+	$outDir/FCount-to-RPM/tRNA-alignment & 
+python bin/FCount-to-RPM.py \
+	$outDir/FCount-count-output/snomiRNA-alignment.count \
+	$mapped \
+	$outDir/FCount-to-RPM/snomiRNA-alignment &
 #python bin/FCount-to-RPM.py $outDir/FCount-count-output/mRNA-ncRNA-alignment.count $mapped $outDir/FCount-to-RPM/mRNA-ncRNA-alignment &
 wait
 sleep 5  # Make sure everything is finished running
 
 ### Collapse count file
 string_padder "Collapsing count files..."
-python bin/CollapseCountfile.py $outDir/FCount-count-output/$singleFile_basename.all-features.count $outDir/FCount-count-output/$singleFile_basename.collapsed.all-features.count  # For DESeq2
-python bin/CollapseCountfile.py $outDir/FCount-to-RPM/$singleFile_basename.all-features.rpm.count $outDir/FCount-to-RPM/$singleFile_basename.collapsed.all-features.rpm.count # For Cleavage + Distribution algorithms
+python bin/CollapseCountfile.py \
+	$outDir/FCount-count-output/$singleFile_basename.all-features.count \
+	$outDir/FCount-count-output/$singleFile_basename.collapsed.all-features.count  # For DESeq2
+python bin/CollapseCountfile.py \
+	$outDir/FCount-to-RPM/$singleFile_basename.all-features.rpm.count \
+	$outDir/FCount-to-RPM/$singleFile_basename.collapsed.all-features.rpm.count # For Cleavage + Distribution algorithms
 
 ### Move results to Data_and_Plots
 cp $outDir/FCount-to-RPM/$singleFile_basename.collapsed.all-features.rpm.count $outDir/Data_and_Plots/
 if [[ $Plots == "yes" ]]; then
 	### If extra plotting parameter (-A) was selected, copy these files 
-	Rscript bin/Bedgraph_plotter.R $outDir/tRNA-alignment/$singleFile_basename.tRNAs-almost-mapped_RPM.depth $outDir/tRNA-alignment/Multi-mappers_tsRNAs_Coverage-plots.pdf 0
+	Rscript bin/Bedgraph_plotter.R \
+		$outDir/tRNA-alignment/$singleFile_basename.tRNAs-almost-mapped_RPM.depth \
+		$outDir/tRNA-alignment/Multi-mappers_tsRNAs_Coverage-plots.pdf \
+		0
 	cp $outDir/tRNA-alignment/Multi-mappers_tsRNAs_Coverage-plots.pdf $outDir/Data_and_Plots/
 	cp $outDir/tRNA-alignment/*Results.* $outDir/Data_and_Plots/
 	cp $outDir/snomiRNA-alignment/*Results.* $outDir/Data_and_Plots/
@@ -523,5 +638,4 @@ echo "Finished analysing "$singleFile" on $(date)" # Print pipeline end-time
 echo "_____________________________________________________________________________________________________________________
 
 "
-
 

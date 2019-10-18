@@ -9,5 +9,4 @@ Update now:
 * Use GRCh38 ncRNA sequences
 * Place the pipeline in a docker container?
 * Remove genomes from setup
-* Change Log2FC and padj cut-offs for DESeq2? If so, also edit Volcano plot cut-offs
 * Incorporate simple text file as table in summary HTML
