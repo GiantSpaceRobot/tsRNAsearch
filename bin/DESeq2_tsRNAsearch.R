@@ -289,7 +289,7 @@ DESeq2.function <- function(path.to.files){
   x=fit$points[,1]
   y=fit$points[,2]
   names(x) <- gsub(x = names(x), pattern = ".collapsed.all.features.count", replacement = "") # Remove string from names
-  names(y) <- gsub(x = names(y), pattern = ".collapsed.all.features.count", replacement = "") # Remove string from names
+  #names(y) <- gsub(x = names(y), pattern = ".collapsed.all.features.count", replacement = "") # Remove string from names
   pdf(paste0(path.to.files, "DE_Results/", ResultsFile, "_tpm-PCA.pdf"),
       width=8,height=8)
   par(xpd = T, mar = par()$mar + c(5,4,4,8))
@@ -300,11 +300,11 @@ DESeq2.function <- function(path.to.files){
        bty="L")
   box()
   legend("right", 
-         inset=c(-0.5,0), 
+         inset=c(-0.2,0), # -0.5,0 to push labels to the right 
          pch=20,
          col=colLabel,
          cex = 0.7, 
-         legend=colnames(tpm),
+         legend=names(x),
          xpd = TRUE,
          bty = "n",
          lty=NULL)

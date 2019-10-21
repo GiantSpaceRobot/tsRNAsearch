@@ -22,8 +22,8 @@ info() { echo "
 Options:
 
 	-h	Print the usage and options information
-	-g	Analyse data against 'human' or 'mouse'? {default: human}
-	-s	Single-end file for analysis
+	-s	Analyse data against 'human' or 'mouse'? {default: human}
+	-f	Single-end file for analysis
 	-o	Output directory for the results and log files
 	-A	Plot all features? yes/no {default: yes}
 	-t	Number of threads to use {default is to calculate the number of processors and use 75%}
@@ -41,7 +41,7 @@ if [ $# -eq 0 ]; then
 fi
 
 skip="no"
-while getopts ":hg:t:s:o:A:S:" o; do
+while getopts ":hs:t:f:o:A:S:" o; do
     case "${o}" in
 		h)
 			asciiArt
@@ -49,10 +49,10 @@ while getopts ":hg:t:s:o:A:S:" o; do
 			info
 			exit
 			;;
-		g)
-			genome="$OPTARG"
-			;;
 		s)
+			species="$OPTARG"
+			;;
+		f)
 			singleFile="$OPTARG"
 			;;
 		o)
@@ -95,21 +95,21 @@ done
 echo "Started analysing "$singleFile" on $(date)" # Print pipeline start-time
 
 ### Are we analysing Human or Mouse? -g parameter
-if [ "$genome" ]; then
-    if [[ $genome == "human" ]]; then
-		genomeDB="DBs/genome_index/human/"
-		ncRNADB="DBs/genome_index/human-ncRNAs/"
-		genomeGTF="DBs/Homo_sapiens.GRCh37.87.gtf"
+if [ "$species" ]; then
+    if [[ $species == "human" ]]; then
+		speciesDB="DBs/species_index/human/"
+		ncRNADB="DBs/species_index/human-ncRNAs/"
+		speciesGTF="DBs/Homo_sapiens.GRCh37.87.gtf"
 		tRNAGTF="DBs/hg19-wholetRNA-CCA_cdhit.gtf"
 		snomiRNAGTF="DBs/hg19-snomiRNA_cdhit.gtf"
 		tRNA_introns="additional-files/tRNA-introns-for-removal_hg19.tsv"
 		empty_tRNAs="additional-files/hg19_empty_tRNA.count"
 		empty_snomiRNAs="additional-files/hg19_empty_snomiRNA.count"
 		empty_mRNAs="additional-files/hg19_empty_mRNA-ncRNA.count"
-	elif [[ $genome == "mouse" ]]; then
-		genomeDB="DBs/genome_index/mouse/"
-		ncRNADB="DBs/genome_index/mouse-ncRNAs/"
-		genomeGTF="DBs/Mus_musculus.GRCm38.95.gtf"
+	elif [[ $species == "mouse" ]]; then
+		speciesDB="DBs/species_index/mouse/"
+		ncRNADB="DBs/species_index/mouse-ncRNAs/"
+		speciesGTF="DBs/Mus_musculus.GRCm38.95.gtf"
 		tRNAGTF="DBs/mm10-tRNAs_renamed_cdhit.gtf"
 		snomiRNAGTF="DBs/mouse_snomiRNAs_relative_cdhit.gtf"
 		tRNA_introns="additional-files/tRNA-introns-for-removal_mm10.tsv"
@@ -117,11 +117,11 @@ if [ "$genome" ]; then
 		empty_snomiRNAs="additional-files/mm10_empty_snomiRNA.count"
 		empty_mRNAs="additional-files/mm10_empty_mRNA-ncRNA.count"
 	fi
-else # If genome was not specified, default to use human genome/files
-	genome="human"
-	genomeDB="DBs/genome_index/human/"
-	ncRNADB="DBs/genome_index/human-ncRNAs/"
-	genomeGTF="DBs/Homo_sapiens.GRCh37.87.gtf"
+else # If species was not specified, default to use human species/files
+	species="human"
+	speciesDB="DBs/species_index/human/"
+	ncRNADB="DBs/species_index/human-ncRNAs/"
+	speciesGTF="DBs/Homo_sapiens.GRCh37.87.gtf"
 	tRNAGTF="DBs/hg19-wholetRNA-CCA_cdhit.gtf"
 	snomiRNAGTF="DBs/hg19-snomiRNA_cdhit.gtf"
 	tRNA_introns="additional-files/tRNA-introns-for-removal_hg19.tsv"
@@ -314,7 +314,7 @@ function bam_to_plots () {  ### Steps for plotting regions with high variation i
 				$1/accepted_hits_sorted.depth \
 				$1/$2_$3_Coverage-plots.pdf \
 				1000 \
-				$genomeGTF
+				$speciesGTF
 			Rscript bin/Single-replicate-analysis.R \
 				$1/accepted_hits_sorted.depth \
 				$1/$2_$3_Results &
@@ -408,6 +408,7 @@ if [ $skip = "no" ]; then
 		--stringency 10 \
 		--length 15 \
 		-o $outDir/pre-processing/ \
+		--fastqc_args "--outdir $outDir/FastQC/" \
 		$singleFile
 	readsForAlignment=$outDir/pre-processing/$trimmedFile
 else
@@ -416,11 +417,11 @@ else
 fi
 
 # Run FastQC on newly trimmed file
-string_padder "Running FastQC on Fastq read file..."
-fastqc \
-	-o $outDir/FastQC/ \
-	-f fastq \
-	$readsForAlignment
+#string_padder "Running FastQC on Fastq read file..."
+#fastqc \
+#	-o $outDir/FastQC/ \
+#	-f fastq \
+#	$readsForAlignment
 
 ### Align reads to ncRNA database using STAR
 string_padder "Running tRNA/snomiRNA alignment step..."
@@ -486,7 +487,7 @@ fi
 
 #string_padder "Running mRNA/ncRNA alignment step..."
 ### STAR ###
-#STAR --runThreadN $threads --genomeDir $genomeDB --readFilesIn $outDir/tRNA-alignment/$myFile --outFileNamePrefix $outDir/mRNA-ncRNA-alignment/ --outReadsUnmapped Fastx --outFilterMatchNmin 15 #$STARparam
+#STAR --runThreadN $threads --genomeDir $speciesDB --readFilesIn $outDir/tRNA-alignment/$myFile --outFileNamePrefix $outDir/mRNA-ncRNA-alignment/ --outReadsUnmapped Fastx --outFilterMatchNmin 15 #$STARparam
 #mv $outDir/mRNA-ncRNA-alignment/Aligned.out.sam $outDir/mRNA-ncRNA-alignment/aligned.sam
 #mv $outDir/mRNA-ncRNA-alignment/Unmapped.out.mate1 $outDir/mRNA-ncRNA-alignment/unmapped.fastq
 ### STAR ###
@@ -518,7 +519,7 @@ string_padder "Alignment steps complete. Moving on to read-counting using FCount
 #	echo "
 #Counting mRNA/ncRNA alignment reads
 #"
-#	bin/featureCounts -T $featureCount_threads -a $genomeGTF -o $outDir/FCount-count-output/mRNA-ncRNA-alignment.fcount $outDir/mRNA-ncRNA-alignment/accepted_hits.bam
+#	bin/featureCounts -T $featureCount_threads -a $speciesGTF -o $outDir/FCount-count-output/mRNA-ncRNA-alignment.fcount $outDir/mRNA-ncRNA-alignment/accepted_hits.bam
 #	grep -v featureCounts $outDir/FCount-count-output/mRNA-ncRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/FCount-count-output/mRNA-ncRNA-alignment.count
 #fi
 	

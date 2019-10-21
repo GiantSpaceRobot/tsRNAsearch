@@ -19,43 +19,48 @@ Comparison of two conditions:
 	Usage: $0 -g human/mouse -d Path/To/Input/Files -o OutputDirectory/ -e ExperimentLayout.csv -t num-of-threads
 
 Analysis of a single RNA-seq file:
-	Usage: $0 -g human/mouse -f Path/To/InputFile.fastq -o OutputDirectory/ -t num-of-number
+	Usage: $0 -g human/mouse -f Path/To/InputFile.fastq -o OutputDirectory/ -t num-of-threads
 	" 1>&2; }
 info() { echo "
 Options
 
 	-h	Print the usage and options information
-	-g	Analyse datasets against 'human' or 'mouse'? {default: human}
+	-s	Analyse datasets against 'human' or 'mouse'? {default: human}
 	-d	Directory containing the files for analysis. Directory should have no other contents.
 	-f	A single file for analysis
 	-o	Output directory for the results and log files
 	-e	CSV file containing file names and file groups (see examples in additional-files/)
 	-t	Number of threads to use {default is to calculate the number of processors and use 75%}
 	-A	Plot all features? yes/no {default: no (only plot differentially expressed features)}
-	-S	Skip pre-processing of data (i.e. skip Fastp) {default: no}
+	-S	Skip pre-processing of data (i.e. skip trim_galore) {default: no}
+	-R	Remove all unnecessary/intermediate files (clean results only) {default: no}
 
 	" 1>&2; }
 
+### Set defaults 
+inFile="NA"
 skip="no"
+Plots="no"
+remove="no"
 version="tsRNAsearch version 0.1"
-while getopts ":hg:A:t:d:f:S:e:o:" o; do
+while getopts ":hs:A:t:d:f:S:R:e:o:" o; do
     case "${o}" in
 		h)
 			asciiArt
 			usage
 			info
-			version
+			echo $version
 			exit
 			;;
-		g)
-			genome="$OPTARG"
+		s)
+			species="$OPTARG"
 			;;
 		d)
 			inDir="$OPTARG"
 			;;
 		f)
 			inFile="$OPTARG"
-			Plots="yes"
+			#Plots="yes"
 			;;
 		e)
 			expFile="$OPTARG"
@@ -72,10 +77,14 @@ while getopts ":hg:A:t:d:f:S:e:o:" o; do
 		S)
 			skip="$OPTARG"
 			;;
+		R)
+			remove="$OPTARG"
+			;;
 		*)
-            echo "Error in input parameters!"
+            echo "Error: incorrect input parameters!"
 			usage
 			info
+			echo $version
 			exit 1
             ;;
     esac
@@ -87,7 +96,8 @@ if [ -z "$*" ] ; then
 	asciiArt
 	usage
     info
-    echo "No command line parameters provided!"
+	echo $version
+    echo "Error: no command line parameters provided!"
 	exit 1
 fi
 
@@ -188,37 +198,52 @@ pipeline_start="Started project analysis on $date"
 string_padder "$pipeline_start"
 StartTime="Pipeline initiated at $(date)"
 
-### Are we analysing Human or Mouse? -g parameter
-if [ "$genome" ]; then
-	if [[ $genome == "human" ]]; then
+### Are we analysing Human or Mouse? -s parameter
+if [ "$species" ]; then
+	if [[ $species == "human" ]]; then
 		snomiRNAGTF="DBs/hg19-snomiRNA_cdhit.gtf"
-	elif [[ $genome == "mouse" ]]; then
+	elif [[ $species == "mouse" ]]; then
 		snomiRNAGTF="DBs/mouse_snomiRNAs_relative_cdhit.gtf"
 	fi
 else
 	snomiRNAGTF="DBs/hg19-snomiRNA_cdhit.gtf"
-	genome="human"
+	species="human"
 fi
 
-### Print parameters used
-echo -e "Parameters:
-	Genome (-g): $genome
-	Input directory containing fastq/fastq.gz files (-d): $indir
+parameters="$(echo -e "Parameters:
+	Species (-s): $species
+	Input directory containing fastq/fastq.gz files (-d): $inDir
+	Input fast/fastq.gz file (-f): $inFile
 	Experiment layout file (-e): $expFile
 	Output directory that tsRNAsearch will create and populate with results (-o): $outDir
 	Number of threads to use for the analysis (-t): $threads
-	"
+	Plot all features (-A): $Plots
+	Skip pre-processing (-S): $skip
+")"
+parametersHTML="
+<br />Parameters:
+<br />    Species (-s): $species
+<br />    Input directory containing fastq/fastq.gz files (-d): $inDir
+<br />    Input fast/fastq.gz file (-f): $inFile
+<br />    Experiment layout file (-e): $expFile
+<br />    Output directory that tsRNAsearch will create and populate with results (-o): $outDir
+<br />    Number of threads to use for the analysis (-t): $threads
+<br />    Plot all features (-A): $Plots
+<br />    Skip pre-processing (-S): $skip"
+echo "$parameters"
 
 ### If -A parameter was not provided, default is to only plot differentially expressed features
-if [ ! "$Plots" ]; then
-	Plots="no"
-else
-	Plots="yes"
-fi
+#if [ ! "$Plots" ]; then
+#	Plots="no"
+#else
+#	Plots="yes"
+#fi
 
 ### Create dir substructure
 mkdir -p $outDir
 mkdir -p $outDir/Data
+mkdir -p $outDir/Data/Distribution_results
+mkdir -p $outDir/Data/Cleavage_results
 mkdir -p $outDir/Data/Intermediate-files
 mkdir -p $outDir/Data/Intermediate-files/DataTransformations
 mkdir -p $outDir/Plots
@@ -226,7 +251,7 @@ mkdir -p $outDir/Plots
 ###
 # Run tsRNAsearch on a single file (only have one script, not two
 if [ "$inFile" ]; then
-	bin/tsRNAsearch_single.sh -g "$genome" -s "$inFile" -o "$myPath/$outDir/$filename" -t "$threads" -A "$Plots" -S "$skip"
+	bin/tsRNAsearch_single.sh -s "$species" -f "$inFile" -o "$myPath/$outDir/$filename" -t "$threads" -A "$Plots" -S "$skip"
 	exit 0 # Exit successfully
 fi
 
@@ -236,7 +261,7 @@ for f in $inDir/*; do
 	filename="$( cut -d '.' -f 1 <<< "$file_base" )" 
 	analysis="Beginning analysis of $filename using tsRNAsearch"
 	string_padder $analysis
-	bin/tsRNAsearch_single.sh -g "$genome" -s "$f" -o "$myPath/$outDir/$filename" -t "$threads" -A "$Plots" -S "$skip"
+	bin/tsRNAsearch_single.sh -s "$species" -f "$f" -o "$myPath/$outDir/$filename" -t "$threads" -A "$Plots" -S "$skip"
 	wait
 	readsMapped=$(awk '{sum+=$2} END{print sum;}' $outDir/$filename/FCount-count-output/$filename.collapsed.all-features.count)
 	cp $outDir/$filename/FCount-count-output/$filename.collapsed.all-features.count $outDir/Data/Intermediate-files/ 
@@ -319,9 +344,9 @@ cat $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-v
 	> $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2.high-distribution-score.sorted.txt
 ### Copy txt files illustrating features with very different distributions to the Results directory:
 cp $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.high-distribution-score.sorted.txt \
-	$myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-tsRNAs.txt 
+	$myPath/$outDir/Data/Distribution_results/${condition1}_vs_${condition2}_High-distribution-tsRNAs.txt 
 cp $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2.high-distribution-score.sorted.txt \
-	$myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-snomiRNAs.txt
+	$myPath/$outDir/Data/Distribution_results/${condition1}_vs_${condition2}_High-distribution-snomiRNAs.txt
 
 
 string_padder "Generating Cleavage Scores..." 
@@ -342,11 +367,11 @@ cat $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_tsRNA
 	> $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_High-cleavage-tsRNAs.txt
 cat $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_snomiRNAs.high-cleavage-score.txt | awk 'NR<2{print $0;next}{print $0| "sort -k11,11nr"}' \
 	> $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_High-cleavage-snomiRNAs.txt
-### Copy sorted high distribution files to the Data dir
+### Copy sorted high cleavage files to the Cleavage results dir
 cp $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_High-cleavage-snomiRNAs.txt \
-	$myPath/$outDir/Data/
+	$myPath/$outDir/Data/Cleavage_results/
 cp $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_High-cleavage-tsRNAs.txt \
-	$myPath/$outDir/Data/
+	$myPath/$outDir/Data/Cleavage_results/
 string_padder "Moving PDFs to Plots dir..."
 ### Copy PDF files to Plots dir
 cp $myPath/$outDir/Data/Intermediate-files/*.pdf \
@@ -549,15 +574,15 @@ if [[ $(wc -l < $myPath/$outDir/Data/All-Features-Identified.txt) -ge 2 ]]; then
 		$myPath/$outDir/Data/Intermediate-files/DataTransformations/High-distribution-scores_feature-names.txt \
 		$myPath/$outDir/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt \
 		$myPath/$outDir/Plots/${condition1}_vs_${condition2}
-	mkdir $myPath/$outDir/Data/Intermediate-files/VennDiagramGeneration
+	mkdir $myPath/$outDir/Data/VennDiagramGeneration
 	cp $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_short-names.txt \
-		$myPath/$outDir/Data/Intermediate-files/VennDiagramGeneration/DESeq2-Features.txt
+		$myPath/$outDir/Data/VennDiagramGeneration/DESeq2-Features.txt
 	cp  $myPath/$outDir/Data/Intermediate-files/DataTransformations/High-distribution-scores_feature-names.txt \
-		$myPath/$outDir/Data/Intermediate-files/VennDiagramGeneration/Distribution-Algorithm-Features.txt
+		$myPath/$outDir/Data/VennDiagramGeneration/Distribution-Algorithm-Features.txt
 	cp $myPath/$outDir/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt \
-		$myPath/$outDir/Data/Intermediate-files/VennDiagramGeneration/Cleavage-Algorithm-Features.txt
+		$myPath/$outDir/Data/VennDiagramGeneration/Cleavage-Algorithm-Features.txt
 	mv $myPath/$outDir/Plots/${condition1}_vs_${condition2}.intersect*txt \
-		$myPath/$outDir/Data/
+		$myPath/$outDir/Data/VennDiagramGeneration/
 else
 	string_padder "No features of interest were identified."
 	echo "There were no features identified. No plots were generated." >> $myPath/$outDir/Plots/${condition1}_vs_${condition2}_no-features-to-plot.txt
@@ -574,24 +599,24 @@ for f in $outDir/Data/Intermediate-files/*RPM.Count; do
 	mv $outDir/Data/Intermediate-files/FCount.rpm.temp \
 		$outDir/Data/Intermediate-files/FCount.rpm.all-features
 done
-#rm $outDir/Data/*rpm.count
 mv $outDir/Data/Intermediate-files/FCount.rpm.all-features \
 	$outDir/Data/FCount.all-features.RPM.Count
-#mv $myPath/$outDir/Data/*count $myPath/$outDir/Data/Intermediate-files/
 
-### Renaming files from pseudo-names to condition names
-find . -iname "*cond1*" -exec rename "s/cond1/${condition1}/g" {} \; # Replace 'cond1' in every filename with condition1 variable
-find . -iname "*cond2*" -exec rename "s/cond2/${condition2}/g" {} \;
-
-### Move DESeq results to Data directory
+### Move results to Data directory
 mv $myPath/$outDir/Data/Intermediate-files/DE_Results/ \
 	$myPath/$outDir/Data/
 cp $myPath/$outDir/Data/DE_Results/*pdf \
 	$myPath/$outDir/Plots/ #Copy PDFs to Plots dir
-cp $myPath/$outDir/Data/DE_Results/DESeq2/*regulated.csv \
-	$myPath/$outDir/Data/ #Copy DESeq2 results to Data dir
-#mv $myPath/$outDir/Plots/*log \
-#	$myPath/$outDir/Data/Intermediate-files/ #Move Venn Diagram log file to Intermediate-files dir 
+cp $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_tsRNAs.cleavage-score.all-features.txt $myPath/$outDir/Data/Cleavage_results/ 
+cp $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_snomiRNAs.cleavage-score.all-features.txt $myPath/$outDir/Data/Cleavage_results/
+cp $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.distribution-score.all-features.txt $myPath/$outDir/Data/Distribution_results/
+cp $myPath/$outDir/Data/Intermediate-files/DataTransformations/snomiRNA.cond1-vs-cond2.distribution-score.all-features.txt $myPath/$outDir/Data/Distribution_results/
+
+wait 
+
+### Renaming files from pseudo-names to condition names
+find . -iname "*cond1*" -exec rename "s/cond1/${condition1}/g" {} \; # Replace 'cond1' in every filename with condition1 variable
+find . -iname "*cond2*" -exec rename "s/cond2/${condition2}/g" {} \;
 
 ### If -A parameter was provided, copy all plots to Plots dir
 if [[ $Plots == "yes" ]]; then 
@@ -600,13 +625,20 @@ if [[ $Plots == "yes" ]]; then
 		$myPath/$outDir/Plots/Individual-Runs/
 fi
 
+### If -R == yes, remove intermediate files
+if [[ $remove == "yes" ]]; then 
+	rm -rf $myPath/$outDir/Data/Intermediate-files/ # Remove all intermediate files
+	find $myPath/$outDir/ -name '*bam' -delete   # Remove BAMs
+	find $myPath/$outDir/ -name '*sam' -delete   # SAMs
+	find $myPath/$outDir/ -name '*.gz' -delete   # .gz files
+	find $myPath/$outDir/ -name '*fastq' -delete # .fastq files
+	find $myPath/$outDir/ -name '*fq' -delete    # .fq files
+fi
+
 ### Get finish time (approx.)
 FinishTime="Pipeline finished at $(date)"
 
 ### Results summary for HTML
-de_results="Differential Expression Results"
-dist_results="Distribution Algorithm Results"
-cleav_results="Cleavage Algorithm Results"
 summary_results=`cat $myPath/$outDir/Data/${condition1}_vs_${condition2}.summarised.top-results.html`
 
 echo "
@@ -617,9 +649,11 @@ echo "
 <body><h3>Quantities of ncRNA features identified</h3>
 <br />
 <br />Proportions of ncRNA groups identified (normalised by reads per million)
+<br />
 <embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_RPM-normalised.pdf" width="800px" height="800px" />
 <br />
 <br />Number of raw reads identified for each ncRNA group  
+<br />
 <embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_Raw-readcounts.pdf" width="800px" height="800px" />
 <br />
 <body><h3>Venn diagram comparing the three methods used (DESeq2, distribution algorithm, cleavage algorithm)</h3>
@@ -627,19 +661,19 @@ echo "
 <br />
 <body><h4>Details of the intersections can be found here</h4>
 <ul>
-  <li>$myPath/$outDir/Data/${condition1}_vs_${condition2}.intersect...</li>
+  <li>$myPath/$outDir/Data/VennDiagramGeneration/${condition1}_vs_${condition2}.intersect...</li>
 </ul>
 <body><h4>Files used to generate the Venn Diagram can be found here</h4>
 <ul>
-  <li>$myPath/$outDir/Data/Intermediate-files/VennDiagramGeneration</li>
+  <li>$myPath/$outDir/Data/VennDiagramGeneration</li>
 </ul>
 <br />
 <body><h4>Summary Report Table</h4>
-<br />Top 20 results shown (sorted by Distribution score)
+<br />Top 20 results shown (sorted by distribution score)
 $summary_results
 <br />
 <br />
-<body><h2>$de_results</h2>
+<body><h2>Differential Expression Results (DESeq2)</h2>
 <br />Principal Component Analysis (PCA) of all samples
 <br />
 <embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_tpm-PCA.pdf" width="800px" height="800px" />
@@ -656,9 +690,17 @@ $summary_results
 <br />
 <embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-DE-negLog10_padj.pdf" width="600px" height="600px" />
 <br />
+<body><h4>Coverage plots for all differentially expressed tRNAs</h4>
+<br />
+<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-tsRNAs.pdf" width="800px" height="600px" />
+<br />
 <br />Differentially expressed snoRNAs/miRNAs
 <br />
 <embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_snomiRNAs-and-genes.high-DE-negLog10_padj.pdf" width="600px" height="600px" />
+<br />
+<body><h4>Coverage plots for all differentially expressed snoRNAs/miRNAs</h4>
+<br />
+<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-snomiRNAs.pdf" width="800px" height="600px" />
 <br />
 <br />Full results for features differentially regulated in ${condition1} versus ${condition2} here:
 <ul>
@@ -667,42 +709,40 @@ $summary_results
   <li>$myPath/$outDir/Data/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output-downregulated.csv</li>
 </ul>
 <br />
-<br />
-<body><h2>$dist_results</h2>
+<body><h2>Distribution Algorithm Results</h2>
 <br />Highest scoring tRNA fragments identified using the distribution algorithm
 <br />
-<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-distribution-score.pdf" width="600px" height="600px" />
-<br />Full results here: $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-tsRNAs.txt
+<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-distribution-score.pdf" width="800px" height="600px" />
+<br />Full results here: $myPath/$outDir/Data/Distribution_results/${condition1}_vs_${condition2}_High-distribution-tsRNAs.txt
 <br />
-<body><h4>tRNA coverage plots for all tRNAs with irregular distribution identified by the distribution algorithm</h4>
+<body><h4>Coverage plots for all tRNAs with irregular distribution identified by the distribution algorithm</h4>
 <embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-tsRNAs.pdf" width="800px" height="600px" />
 <br />
 <br />Highest scoring snoRNA fragments/miRNAs identified using the distribution algorithm
 <br />
-<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_snomiRNAs.high-distribution-score.pdf" width="600px" height="600px" />
+<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_snomiRNAs.high-distribution-score.pdf" width="800px" height="600px" />
 <br />
-<br />Full results here: $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-distribution-snomiRNAs.txt
-<br />Coverage plots of the snoRNA/miRNAs identified by the distribution algorithm can be found here: 
-<ul>
-  <li>$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-snomiRNAs.pdf</li>
-</ul>
+<br />Full results here: $myPath/$outDir/Data/Distribution_results/${condition1}_vs_${condition2}_High-distribution-snomiRNAs.txt
 <br />
+<body><h4>Coverage plots for all sno/miRNAs with irregular distribution identified by the distribution algorithm</h4>
+<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-snomiRNAs.pdf" width="800px" height="600px" />
 <br />
-<body><h2>$cleav_results</h2>
+<body><h2>Cleavage Algorithm Results</h2>
 <br />Highest scoring tRNA fragments identified using the cleavage algorithm
 <br />
-<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-cleavage-score.pdf" width="600px" height="600px" />
-<br />Full results here: $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-cleavage-tsRNAs.txt
+<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-cleavage-score.pdf" width="800px" height="600px" />
+<br />Full results here: $myPath/$outDir/Data/Cleavage_results/${condition1}_vs_${condition2}_High-cleavage-tsRNAs.txt
+<br />
+<body><h4>Coverage plots for all tRNAs with irregular 5' vs 3' coverage identified by the cleavage algorithm</h4>
+<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-tsRNAs.pdf" width="800px" height="600px" />
 <br />
 <br />Highest scoring snoRNA fragments/miRNAs identified using the cleavage algorithm
 <br />
-<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_snomiRNAs.high-cleavage-score.pdf" width="600px" height="600px" />
-<br />Full results here: $myPath/$outDir/Data/${condition1}_vs_${condition2}_High-cleavage-snomiRNAs.txt
-<br />Coverage plots of the snoRNA/miRNAs identified by the cleavage algorithm can be found here: 
-<ul>
-  <li>$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-cleavage-snomiRNAs.pdf</li>
-</ul>
+<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_snomiRNAs.high-cleavage-score.pdf" width="800px" height="600px" />
+<br />Full results here: $myPath/$outDir/Data/Cleavage_results/${condition1}_vs_${condition2}_High-cleavage-snomiRNAs.txt
 <br />
+<body><h4>Coverage plots for all sno/miRNAs with irregular 5' vs 3' coverage identified by the cleavage algorithm</h4>
+<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-snomiRNAs.pdf" width="800px" height="600px" />
 <br />
 <body><h2>More results:</h2>
 <br />tRNA fragments identified where read origin accurate only to isoacceptor level 
@@ -713,9 +753,10 @@ $summary_results
 <ul>
   <li>$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_All-tsRNAs.pdf</li>
 </ul>
-<br />
 <br />$StartTime
 <br />$FinishTime
+<br />$parametersHTML
+<br />
 <br />$version
 </body>
 </html>

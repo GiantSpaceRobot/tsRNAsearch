@@ -1,37 +1,37 @@
 #!/bin/bash
 
-usage() { echo "Usage: $0 -p CPUs
+usage() { echo "Usage: $0 -p threads
 " 1>&2; }
 
 #if [ $# -eq 0 ]; then
 #    echo "No arguments provided. Defaulting to use 1 CPU. 
 #	      Please provide parameter '-p #threads' if you wish to use more than 1."
-#    CPUs=1
+#    threads=1
 #fi
-CPUs=1 # Default CPU number unless overwritten by parameters provided
+threads=1 # Default CPU number unless overwritten by parameters provided
 
-while getopts ":hg:p:" o; do
+while getopts ":hs:p:" o; do
     case "${o}" in
 		h)
 			usage
 			exit
 			;;
-		g)
-			g_option="$OPTARG"
-			if [ $g_option = "human" ]; then
-				genome="human"
-			elif [ $g_option = "mouse" ]; then
-				genome="mouse"
-			elif [ $g_option = "both" ]; then
-				genome="both"
+		s)
+			s_option="$OPTARG"
+			if [ $s_option = "human" ]; then
+				species="human"
+			elif [ $s_option = "mouse" ]; then
+				species="mouse"
+			elif [ $s_option = "both" ]; then
+				species="both"
 			else
 				usage
-				echo "Error: the acceptable arguments for the -g parameter are 'human', 'mouse', 'both'"
+				echo "Error: the acceptable arguments for the -s parameter are 'human', 'mouse', 'both'"
 				exit
 			fi
 			;;
 		p)
-			CPUs="$OPTARG"
+			threads="$OPTARG"
 			;;
 		*)
             echo "Error in input parameters!"
@@ -42,46 +42,46 @@ while getopts ":hg:p:" o; do
 done
 
 ### Define functions
-function human_genome () {
+function human_setup () {
 	### Download human genome
 	wget -q http://ftp.ensembl.org/pub/grch37/release-87/gtf/homo_sapiens/Homo_sapiens.GRCh37.87.gtf.gz ./ &
-	wget -q http://ftp.ensembl.org/pub/grch37/release-87/fasta/homo_sapiens/dna/Homo_sapiens.GRCh37.dna.primary_assembly.fa.gz ./ &
+	#wget -q http://ftp.ensembl.org/pub/grch37/release-87/fasta/homo_sapiens/dna/Homo_sapiens.GRCh37.dna.primary_assembly.fa.gz ./ &
 	wait
 	echo "Gunzipping human genome files..."
 	gunzip Homo_sapiens.GRCh37.87.gtf.gz &  # Gunzip GTF file
-	gunzip Homo_sapiens.GRCh37.dna.primary_assembly.fa.gz &
+	#gunzip Homo_sapiens.GRCh37.dna.primary_assembly.fa.gz &
 	wait
 	python bin/GTF_DuplicateRemover.py additional-files/Homo-sapiens_All-ncRNAs.txt Homo_sapiens.GRCh37.87.gtf Homo_sapiens.GRCh37.87.NoDuplicates.gtf
 	rm Homo_sapiens.GRCh37.87.gtf
 	mv Homo_sapiens.GRCh37.87.NoDuplicates.gtf DBs/Homo_sapiens.GRCh37.87.gtf
-	echo "Building human genome index..."
-	mkdir -p DBs/genome_index
-	mkdir -p DBs/genome_index/human
+	#echo "Building human genome index..."
+	#mkdir -p DBs/genome_index
+	#mkdir -p DBs/genome_index/human
 	mkdir -p DBs/genome_index/human-ncRNAs
-	STAR --runThreadN $CPUs --runMode genomeGenerate --genomeDir DBs/genome_index/human/ --genomeFastaFiles Homo_sapiens.GRCh37.dna.primary_assembly.fa 
-	STAR --runThreadN $CPUs --runMode genomeGenerate --genomeDir DBs/genome_index/human-ncRNAs/ --genomeFastaFiles DBs/hg19-combined_tiRNAs_snomiRNAs.fa --genomeSAindexNbases 8
-	echo "Feel free to delete the Homo_sapiens.GRCh37.dna.primary_assembly.fa file in this directory as it is no longer required"
+	#STAR --runThreadN $threads --runMode genomeGenerate --genomeDir DBs/genome_index/human/ --genomeFastaFiles Homo_sapiens.GRCh37.dna.primary_assembly.fa 
+	STAR --runThreadN $threads --runMode genomeGenerate --genomeDir DBs/genome_index/human-ncRNAs/ --genomeFastaFiles DBs/hg19-combined_tiRNAs_snomiRNAs.fa --genomeSAindexNbases 8
+	#echo "Feel free to delete the Homo_sapiens.GRCh37.dna.primary_assembly.fa file in this directory as it is no longer required"
 }
 
-function mouse_genome () {
+function mouse_setup () {
 	### Download mouse genome
-	wget -q http://ftp.ensembl.org/pub/release-95/fasta/mus_musculus/dna/Mus_musculus.GRCm38.dna.primary_assembly.fa.gz ./ &
+	#wget -q http://ftp.ensembl.org/pub/release-95/fasta/mus_musculus/dna/Mus_musculus.GRCm38.dna.primary_assembly.fa.gz ./ &
 	wget -q http://ftp.ensembl.org/pub/release-95/gtf/mus_musculus/Mus_musculus.GRCm38.95.gtf.gz ./ &
 	wait
 	echo "Gunzipping mouse genome files..."
 	gunzip Mus_musculus.GRCm38.95.gtf.gz &  # Gunzip GTF file
-	gunzip Mus_musculus.GRCm38.dna.primary_assembly.fa.gz &
+	#gunzip Mus_musculus.GRCm38.dna.primary_assembly.fa.gz &
 	wait
 	python bin/GTF_DuplicateRemover.py additional-files/Mus-musculus_All-ncRNAs.txt Mus_musculus.GRCm38.95.gtf Mus_musculus.GRCm38.95.NoDuplicates.gtf
 	rm Mus_musculus.GRCm38.95.gtf 
 	mv Mus_musculus.GRCm38.95.NoDuplicates.gtf DBs/Mus_musculus.GRCm38.95.gtf
 	echo "Building mouse genome index..."
 	mkdir -p DBs/genome_index
-	mkdir -p DBs/genome_index/mouse
+	#mkdir -p DBs/genome_index/mouse
 	mkdir -p DBs/genome_index/mouse-ncRNAs
-	STAR --runThreadN $CPUs --runMode genomeGenerate --genomeDir DBs/genome_index/mouse/ --genomeFastaFiles Mus_musculus.GRCm38.dna.primary_assembly.fa
-	STAR --runThreadN $CPUs --runMode genomeGenerate --genomeDir DBs/genome_index/mouse-ncRNAs/ --genomeFastaFiles DBs/GRCm38-combined_tiRNAs_snomiRNAs.fsa
-	echo "Feel free to delete the Mus_musculus.GRCm38.dna.primary_assembly.fa file in this directory as it is no longer required"
+	#STAR --runThreadN $threads --runMode genomeGenerate --genomeDir DBs/genome_index/mouse/ --genomeFastaFiles Mus_musculus.GRCm38.dna.primary_assembly.fa
+	STAR --runThreadN $threads --runMode genomeGenerate --genomeDir DBs/genome_index/mouse-ncRNAs/ --genomeFastaFiles DBs/GRCm38-combined_tiRNAs_snomiRNAs.fsa
+	#echo "Feel free to delete the Mus_musculus.GRCm38.dna.primary_assembly.fa file in this directory as it is no longer required"
 }
 
 
@@ -94,41 +94,31 @@ else
 fi
 
 ### Download genomes
-if [ $genome = "human" ]; then
+if [ $species = "human" ]; then
 	### Download human genome and GTF file
-	echo "Downloading human genome and GTF files..."
-	human_genome &
-elif [ $genome = "mouse" ]; then
-	### Download mouse genome and GTF file
-	echo "Downloading mouse genome and GTF files..."
-	mouse_genome &
-elif [ $genome = "both" ]; then
+	echo "Downloading human GTF file..."
+	human_setup &
+elif [ $species = "mouse" ]; then
+	### Download mouse GTF file
+	echo "Downloading mouse GTF file..."
+	mouse_setup &
+elif [ $species = "both" ]; then
 	### Download human and mouse genomes and GTF files
-	echo "Downloading human and mouse genomes and GTF files..."
-	human_genome &
-	mouse_genome &
-elif [ -z $genome ]; then
+	echo "Downloading human and mouse GTF files..."
+	human_setup &
+	mouse_setup &
+elif [ -z $species ]; then
 	### The genome variable is unset
-	echo "Please use the -g option with 'human', 'mouse', or 'both' depending on the type of analyses you intend to run"
-	exit 1	
+	echo "Please use the -s option with 'human', 'mouse', or 'both' depending on the type of analyses you intend to run"
+	exit 1
 fi
 
 # Setup for tsRNAsearch
 echo "
 
-tsRNAsearch setup.
-
-This will take approx. 1 hour per genome (downloading and indexing genomes is a slow process)...
+Beginning tsRNAsearch setup...
 
 "
-
-# curl
-#echo "Looking for Curl..."
-#if ! [ -x "$(command -v curl)" ]; then
-#	sudo apt install curl
-#else
-#	echo "Curl already installed"
-#fi
 
 # python 
 echo "Looking for Python..."
@@ -170,51 +160,26 @@ else
 fi
 
 # Trim Galore
-echo "Looking for Trim_Galore..."
+echo "Looking for cutadapt and fastqc (trim_galore)..."
 if ! [ -x "$(command -v cutadapt)" ]; then
 	sudo apt install cutadapt
 fi
 if ! [ -x "$(command -v fastqc)" ]; then
 	sudo apt install fastqc
 fi
-#if ! [ -x "$(command -v trim_galore)" ]; then # Check for global trim_galore
-#	if [ ! -f bin/trim_galore ]; then # Check for tsRNAsearch trim_galore
-		### Download trim_galore and move it to bin Dir. Edit tsRNAsearch to point to new trim_galore location
-		#curl -fsSL https://github.com/FelixKrueger/TrimGalore/archive/0.4.5.tar.gz -o trim_galore.tar.gz
-		#tar xvzf trim_galore.tar.gz
-		#mv TrimGalore-0.4.5/trim_galore bin/
-#		sed -i -e 's/trim_galore\ /bin\/trim_galore\ /g' tsRNAsearch.sh
-#	fi
-#else
-#	echo "Trim_Galore aleady installed"
-#fi
-
-# FeatureCounts
-#echo "Looking for featureCounts..."
-#if ! [ -x "$(command -v featureCounts)" ]; then
-#	if [ ! -f bin/featureCounts ]; then
-		### Download featureCounts and move it to bin Dir. Edit tsRNAsearch to point to new featureCounts location
-		#wget -q https://sourceforge.net/projects/subread/files/subread-1.6.3/subread-1.6.3-Linux-x86_64.tar.gz ./ #featureCounts 1.6.3
-		#tar xvfz subread-1.6.3-Linux-x86_64.tar.gz
-		#mv subread-1.6.3-Linux-x86_64/bin/featureCounts bin/
-#		sed -i -e 's/featureCounts\ /bin\/featureCounts\ /g' tsRNAsearch.sh
-#	fi
-#else
-#	echo "featureCounts already installed"
-#fi
 
 # Create absolute path for bin files
-echo "Creating absolute path for tsRNAsearch 'bin' and 'DBs'"
+echo "Creating absolute path for tsRNAsearch 'bin' and 'DBs'..."
 myPath=$(pwd)
-sed -i -e "s~ bin~ ${myPath}\/bin~g" tsRNAsearch.sh # using tilde as delimiter here instead of slash as myPath variable contains slashes
-sed -i -e "s~ bin~ ${myPath}\/bin~g" tsRNAsearch_DE.sh
+sed -i -e "s~ bin~ ${myPath}\/bin~g" bin/tsRNAsearch_single.sh # using tilde as delimiter here instead of slash as myPath variable contains slashes
+sed -i -e "s~ bin~ ${myPath}\/bin~g" tsRNAsearch.sh
+sed -i -e "s~DBs~${myPath}\/DBs~g" bin/tsRNAsearch_single.sh
 sed -i -e "s~DBs~${myPath}\/DBs~g" tsRNAsearch.sh
-sed -i -e "s~DBs~${myPath}\/DBs~g" tsRNAsearch_DE.sh
-sed -i -e "s~bin\/trim~${myPath}\/bin\/trim~g" tsRNAsearch.sh
-sed -i -e "s~bin\/feat~${myPath}\/bin\/feat~g" tsRNAsearch.sh
+sed -i -e "s~bin\/trim~${myPath}\/bin\/trim~g" bin/tsRNAsearch_single.sh
+sed -i -e "s~bin\/feat~${myPath}\/bin\/feat~g" bin/tsRNAsearch_single.sh
+sed -i -e "s~additional~${myPath}\/additional~g" bin/tsRNAsearch_single.sh
 sed -i -e "s~additional~${myPath}\/additional~g" tsRNAsearch.sh
-sed -i -e "s~additional~${myPath}\/additional~g" tsRNAsearch_DE.sh
 
-wait # Wait for things to finish (genome download and database setup)
+wait # Wait for things to finish running
 
 echo "Done"

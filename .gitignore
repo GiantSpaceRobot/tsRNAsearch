@@ -1,9 +1,9 @@
 DBs/Homo*
 DBs/Mus*
 Runs/
-DBs/genome_index/*
-DBs/genome_index/human/*
-DBs/genome_index/mouse/*
+DBs/species_index/*
+DBs/species_index/human/*
+DBs/species_index/mouse/*
 samtool*
 temp_files/
 nohup*
