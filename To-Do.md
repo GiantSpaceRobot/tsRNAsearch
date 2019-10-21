@@ -8,5 +8,5 @@ Update after publication:
 Update now:
 * Use GRCh38 ncRNA sequences
 * Place the pipeline in a docker container?
-* Remove genomes from setup
-* Incorporate simple text file as table in summary HTML
+* DE PDFs not showing in HTML
+* Test new -R parameter

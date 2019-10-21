@@ -35,7 +35,6 @@ if(!require(DESeq2)){
 }
 
 if(!require(EnhancedVolcano)){ 
-  # If DESeq2 still not loaded, try install from github
   install.packages("devtools") 
   devtools::install_github("kevinblighe/EnhancedVolcano") 
 }
@@ -60,3 +59,7 @@ if(!require(reshape2)){
   library(reshape2)
 }
 
+if(!require(xtable)){
+  install.packages("xtable")
+  library(xtable)
+}
