@@ -59,7 +59,7 @@ function human_setup () {
 	#mkdir -p DBs/genome_index/human
 	mkdir -p DBs/genome_index/human-ncRNAs
 	#STAR --runThreadN $threads --runMode genomeGenerate --genomeDir DBs/genome_index/human/ --genomeFastaFiles Homo_sapiens.GRCh37.dna.primary_assembly.fa 
-	STAR --runThreadN $threads --runMode genomeGenerate --genomeDir DBs/genome_index/human-ncRNAs/ --genomeFastaFiles DBs/hg19-combined_tiRNAs_snomiRNAs.fa --genomeSAindexNbases 8
+	bin/STAR --runThreadN $threads --runMode genomeGenerate --genomeDir DBs/genome_index/human-ncRNAs/ --genomeFastaFiles DBs/hg19-combined_tiRNAs_snomiRNAs.fa --genomeSAindexNbases 8
 	#echo "Feel free to delete the Homo_sapiens.GRCh37.dna.primary_assembly.fa file in this directory as it is no longer required"
 }
 
@@ -80,22 +80,22 @@ function mouse_setup () {
 	#mkdir -p DBs/genome_index/mouse
 	mkdir -p DBs/genome_index/mouse-ncRNAs
 	#STAR --runThreadN $threads --runMode genomeGenerate --genomeDir DBs/genome_index/mouse/ --genomeFastaFiles Mus_musculus.GRCm38.dna.primary_assembly.fa
-	STAR --runThreadN $threads --runMode genomeGenerate --genomeDir DBs/genome_index/mouse-ncRNAs/ --genomeFastaFiles DBs/GRCm38-combined_tiRNAs_snomiRNAs.fsa
+	bin/STAR --runThreadN $threads --runMode genomeGenerate --genomeDir DBs/genome_index/mouse-ncRNAs/ --genomeFastaFiles DBs/GRCm38-combined_tiRNAs_snomiRNAs.fsa
 	#echo "Feel free to delete the Mus_musculus.GRCm38.dna.primary_assembly.fa file in this directory as it is no longer required"
 }
 
 
 # STAR
-echo "Looking for STAR..."
-if ! [ -x "$(command -v STAR)" ]; then
-	sudo apt install rna-star
-else
-	echo "STAR already installed"
-fi
+#echo "Looking for STAR..."
+#if ! [ -x "$(command -v STAR)" ]; then
+#	sudo apt install rna-star
+#else
+#	echo "STAR already installed"
+#fi
 
 ### Download genomes
 if [ $species = "human" ]; then
-	### Download human genome and GTF file
+	### Download human GTF file
 	echo "Downloading human GTF file..."
 	human_setup &
 elif [ $species = "mouse" ]; then
@@ -103,7 +103,7 @@ elif [ $species = "mouse" ]; then
 	echo "Downloading mouse GTF file..."
 	mouse_setup &
 elif [ $species = "both" ]; then
-	### Download human and mouse genomes and GTF files
+	### Download human and mouse GTF files
 	echo "Downloading human and mouse GTF files..."
 	human_setup &
 	mouse_setup &
@@ -159,7 +159,7 @@ else
 	echo "samtools already installed"
 fi
 
-# Trim Galore
+# cutadapt and fastqc
 echo "Looking for cutadapt and fastqc (trim_galore)..."
 if ! [ -x "$(command -v cutadapt)" ]; then
 	sudo apt install cutadapt

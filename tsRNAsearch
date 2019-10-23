@@ -16,10 +16,10 @@ asciiArt() { echo '
    ' 1>&1; }
 usage() { echo "
 Comparison of two conditions:
-	Usage: $0 -g human/mouse -d Path/To/Input/Files -o OutputDirectory/ -e ExperimentLayout.csv -t num-of-threads
+	Usage: $0 -s human/mouse -d Path/To/Input/Files -o OutputDirectory/ -e ExperimentLayout.csv -t num-of-threads
 
 Analysis of a single RNA-seq file:
-	Usage: $0 -g human/mouse -f Path/To/InputFile.fastq -o OutputDirectory/ -t num-of-threads
+	Usage: $0 -s human/mouse -f Path/To/InputFile.fastq -o OutputDirectory/ -t num-of-threads
 	" 1>&2; }
 info() { echo "
 Options
@@ -50,7 +50,7 @@ while getopts ":hs:A:t:d:f:S:R:e:o:" o; do
 			usage
 			info
 			echo $version
-			exit
+			exit 0
 			;;
 		s)
 			species="$OPTARG"
@@ -219,6 +219,7 @@ parameters="$(echo -e "Parameters:
 	Number of threads to use for the analysis (-t): $threads
 	Plot all features (-A): $Plots
 	Skip pre-processing (-S): $skip
+	Remove intermediate files (-R): $remove
 ")"
 parametersHTML="
 <br />Parameters:
@@ -229,7 +230,8 @@ parametersHTML="
 <br />    Output directory that tsRNAsearch will create and populate with results (-o): $outDir
 <br />    Number of threads to use for the analysis (-t): $threads
 <br />    Plot all features (-A): $Plots
-<br />    Skip pre-processing (-S): $skip"
+<br />    Skip pre-processing (-S): $skip
+<br />    Remove intermediate files (-R): $remove"
 echo "$parameters"
 
 ### If -A parameter was not provided, default is to only plot differentially expressed features
@@ -241,19 +243,21 @@ echo "$parameters"
 
 ### Create dir substructure
 mkdir -p $outDir
+
+###
+# Run tsRNAsearch on a single file (only have one script, not two
+if [[ $inFile != "NA" ]]; then
+	bin/tsRNAsearch_single.sh -s "$species" -f "$inFile" -o "$myPath/$outDir/$filename" -t "$threads" -A "$Plots" -S "$skip"
+	exit 0 # Exit successfully
+fi
+
+### Create dir substructure
 mkdir -p $outDir/Data
 mkdir -p $outDir/Data/Distribution_results
 mkdir -p $outDir/Data/Cleavage_results
 mkdir -p $outDir/Data/Intermediate-files
 mkdir -p $outDir/Data/Intermediate-files/DataTransformations
 mkdir -p $outDir/Plots
-
-###
-# Run tsRNAsearch on a single file (only have one script, not two
-if [ "$inFile" ]; then
-	bin/tsRNAsearch_single.sh -s "$species" -f "$inFile" -o "$myPath/$outDir/$filename" -t "$threads" -A "$Plots" -S "$skip"
-	exit 0 # Exit successfully
-fi
 
 ### Run tsRNAsearch on each RNA-seq file
 for f in $inDir/*; do
@@ -633,6 +637,7 @@ if [[ $remove == "yes" ]]; then
 	find $myPath/$outDir/ -name '*.gz' -delete   # .gz files
 	find $myPath/$outDir/ -name '*fastq' -delete # .fastq files
 	find $myPath/$outDir/ -name '*fq' -delete    # .fq files
+	find $myPath/$outDir/ -name '*accepted_hits*depth' -delete    # .depth files
 fi
 
 ### Get finish time (approx.)

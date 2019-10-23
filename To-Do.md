@@ -7,6 +7,3 @@ Update after publication:
 
 Update now:
 * Use GRCh38 ncRNA sequences
-* Place the pipeline in a docker container?
-* DE PDFs not showing in HTML
-* Test new -R parameter

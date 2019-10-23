@@ -427,7 +427,7 @@ fi
 string_padder "Running tRNA/snomiRNA alignment step..."
 
 ### STAR ###
-STAR \
+bin/STAR \
 	--runThreadN $threads \
 	--genomeDir $ncRNADB \
 	--readFilesIn $readsForAlignment \
