@@ -22,7 +22,7 @@ This script will install the following pieces of software at root level:
 * R/Rscript (and R libraries)
 * samtools
 
-Add tsRNAsearch.sh to your path.
+Add tsRNAsearch.sh to your path or call the programme using bash/sh.
 
 ### Analysing a single RNA-seq dataset
 We have supplied data to test that the pipeline is functioning correctly:

@@ -1,8 +1,4 @@
 DBs/Homo*
 DBs/Mus*
-DBs/hg19.ensembl.gtf
 DBs/species_index/*
 samtool*
-temp_files/
-nohup*
-fastp*
