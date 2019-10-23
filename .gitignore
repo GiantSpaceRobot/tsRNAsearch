@@ -1,9 +1,7 @@
 DBs/Homo*
 DBs/Mus*
-Runs/
+DBs/hg19.ensembl.gtf
 DBs/species_index/*
-DBs/species_index/human/*
-DBs/species_index/mouse/*
 samtool*
 temp_files/
 nohup*
