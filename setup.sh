@@ -61,7 +61,7 @@ function human_setup () {
 	#mkdir -p DBs/species_index/human
 	mkdir -p DBs/species_index/human-ncRNAs
 	#STAR --runThreadN $threads --runMode genomeGenerate --genomeDir DBs/species_index/human/ --genomeFastaFiles Homo_sapiens.GRCh37.dna.primary_assembly.fa 
-	bin/STAR --runThreadN $threads --runMode genomeGenerate --genomeDir DBs/species_index/human-ncRNAs/ --genomeFastaFiles DBs/hg19-combined_tiRNAs_snomiRNAs.fa --genomeSAindexNbases 8
+	bin/STAR --runThreadN $threads --runMode genomeGenerate --genomeDir DBs/species_index/human-ncRNAs/ --genomeFastaFiles DBs/human_tRNAs-and-ncRNAs_relative_cdhit.fa --genomeSAindexNbases 8
 	#echo "Feel free to delete the Homo_sapiens.GRCh37.dna.primary_assembly.fa file in this directory as it is no longer required"
 }
 
@@ -82,7 +82,7 @@ function mouse_setup () {
 	#mkdir -p DBs/species_index/mouse
 	mkdir -p DBs/species_index/mouse-ncRNAs
 	#STAR --runThreadN $threads --runMode genomeGenerate --genomeDir DBs/species_index/mouse/ --genomeFastaFiles Mus_musculus.GRCm38.dna.primary_assembly.fa
-	bin/STAR --runThreadN $threads --runMode genomeGenerate --genomeDir DBs/species_index/mouse-ncRNAs/ --genomeFastaFiles DBs/GRCm38-combined_tiRNAs_snomiRNAs.fsa
+	bin/STAR --runThreadN $threads --runMode genomeGenerate --genomeDir DBs/species_index/mouse-ncRNAs/ --genomeFastaFiles DBs/Mus_musculus.GRCm38-combined_tiRNAs_snomiRNAs.fsa
 	#echo "Feel free to delete the Mus_musculus.GRCm38.dna.primary_assembly.fa file in this directory as it is no longer required"
 }
 

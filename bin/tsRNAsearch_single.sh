@@ -40,6 +40,8 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
+### Define defaults
+species="human"
 skip="no"
 while getopts ":hs:t:f:o:A:S:" o; do
     case "${o}" in
@@ -95,40 +97,48 @@ done
 echo "Started analysing "$singleFile" on $(date)" # Print pipeline start-time
 
 ### Are we analysing Human or Mouse? -g parameter
-if [ "$species" ]; then
-    if [[ $species == "human" ]]; then
-		speciesDB="DBs/species_index/human/"
-		ncRNADB="DBs/species_index/human-ncRNAs/"
-		speciesGTF="DBs/Homo_sapiens.GRCh37.87.gtf"
-		tRNAGTF="DBs/hg19-wholetRNA-CCA_cdhit.gtf"
-		snomiRNAGTF="DBs/hg19-snomiRNA_cdhit.gtf"
-		tRNA_introns="additional-files/tRNA-introns-for-removal_hg19.tsv"
-		empty_tRNAs="additional-files/hg19_empty_tRNA.count"
-		empty_snomiRNAs="additional-files/hg19_empty_snomiRNA.count"
-		empty_mRNAs="additional-files/hg19_empty_mRNA-ncRNA.count"
-	elif [[ $species == "mouse" ]]; then
-		speciesDB="DBs/species_index/mouse/"
-		ncRNADB="DBs/species_index/mouse-ncRNAs/"
-		speciesGTF="DBs/Mus_musculus.GRCm38.95.gtf"
-		tRNAGTF="DBs/mm10-tRNAs_renamed_cdhit.gtf"
-		snomiRNAGTF="DBs/mouse_snomiRNAs_relative_cdhit.gtf"
-		tRNA_introns="additional-files/tRNA-introns-for-removal_mm10.tsv"
-		empty_tRNAs="additional-files/mm10_empty_tRNA.count"
-		empty_snomiRNAs="additional-files/mm10_empty_snomiRNA.count"
-		empty_mRNAs="additional-files/mm10_empty_mRNA-ncRNA.count"
-	fi
-else # If species was not specified, default to use human species/files
-	species="human"
-	speciesDB="DBs/species_index/human/"
-	ncRNADB="DBs/species_index/human-ncRNAs/"
-	speciesGTF="DBs/Homo_sapiens.GRCh37.87.gtf"
-	tRNAGTF="DBs/hg19-wholetRNA-CCA_cdhit.gtf"
-	snomiRNAGTF="DBs/hg19-snomiRNA_cdhit.gtf"
-	tRNA_introns="additional-files/tRNA-introns-for-removal_hg19.tsv"
-	empty_tRNAs="additional-files/hg19_empty_tRNA.count"
-	empty_snomiRNAs="additional-files/hg19_empty_snomiRNA.count"
-	empty_mRNAs="additional-files/hg19_empty_mRNA-ncRNA.count"
-fi
+#if [ "$species" ]; then
+#    if [[ $species == "human" ]]; then
+#		#speciesDB="DBs/species_index/human/"
+#		ncRNADB="DBs/species_index/human-ncRNAs/"
+#		#speciesGTF="DBs/Homo_sapiens.GRCh37.87.gtf"
+#		tRNAGTF="DBs/hg19-wholetRNA-CCA_cdhit.gtf"
+#		ncRNA_GTF="DBs/hg19-ncRNA_cdhit.gtf"
+#		tRNA_introns="additional-files/tRNA-introns-for-removal_hg19.tsv"
+#		empty_tRNAs="additional-files/hg19_empty_tRNA.count"
+#		empty_ncRNAs="additional-files/hg19_empty_ncRNA.count"
+#		empty_mRNAs="additional-files/hg19_empty_mRNA-ncRNA.count"
+#	elif [[ $species == "mouse" ]]; then
+#		#speciesDB="DBs/species_index/mouse/"
+#		ncRNADB="DBs/species_index/mouse-ncRNAs/"
+#		#speciesGTF="DBs/Mus_musculus.GRCm38.95.gtf"
+#		tRNAGTF="DBs/mm10-tRNAs_renamed_cdhit.gtf"
+#		ncRNA_GTF="DBs/mouse_ncRNAs_relative_cdhit.gtf"
+#		tRNA_introns="additional-files/tRNA-introns-for-removal_mm10.tsv"
+#		empty_tRNAs="additional-files/mm10_empty_tRNA.count"
+#		empty_ncRNAs="additional-files/mm10_empty_ncRNA.count"
+#		empty_mRNAs="additional-files/mm10_empty_mRNA-ncRNA.count"
+#	fi
+#else # If species was not specified, default to use human species/files
+#	#species="human"
+#	#speciesDB="DBs/species_index/human/"
+#	ncRNADB="DBs/species_index/human-ncRNAs/"
+#	#speciesGTF="DBs/Homo_sapiens.GRCh37.87.gtf"
+#	tRNAGTF="DBs/hg19-wholetRNA-CCA_cdhit.gtf"
+#	ncRNA_GTF="DBs/hg19-ncRNA_cdhit.gtf"
+#	tRNA_introns="additional-files/tRNA-introns-for-removal_hg19.tsv"
+#	empty_tRNAs="additional-files/hg19_empty_tRNA.count"
+#	empty_ncRNAs="additional-files/hg19_empty_ncRNA.count"
+#	empty_mRNAs="additional-files/hg19_empty_mRNA-ncRNA.count"
+#fi
+ncRNADB="DBs/species_index/${species}-ncRNAs/"
+tRNAGTF="DBs/${species}_tRNAs_relative_cdhit.gtf"
+ncRNA_GTF="DBs/${species}_ncRNAs_relative_cdhit.gtf"
+tRNA_introns="additional-files/${species}_tRNA-introns-for-removal.tsv"
+empty_tRNAs="additional-files/${species}_empty_tRNA.count"
+empty_ncRNAs="additional-files/${species}_empty_ncRNA.count"
+#empty_mRNAs="additional-files/hg19_empty_mRNA-ncRNA.count"
+
 
 ### Define functions
 # Function to pad text with characters to make sentences stand out more
@@ -266,10 +276,14 @@ function bam_to_plots () {  ### Steps for plotting regions with high variation i
 	### If we are working with tRNAs, collapse all tRNAs based on same isoacceptor
 	if [[ $3 = "tsRNA" ]]; then
 		### Remove introns from tRNA counts (as these will interfere with the read counts of collapsed tRNAs)
-		Rscript bin/Remove-introns.R \
-			$1/accepted_hits.depth \
-			$tRNA_introns \
-			$1/accepted_hits_intron-removed.depth 
+		if [ -s $tRNA_introns ]; then # If there are introns in the intron annotation file, proceed with removing them
+			Rscript bin/Remove-introns.R \
+				$1/accepted_hits.depth \
+				$tRNA_introns \
+				$1/accepted_hits_intron-removed.depth 
+		else # If not, just use the input
+			cp $1/accepted_hits.depth $1/accepted_hits_intron-removed.depth
+		fi
 		### Flip the read coverage of tRNAs that are in the minus orientation
 		Rscript bin/Coverage-flipper.R \
 			$1/accepted_hits_intron-removed.depth \
@@ -291,16 +305,16 @@ function bam_to_plots () {  ### Steps for plotting regions with high variation i
 	if [[ $Plots == "yes" ]]; then # Plot everything
 		### Plot the coverage of all features (arg 3 is mean coverage in RPM) and
 		### Create plot and txt file describing relationship between 5' and 3' regions of feature
-		if [[ $3 = "snomiRNA" ]]; then
+		if [[ $3 = "ncRNA" ]]; then
 			Rscript bin/Bedgraph_plotter.R \
 				$1/accepted_hits_sorted.depth \
 				$1/$2_$3_Coverage-plots.pdf \
 				0 \
-				$snomiRNAGTF
+				$ncRNA_GTF
 			Rscript bin/Single-replicate-analysis.R \
 				$1/accepted_hits_sorted.depth \
 				$1/$2_$3_Results \
-				$snomiRNAGTF &
+				$ncRNA_GTF &
 		elif [[ $3 == "tsRNA" ]]; then
 			Rscript bin/Bedgraph_plotter.R \
 				$1/accepted_hits_sorted.depth \
@@ -379,7 +393,7 @@ string_padder "Creating directory structure"
 mkdir -p $outDir
 mkdir -p $outDir/FastQC
 mkdir -p $outDir/tRNA-alignment
-mkdir -p $outDir/snomiRNA-alignment
+mkdir -p $outDir/ncRNA-alignment
 mkdir -p $outDir/mRNA-ncRNA-alignment
 mkdir -p $outDir/FCount-count-output
 mkdir -p $outDir/FCount-to-RPM
@@ -424,7 +438,7 @@ fi
 #	$readsForAlignment
 
 ### Align reads to ncRNA database using STAR
-string_padder "Running tRNA/snomiRNA alignment step..."
+string_padder "Running tRNA/ncRNA alignment step..."
 
 ### STAR ###
 bin/STAR \
@@ -451,13 +465,13 @@ mv $outDir/tRNA-alignment/Unmapped.out.mate1 $outDir/tRNA-alignment/unmapped.fas
 #### STAR ###
 
 if [ -f $outDir/tRNA-alignment/aligned_tRNAdb.sam ]; then  #If STAR successfully mapped reads, convert to bam and index
-	### Split the resulting SAM file into reads aligned to tRNAs and snomiRNAs
+	### Split the resulting SAM file into reads aligned to tRNAs and ncRNAs
 	grep ^@ $outDir/tRNA-alignment/aligned_tRNAdb.sam > $outDir/tRNA-alignment/SamHeader.sam &
-	grep ENS $outDir/tRNA-alignment/aligned_tRNAdb.sam > $outDir/tRNA-alignment/snomiRNAs.sam &
+	grep ENS $outDir/tRNA-alignment/aligned_tRNAdb.sam > $outDir/tRNA-alignment/ncRNAs.sam &
 	grep -v ENS $outDir/tRNA-alignment/aligned_tRNAdb.sam > $outDir/tRNA-alignment/tsRNAs_aligned.sam &
 	wait
-	cat $outDir/tRNA-alignment/SamHeader.sam $outDir/tRNA-alignment/snomiRNAs.sam \
-		> $outDir/tRNA-alignment/snomiRNAs_aligned.sam
+	cat $outDir/tRNA-alignment/SamHeader.sam $outDir/tRNA-alignment/ncRNAs.sam \
+		> $outDir/tRNA-alignment/ncRNAs_aligned.sam
 	wait
 	#samtools view -bS $outDir/tRNA-alignment/tsRNAs_aligned.sam > $outDir/tRNA-alignment/accepted_hits_unsorted.bam
 	#samtools sort $outDir/tRNA-alignment/accepted_hits_unsorted.bam > $outDir/tRNA-alignment/accepted_hits.bam 
@@ -466,16 +480,16 @@ if [ -f $outDir/tRNA-alignment/aligned_tRNAdb.sam ]; then  #If STAR successfully
 		> $outDir/tRNA-alignment/accepted_hits.bam
 	samtools index $outDir/tRNA-alignment/accepted_hits.bam &
 	mv $outDir/tRNA-alignment/unmapped.fastq $outDir/tRNA-alignment/$myFile
-	### Move snomiRNA BAM to directory
-	#samtools view -bS $outDir/tRNA-alignment/snomiRNAs.sam > $outDir/snomiRNA-alignment/accepted_hits_unsorted.bam
-	#samtools sort $outDir/snomiRNA-alignment/accepted_hits_unsorted.bam > $outDir/snomiRNA-alignment/accepted_hits.bam 
-	samtools view -bS $outDir/tRNA-alignment/snomiRNAs.sam \
+	### Move ncRNA BAM to directory
+	#samtools view -bS $outDir/tRNA-alignment/ncRNAs.sam > $outDir/ncRNA-alignment/accepted_hits_unsorted.bam
+	#samtools sort $outDir/ncRNA-alignment/accepted_hits_unsorted.bam > $outDir/ncRNA-alignment/accepted_hits.bam 
+	samtools view -bS $outDir/tRNA-alignment/ncRNAs.sam \
 		| samtools sort \
-		> $outDir/snomiRNA-alignment/accepted_hits.bam
-	samtools index $outDir/snomiRNA-alignment/accepted_hits.bam &
+		> $outDir/ncRNA-alignment/accepted_hits.bam
+	samtools index $outDir/ncRNA-alignment/accepted_hits.bam &
 	rm \
 		$outDir/tRNA-alignment/SamHeader.sam \
-		$outDir/tRNA-alignment/snomiRNAs.sam \
+		$outDir/tRNA-alignment/ncRNAs.sam \
 		$outDir/tRNA-alignment/aligned_tRNAdb.sam &	
 else
 	echo "
@@ -524,24 +538,24 @@ string_padder "Alignment steps complete. Moving on to read-counting using FCount
 #fi
 	
 # Count for alignment step 2
-if [ ! -f $outDir/snomiRNA-alignment/accepted_hits.bam ]; then
+if [ ! -f $outDir/ncRNA-alignment/accepted_hits.bam ]; then
 	echo "
 No alignment file found for sno/miRNA alignment. Using blank count file instead
 "
-	cp $empty_snomiRNAs $outDir/FCount-count-output/snomiRNA-alignment.count &
+	cp $empty_ncRNAs $outDir/FCount-count-output/ncRNA-alignment.count &
 else
 	echo "
 Counting sno/miRNA alignment reads
 "
 	bin/featureCounts \
 		-T $featureCount_threads \
-		-a $snomiRNAGTF \
-		-o $outDir/FCount-count-output/snomiRNA-alignment.fcount \
-		$outDir/snomiRNA-alignment/accepted_hits.bam
-	grep -v featureCounts $outDir/FCount-count-output/snomiRNA-alignment.fcount \
+		-a $ncRNA_GTF \
+		-o $outDir/FCount-count-output/ncRNA-alignment.fcount \
+		$outDir/ncRNA-alignment/accepted_hits.bam
+	grep -v featureCounts $outDir/FCount-count-output/ncRNA-alignment.fcount \
 		| grep -v ^Geneid \
 		| awk -v OFS='\t' '{print $1, $7}' \
-		> $outDir/FCount-count-output/snomiRNA-alignment.count
+		> $outDir/FCount-count-output/ncRNA-alignment.count
 fi
 
 # Count for alignment step 1
@@ -580,12 +594,12 @@ wait
 ### Plot everything
 string_padder "Generate depth files and plot features"
 bam_to_plots $outDir/tRNA-alignment $singleFile_basename tsRNA &
-bam_to_plots $outDir/snomiRNA-alignment $singleFile_basename snomiRNA &
+bam_to_plots $outDir/ncRNA-alignment $singleFile_basename ncRNA &
 
 ### Process multi-mapping tRNAs
 python bin/Leftovers-to-Bedgraph.py \
 	$outDir/tRNA-alignment/tRNAs-almost-mapped.txt \
-	additional-files/tRNA-lengths_hg19.txt \
+	additional-files/${species}_tRNA-lengths.txt \
 	$outDir/tRNA-alignment/tRNAs-almost-mapped.depth
 python bin/Depth-to-Depth_RPM.py \
 	$outDir/tRNA-alignment/tRNAs-almost-mapped.depth \
@@ -607,9 +621,9 @@ python bin/FCount-to-RPM.py \
 	$mapped \
 	$outDir/FCount-to-RPM/tRNA-alignment & 
 python bin/FCount-to-RPM.py \
-	$outDir/FCount-count-output/snomiRNA-alignment.count \
+	$outDir/FCount-count-output/ncRNA-alignment.count \
 	$mapped \
-	$outDir/FCount-to-RPM/snomiRNA-alignment &
+	$outDir/FCount-to-RPM/ncRNA-alignment &
 #python bin/FCount-to-RPM.py $outDir/FCount-count-output/mRNA-ncRNA-alignment.count $mapped $outDir/FCount-to-RPM/mRNA-ncRNA-alignment &
 wait
 sleep 5  # Make sure everything is finished running
@@ -633,7 +647,7 @@ if [[ $Plots == "yes" ]]; then
 		0
 	cp $outDir/tRNA-alignment/Multi-mappers_tsRNAs_Coverage-plots.pdf $outDir/Data_and_Plots/
 	cp $outDir/tRNA-alignment/*Results.* $outDir/Data_and_Plots/
-	cp $outDir/snomiRNA-alignment/*Results.* $outDir/Data_and_Plots/
+	cp $outDir/ncRNA-alignment/*Results.* $outDir/Data_and_Plots/
 fi
 echo "Finished analysing "$singleFile" on $(date)" # Print pipeline end-time
 echo "_____________________________________________________________________________________________________________________

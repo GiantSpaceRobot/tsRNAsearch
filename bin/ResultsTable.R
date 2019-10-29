@@ -15,16 +15,16 @@ args = commandArgs(trailingOnly=TRUE)
 ### Load input files
 pvals <- read.table(args[1], sep = "\t", header = T)
 distribution.scores.tsRNAs <- read.table(args[2], sep = "\t", header = T)
-distribution.scores.snomiRNAs <- read.table(args[3], sep = "\t", header = T)
+distribution.scores.ncRNAs <- read.table(args[3], sep = "\t", header = T)
 cleavage.scores.tsRNAs <- read.table(args[4], sep = "\t", header = T)
-cleavage.scores.snomiRNAs <- read.table(args[5], sep = "\t", header = T)
+cleavage.scores.ncRNAs <- read.table(args[5], sep = "\t", header = T)
 DEGs <- read.csv(args[6])
 
 colnames(DEGs)[1]  <- "feature" # rename column 1 to features for DEG DF
 
-### Combine tsRNA and snomiRNA dataframes
-distribution.scores <- rbind.data.frame(distribution.scores.tsRNAs, distribution.scores.snomiRNAs)
-cleavage.scores <- rbind.data.frame(cleavage.scores.tsRNAs, cleavage.scores.snomiRNAs)
+### Combine tsRNA and ncRNA dataframes
+distribution.scores <- rbind.data.frame(distribution.scores.tsRNAs, distribution.scores.ncRNAs)
+cleavage.scores <- rbind.data.frame(cleavage.scores.tsRNAs, cleavage.scores.ncRNAs)
 
 ### Join dataframes
 joined1 <- join(x = pvals, y = distribution.scores, by = "feature")

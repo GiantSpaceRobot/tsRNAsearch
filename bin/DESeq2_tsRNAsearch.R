@@ -406,7 +406,7 @@ DESeq2.function <- function(path.to.files){
   
   ### Plot genes and sno/miRNAs:
   pdf.width <- nrow(genes.df.subset)*0.2 + 3
-  pdf(file = paste0(path.to.files, args[2], "_snomiRNAs-and-genes.high-DE-negLog10_padj.pdf"), width = pdf.width, height = 5)
+  pdf(file = paste0(path.to.files, args[2], "_ncRNAs-and-genes.high-DE-negLog10_padj.pdf"), width = pdf.width, height = 5)
   print(ggplot(data = genes.df.subset, mapping = aes(features, 
                                                 genes.df.subset$negLog10, 
                                                 color=genes.df.subset$negLog10)) +
