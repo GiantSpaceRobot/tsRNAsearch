@@ -1,7 +1,6 @@
 #!/bin/bash
 # Author: Paul Donovan 
 # Email: pauldonovan@rcsi.com
-# 12-12-2018
 
 asciiArt() { echo '
   
@@ -16,16 +15,16 @@ asciiArt() { echo '
    ' 1>&1; }
 usage() { echo "
 Comparison of two conditions:
-	Usage: $0 -s human/mouse -d Path/To/Input/Files -o OutputDirectory/ -e ExperimentLayout.csv -t num-of-threads
+	Usage: $0 -s human/mouse/rat -d Path/To/Input/Files -o OutputDirectory/ -e ExperimentLayout.csv -t num-of-threads
 
 Analysis of a single RNA-seq file:
-	Usage: $0 -s human/mouse -f Path/To/InputFile.fastq -o OutputDirectory/ -t num-of-threads
+	Usage: $0 -s human/mouse/rat -f Path/To/InputFile.fastq -o OutputDirectory/ -t num-of-threads
 	" 1>&2; }
 info() { echo "
 Options
 
 	-h	Print the usage and options information
-	-s	Analyse datasets against 'human' or 'mouse'? {default: human}
+	-s	Analyse datasets against 'human', 'mouse', 'rat'? {default: human}
 	-d	Directory containing the files for analysis. Directory should have no other contents.
 	-f	A single file for analysis
 	-o	Output directory for the results and log files
@@ -650,7 +649,6 @@ echo "
 <body><h1>tsRNAsearch Report</h1>
 <body><h2>${condition1} versus ${condition2}</h2>
 <body><h3>Quantities of ncRNA features identified</h3>
-<br />
 <br />Proportions of ncRNA groups identified (normalised by reads per million)
 <br />
 <embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_RPM-normalised.pdf" width="800px" height="800px" />
@@ -697,11 +695,11 @@ $summary_results
 <br />
 <embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-tsRNAs.pdf" width="800px" height="600px" />
 <br />
-<br />Differentially expressed snoRNAs/miRNAs
+<br />Differentially expressed ncRNAs (other than tRNAs)
 <br />
 <embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_ncRNAs-and-genes.high-DE-negLog10_padj.pdf" width="600px" height="600px" />
 <br />
-<body><h4>Coverage plots for all differentially expressed snoRNAs/miRNAs</h4>
+<body><h4>Coverage plots for all differentially expressed ncRNAs</h4>
 <br />
 <embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-ncRNAs.pdf" width="800px" height="600px" />
 <br />
@@ -721,7 +719,7 @@ $summary_results
 <body><h4>Coverage plots for all tRNAs with irregular distribution identified by the distribution algorithm</h4>
 <embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-tsRNAs.pdf" width="800px" height="600px" />
 <br />
-<br />Highest scoring snoRNA fragments/miRNAs identified using the distribution algorithm
+<br />Highest scoring ncRNA fragments identified using the distribution algorithm
 <br />
 <embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_ncRNAs.high-distribution-score.pdf" width="800px" height="600px" />
 <br />
@@ -739,7 +737,7 @@ $summary_results
 <body><h4>Coverage plots for all tRNAs with irregular 5' vs 3' coverage identified by the cleavage algorithm</h4>
 <embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-tsRNAs.pdf" width="800px" height="600px" />
 <br />
-<br />Highest scoring snoRNA fragments/miRNAs identified using the cleavage algorithm
+<br />Highest scoring ncRNA fragments identified using the cleavage algorithm
 <br />
 <embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_ncRNAs.high-cleavage-score.pdf" width="800px" height="600px" />
 <br />Full results here: $myPath/$outDir/Data/Cleavage_results/${condition1}_vs_${condition2}_High-cleavage-ncRNAs.txt

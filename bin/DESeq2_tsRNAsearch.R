@@ -22,9 +22,9 @@ if (length(args)==0) {
 } else if (length(args)>4) {
   stop("Error: Too many command line arguments. Quitting.")
 } else if (length(args)==1) {
-  stop("Error: Require three command line arguments at least: path-to-files, output-prefix, sno/miRNA GTF, [layout-file.csv]. Quitting.")
+  stop("Error: Require three command line arguments at least: path-to-files, output-prefix, ncRNA GTF, [layout-file.csv]. Quitting.")
 } else if (length(args)==2) {
-  stop("Error: Require three command line arguments at least: path-to-files, output-prefix, sno/miRNA GTF, [layout-file.csv]. Quitting.")
+  stop("Error: Require three command line arguments at least: path-to-files, output-prefix, ncRNA GTF, [layout-file.csv]. Quitting.")
 } else if (length(args)==3) {             # If only a filepath was provided:
   myPath <- args[1]
   if (dir.exists(myPath)) {
@@ -392,33 +392,33 @@ DESeq2.function <- function(path.to.files){
                                               tsRNAs.df.subset$negLog10, 
                                               color=tsRNAs.df.subset$negLog10)) +
     geom_point() +
-    ggtitle("DE Analysis - tsRNAs") +
+    ggtitle("DE Analysis - tRNAs") +
     theme(axis.text.x = element_text(size=7)) + # Move x axis label down
     scale_color_gradient(low="blue", high="red") +
     #scale_y_continuous(trans='log2') +   # Change y axis to log scale
     scale_x_discrete(limits = (levels(tsRNAs.df.subset$negLog10))) +
     coord_flip() +
     labs(colour = "-Log10\n   of \n  padj", 
-         x = "ncRNA/gene", 
+         x = "tRNAs", 
          y = "-Log10 of padj", 
          subtitle = "Max number of features shown is 20"))
   dev.off()
   
-  ### Plot genes and sno/miRNAs:
+  ### Plot genes and ncRNAs:
   pdf.width <- nrow(genes.df.subset)*0.2 + 3
   pdf(file = paste0(path.to.files, args[2], "_ncRNAs-and-genes.high-DE-negLog10_padj.pdf"), width = pdf.width, height = 5)
   print(ggplot(data = genes.df.subset, mapping = aes(features, 
                                                 genes.df.subset$negLog10, 
                                                 color=genes.df.subset$negLog10)) +
     geom_point() +
-    ggtitle("DE Analysis - sno/miRNAs") +
+    ggtitle("DE Analysis - ncRNAs") +
     theme(axis.text.x = element_text(size=7)) +
     scale_color_gradient(low="blue", high="red") +
     #scale_y_continuous(trans='log2') +   # Change y axis to log scale
     scale_x_discrete(limits = (levels(genes.df.subset$negLog10))) +
     coord_flip() +
     labs(colour = "-Log10\n   of \n  padj", 
-         x = "ncRNA/gene", 
+         x = "ncRNAs", 
          y = "-Log10 of padj", 
          subtitle = "Max number of features shown is 20"))
   dev.off()
