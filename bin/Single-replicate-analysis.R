@@ -46,7 +46,7 @@ for(subset in df) {
   if (length(args)==3) {
     featureRows <- GTF[grep(feature, GTF$V9),]
     featureRows <- featureRows[1,]
-    geneName <- as.character(sub(".*gene_name *(.*?) *; gene_source.*", "\\1", featureRows$V9))
+    geneName <- as.character(sub(".*gene_name *(.*?) *; .*", "\\1", featureRows$V9))
     feature <- paste0(feature," (",geneName,")")
   } 
   ### Count no. of zeros in subset. If over 3/4 values are zero, do not calculate ratios.

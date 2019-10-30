@@ -47,11 +47,11 @@ for(subset1 in df1) {
   feature <- as.character(subset1[1,1])
   subset1.length <- nrow(subset1)
   half.length <- as.integer(subset1.length/2)
-  ### Get gene name for sno/miRNAs
+  ### Get gene names for ncRNAs
   if(startsWith(feature, "ENS")) {
     featureRows <- GTF[grep(feature, GTF$V9),]
     featureRows <- featureRows[1,]
-    geneName <- as.character(sub(".*gene_name *(.*?) *; gene_source.*", "\\1", featureRows$V9))
+    geneName <- as.character(sub(".*gene_name *(.*?) *; .*", "\\1", featureRows$V9))
     feature <- paste0(feature," (",geneName,")")
   } 
   ### Condition1

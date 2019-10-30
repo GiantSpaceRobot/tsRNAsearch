@@ -89,11 +89,11 @@ if (file.size(args[3]) == 0) { # Check if features file contains any lines
                             "coord",
                             "Conditions")
     
-    ### get sno/miRNA gene names rather than IDs
+    ### get ncRNA gene names rather than IDs
     if (length(args)==7) {
       featureRows <- GTF[grep(feature, GTF$V9),]
       featureRows <- featureRows[1,]
-      geneName <- as.character(sub(".*gene_name *(.*?) *; gene_source.*", "\\1", featureRows$V9))
+      geneName <- as.character(sub(".*gene_name *(.*?) *; .*", "\\1", featureRows$V9))
       geneName <- paste0(geneName, " (", feature, ")")
     } else if (nchar(feature) == 3) {
       geneName <- paste0(feature, " (plot of multi-mapping reads where isoacceptor could not be identified)", sep="")

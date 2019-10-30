@@ -57,11 +57,12 @@ results.df <- setNames(data.frame(matrix(ncol = 6, nrow = 0)), c("feature",
 
 for(subset in df) {
   feature <- as.character(subset[1,1])
-  ### If feature is a sno/miRNA, get gene name
+  ### If feature is a ncRNA (not a tRNA), get gene name
   if(startsWith(feature, "ENS")) {
     featureRows <- GTF[grep(feature, GTF$V9),]
     featureRows <- featureRows[1,]
-    geneName <- as.character(sub(".*gene_name *(.*?) *; gene_source.*", "\\1", featureRows$V9))
+    #geneName <- as.character(sub(".*gene_name *(.*?) *; gene_source.*", "\\1", featureRows$V9))
+    geneName <- as.character(sub(".*gene_name *(.*?) *; .*", "\\1", featureRows$V9)) 
     feature <- paste0(feature," (",geneName,")")
   } 
   subset$V7 <- (subset$V2-subset$V3)

@@ -5,4 +5,4 @@ Update after publication:
 * Integrate MINTmap tRNA fragment license plates for identified tsRNAs
 
 Update now:
-* Use GRCh38 ncRNA sequences
+* Remake rat and mouse databases

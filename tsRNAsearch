@@ -697,7 +697,7 @@ $summary_results
 <br />
 <br />Differentially expressed ncRNAs (other than tRNAs)
 <br />
-<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_ncRNAs-and-genes.high-DE-negLog10_padj.pdf" width="600px" height="600px" />
+<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_ncRNAs.high-DE-negLog10_padj.pdf" width="600px" height="600px" />
 <br />
 <body><h4>Coverage plots for all differentially expressed ncRNAs</h4>
 <br />

@@ -2,13 +2,11 @@
 
 ## Script name: DESeq2_tsRNAsearch.R
 ##
-## Purpose of script: Carry out differential gene expression analysis of ncRNAs/genes from small RNA-seq data
+## Purpose of script: Carry out differential gene expression analysis of ncRNAs from small RNA-seq data
 ##
 ## Author: Dr Paul Donovan
 ##
 ## Date Created: 2-1-2019 (2nd of Jan 2019)
-##
-## Version: 14
 ##
 ## Copyright: MIT license
 ##
@@ -128,7 +126,7 @@ suppressMessages(library(reshape2))
 
 ### Reading in gene mapping file
 GTF <- read.table(args[3], sep = "\t") # Read in GTF for name conversion
-GTF$NewNames <- paste0(GTF$V1, " (", as.character(sub(".*gene_name *(.*?) *; gene_source.*", "\\1", GTF$V9)), ")") # Add new column with gene names
+GTF$NewNames <- paste0(GTF$V1, " (", as.character(sub(".*gene_name *(.*?) *; .*", "\\1", GTF$V9)), ")") # Add new column with gene names
 GTF <- GTF[!duplicated(GTF$NewNames),]  # Remove duplicates based on NewNames
 
 #------------------------------#
@@ -359,8 +357,8 @@ DESeq2.function <- function(path.to.files){
   newdata.subset <- rbind(up, down)
   newdata.subset$features <- rownames(newdata.subset)
   newdata.subset$negLog10 <- -log10(newdata.subset$padj)
-  genes.df <- subset(newdata.subset, startsWith(as.character(features), "ENS"))
-  tsRNAs.df <- newdata.subset[ !(newdata.subset$features %in% genes.df$features), ] # newdata.susbet minus all rows in genes.df (to get tsRNAs.df)
+  ncRNAs.df <- subset(newdata.subset, startsWith(as.character(features), "ENS"))
+  tsRNAs.df <- newdata.subset[ !(newdata.subset$features %in% ncRNAs.df$features), ] # newdata.susbet minus all rows in ncRNAs.df (to get tsRNAs.df)
   #tsRNAs.df <- subset(newdata.subset, startsWith(as.character(features), "chr"))
   # If there are more than 20 features, show top 20
   if(nrow(tsRNAs.df) > 20){
@@ -370,18 +368,18 @@ DESeq2.function <- function(path.to.files){
   }
 
   # If there are more than 20 features, show top 20
-  if(nrow(genes.df) > 20){
-    genes.df.subset <- head(genes.df, n = 20)
+  if(nrow(ncRNAs.df) > 20){
+    ncRNAs.df.subset <- head(ncRNAs.df, n = 20)
   } else {
-    genes.df.subset <- genes.df
+    ncRNAs.df.subset <- ncRNAs.df
   }
   ### replace Inf values (extremely low adj p-value) with -Log10 of 300
   tsRNAs.df.subset <- data.frame(lapply(tsRNAs.df.subset, function(x) {gsub(Inf, "300", x)}))
   tsRNAs.df.subset$negLog10 <- as.numeric(levels(tsRNAs.df.subset$negLog10))[tsRNAs.df.subset$negLog10] #Convert factor type to numeric
   tsRNAs.df.subset$features <- factor(tsRNAs.df.subset$features, levels = tsRNAs.df.subset$features[order(tsRNAs.df.subset$negLog10)])
-  genes.df.subset <- data.frame(lapply(genes.df.subset, function(x) {gsub(Inf, "300", x)}))
-  genes.df.subset$negLog10 <- as.numeric(levels(genes.df.subset$negLog10))[genes.df.subset$negLog10] #Convert factor type to numeric
-  genes.df.subset$features <- factor(genes.df.subset$features, levels = genes.df.subset$features[order(genes.df.subset$negLog10)])
+  ncRNAs.df.subset <- data.frame(lapply(ncRNAs.df.subset, function(x) {gsub(Inf, "300", x)}))
+  ncRNAs.df.subset$negLog10 <- as.numeric(levels(ncRNAs.df.subset$negLog10))[ncRNAs.df.subset$negLog10] #Convert factor type to numeric
+  ncRNAs.df.subset$features <- factor(ncRNAs.df.subset$features, levels = ncRNAs.df.subset$features[order(ncRNAs.df.subset$negLog10)])
   
   ### checkpoint
   print("Checkpoint 11")
@@ -404,18 +402,18 @@ DESeq2.function <- function(path.to.files){
          subtitle = "Max number of features shown is 20"))
   dev.off()
   
-  ### Plot genes and ncRNAs:
-  pdf.width <- nrow(genes.df.subset)*0.2 + 3
-  pdf(file = paste0(path.to.files, args[2], "_ncRNAs-and-genes.high-DE-negLog10_padj.pdf"), width = pdf.width, height = 5)
-  print(ggplot(data = genes.df.subset, mapping = aes(features, 
-                                                genes.df.subset$negLog10, 
-                                                color=genes.df.subset$negLog10)) +
+  ### Plot ncRNAs:
+  pdf.width <- nrow(ncRNAs.df.subset)*0.2 + 3
+  pdf(file = paste0(path.to.files, args[2], "_ncRNAs.high-DE-negLog10_padj.pdf"), width = pdf.width, height = 5)
+  print(ggplot(data = ncRNAs.df.subset, mapping = aes(features, 
+                                                ncRNAs.df.subset$negLog10, 
+                                                color=ncRNAs.df.subset$negLog10)) +
     geom_point() +
     ggtitle("DE Analysis - ncRNAs") +
     theme(axis.text.x = element_text(size=7)) +
     scale_color_gradient(low="blue", high="red") +
     #scale_y_continuous(trans='log2') +   # Change y axis to log scale
-    scale_x_discrete(limits = (levels(genes.df.subset$negLog10))) +
+    scale_x_discrete(limits = (levels(ncRNAs.df.subset$negLog10))) +
     coord_flip() +
     labs(colour = "-Log10\n   of \n  padj", 
          x = "ncRNAs", 

@@ -493,7 +493,7 @@ if [ -f $outDir/tRNA-alignment/aligned_tRNAdb.sam ]; then  #If STAR successfully
 		$outDir/tRNA-alignment/aligned_tRNAdb.sam &	
 else
 	echo "
-	Alignment output not found. Reads likely did not map to tRNA/sno/miRNA reference. 
+	Alignment output not found. Reads likely did not map to ncRNA database. 
 	Using trimmed reads from Trim_Galore output.
 	"
 	cp $outDir/trim_galore_output/$trimmedFile $outDir/tRNA-alignment/$trimmedFile
@@ -540,12 +540,12 @@ string_padder "Alignment steps complete. Moving on to read-counting using FCount
 # Count for alignment step 2
 if [ ! -f $outDir/ncRNA-alignment/accepted_hits.bam ]; then
 	echo "
-No alignment file found for sno/miRNA alignment. Using blank count file instead
+No alignment file found for ncRNA alignment. Using blank count file instead
 "
 	cp $empty_ncRNAs $outDir/FCount-count-output/ncRNA-alignment.count &
 else
 	echo "
-Counting sno/miRNA alignment reads
+Counting ncRNA alignment reads
 "
 	bin/featureCounts \
 		-T $featureCount_threads \
