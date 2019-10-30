@@ -42,7 +42,7 @@ species="human"
 skip="no"
 Plots="no"
 remove="no"
-version="tsRNAsearch version 0.1"
+version="tsRNAsearch version 0.11"
 while getopts ":hs:A:t:d:f:S:R:e:o:" o; do
     case "${o}" in
 		h)

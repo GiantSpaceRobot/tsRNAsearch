@@ -121,6 +121,7 @@ suppressMessages(library(DESeq2))
 suppressMessages(library(dplyr))
 suppressMessages(library(gplots))
 suppressMessages(library(ggplot2))
+suppressMessages(library(RColorBrewer))
 suppressMessages(library(EnhancedVolcano))
 suppressMessages(library(reshape2))
 
@@ -476,7 +477,7 @@ create.barplot <- function(column.cond1, column.cond2, normalisation.method, my.
   for(row in seq_len( nrow(barplot.df))) {
     if(is.na(barplot.df$mapped[row])) {   # If no ncRNA type has been assigned yet:
       if(startsWith(barplot.df$features[row], "ENS") == TRUE) {  # If the feature has an 'ENS' ID, it is a gene or unknown feature. Ignore for now.
-        barplot.df$mapped[row] <- "other (gene/ncRNA)"
+        barplot.df$mapped[row] <- "other (ncRNA)"
       } else { # If the feature has no ncRNA type yet and does not start with 'ENS', it is a tRNA
         barplot.df$mapped[row] <- "tRNA"
       }
@@ -489,16 +490,27 @@ create.barplot <- function(column.cond1, column.cond2, normalisation.method, my.
   names(grouped.df)[2] <- name1 # Add correct colname to DF
   names(grouped.df)[3] <- name2 # Add correct colname to DF
   melted.df <- melt(data = grouped.df, id.vars = "Feature")
-  
+  df.cols <- length(unique(melted.df$Feature)) # Expand color palette
+  mycolors <- colorRampPalette(brewer.pal(11, "RdYlBu"))(df.cols) # Expand RdYlBu to # of colours needed based on DF
   results.barplot <- ggplot(data = melted.df, mapping = aes(variable, value, fill = Feature)) +
     geom_bar(stat = "identity", width = 0.5) + 
     ggtitle(paste0("Features identified in ", name1, " vs ", name2)) +
-    scale_fill_brewer(palette = "RdYlBu") +
+    scale_fill_manual(values = mycolors) +
     #theme_minimal() +
     #coord_flip() +
+    theme(legend.position = "bottom") +
     labs(x = "", 
          y = normalisation.method, 
          subtitle = subtitle)
+  #results.barplot <- ggplot(data = melted.df, mapping = aes(variable, value, fill = Feature)) +
+  #  geom_bar(stat = "identity", width = 0.5) + 
+  #  ggtitle(paste0("Features identified in ", name1, " vs ", name2)) +
+  #  scale_fill_brewer(palette = "RdYlBu") +
+  #  #theme_minimal() +
+  #  #coord_flip() +
+  #  labs(x = "", 
+  #       y = normalisation.method, 
+  #       subtitle = subtitle)
   return(results.barplot)
 }
 
