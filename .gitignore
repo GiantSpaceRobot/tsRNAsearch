@@ -2,4 +2,5 @@ DBs/Homo*
 DBs/Mus*
 DBs/species_index/*
 samtool*
-RunOvernight.sh
+RunOvernight*
+test*

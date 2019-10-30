@@ -279,8 +279,10 @@ mv $outDir/Data/Intermediate-files/FCount.all-features $outDir/Data/Intermediate
 
 ### Carry out DESeq2 analysis
 string_padder "Carrying out DESeq2 analysis..."
-condition1=$( awk -F ',' 'NR == 1 {print $2}' "$expFile" ) # Get element in first row second column (condition)
-condition2=$( grep -v $condition1 "$expFile" | awk -F ',' 'NR == 1 {print $2}') # Get the second condition using the inverse of the first one
+#condition1=$( awk -F ',' 'NR == 1 {print $2}' "$expFile" ) # Get element in first row second column (condition)
+#condition2=$( grep -v $condition1 "$expFile" | awk -F ',' 'NR == 1 {print $2}') # Get the second condition using the inverse of the first one
+condition1=$( awk -F ',' '{print $2}' "$expFile" | uniq | head -n 1 ) # Get the first condition name
+condition2=$( awk -F ',' '{print $2}' "$expFile" | uniq | tail -n 1 ) # Get the second condition name
 Rscript --vanilla bin/DESeq2_tsRNAsearch.R "$myPath/$outDir/Data/Intermediate-files/" "${condition1}_vs_${condition2}" "$ncRNA_GTF" "$expFile"
 grep $condition1 "$expFile" > $myPath/$outDir/Data/Intermediate-files/predicted_exp_layout_cond1.csv
 grep $condition2 "$expFile" > $myPath/$outDir/Data/Intermediate-files/predicted_exp_layout_cond2.csv
