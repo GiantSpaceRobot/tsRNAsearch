@@ -45,64 +45,36 @@ fi
 
 ### Define functions
 function human_setup () {
-	### Download human genome
-	#wget -q http://ftp.ensembl.org/pub/grch37/release-87/gtf/homo_sapiens/Homo_sapiens.GRCh37.87.gtf.gz ./ &
-	#wget -q http://ftp.ensembl.org/pub/grch37/release-87/fasta/homo_sapiens/dna/Homo_sapiens.GRCh37.dna.primary_assembly.fa.gz ./ &
-	#wait
-	#echo "Gunzipping human genome files..."
-	#gunzip Homo_sapiens.GRCh37.87.gtf.gz &  # Gunzip GTF file
-	#gunzip Homo_sapiens.GRCh37.dna.primary_assembly.fa.gz &
-	#wait
-	#python bin/GTF_DuplicateRemover.py additional-files/Homo-sapiens_All-ncRNAs.txt Homo_sapiens.GRCh37.87.gtf Homo_sapiens.GRCh37.87.NoDuplicates.gtf
-	#rm Homo_sapiens.GRCh37.87.gtf
-	#mv Homo_sapiens.GRCh37.87.NoDuplicates.gtf DBs/Homo_sapiens.GRCh37.87.gtf
-	#echo "Building human genome index..."
-	#mkdir -p DBs/species_index
-	#mkdir -p DBs/species_index/human
 	mkdir -p DBs/species_index/human-ncRNAs
-	#STAR --runThreadN $threads --runMode genomeGenerate --genomeDir DBs/species_index/human/ --genomeFastaFiles Homo_sapiens.GRCh37.dna.primary_assembly.fa 
 	bin/STAR --runThreadN $threads --runMode genomeGenerate --genomeDir DBs/species_index/human-ncRNAs/ --genomeFastaFiles DBs/human_tRNAs-and-ncRNAs_relative_cdhit.fa --genomeSAindexNbases 8
-	#echo "Feel free to delete the Homo_sapiens.GRCh37.dna.primary_assembly.fa file in this directory as it is no longer required"
 }
-
 function mouse_setup () {
-	### Download mouse genome
-	#wget -q http://ftp.ensembl.org/pub/release-95/fasta/mus_musculus/dna/Mus_musculus.GRCm38.dna.primary_assembly.fa.gz ./ &
-	#wget -q http://ftp.ensembl.org/pub/release-95/gtf/mus_musculus/Mus_musculus.GRCm38.95.gtf.gz ./ &
-	#wait
-	#echo "Gunzipping mouse genome files..."
-	#gunzip Mus_musculus.GRCm38.95.gtf.gz &  # Gunzip GTF file
-	#gunzip Mus_musculus.GRCm38.dna.primary_assembly.fa.gz &
-	#wait
-	#python bin/GTF_DuplicateRemover.py additional-files/Mus-musculus_All-ncRNAs.txt Mus_musculus.GRCm38.95.gtf Mus_musculus.GRCm38.95.NoDuplicates.gtf
-	#rm Mus_musculus.GRCm38.95.gtf 
-	#mv Mus_musculus.GRCm38.95.NoDuplicates.gtf DBs/Mus_musculus.GRCm38.95.gtf
-	#echo "Building mouse genome index..."
-	mkdir -p DBs/species_index
-	#mkdir -p DBs/species_index/mouse
 	mkdir -p DBs/species_index/mouse-ncRNAs
-	#STAR --runThreadN $threads --runMode genomeGenerate --genomeDir DBs/species_index/mouse/ --genomeFastaFiles Mus_musculus.GRCm38.dna.primary_assembly.fa
-	bin/STAR --runThreadN $threads --runMode genomeGenerate --genomeDir DBs/species_index/mouse-ncRNAs/ --genomeFastaFiles DBs/Mus_musculus.GRCm38-combined_tiRNAs_snomiRNAs.fsa
-	#echo "Feel free to delete the Mus_musculus.GRCm38.dna.primary_assembly.fa file in this directory as it is no longer required"
+	bin/STAR --runThreadN $threads --runMode genomeGenerate --genomeDir DBs/species_index/mouse-ncRNAs/ --genomeFastaFiles DBs/mouse_tRNAs-and-ncRNAs_relative_cdhit.fa
 }
-
+function rat_setup () {
+	mkdir -p DBs/species_index/rat-ncRNAs
+	bin/STAR --runThreadN $threads --runMode genomeGenerate --genomeDir DBs/species_index/rat-ncRNAs/ --genomeFastaFiles DBs/rat_tRNAs-and-ncRNAs_relative_cdhit.fa
+}
 ### Download species data
+mkdir -p DBs/species_index
 if [ $species = "human" ]; then
-	### Download human GTF file
-	echo "Downloading human GTF file..."
+	echo "Setting up human database..."
 	human_setup &
 elif [ $species = "mouse" ]; then
-	### Download mouse GTF file
-	echo "Downloading mouse GTF file..."
+	echo "Setting up mouse database..."
 	mouse_setup &
-elif [ $species = "both" ]; then
-	### Download human and mouse GTF files
-	echo "Downloading human and mouse GTF files..."
+elif [ $species = "rat" ]; then
+	echo "Setting up rat database..."
+	rat_setup &
+elif [ $species = "all" ]; then
+	echo "Setting up all available databases..."
 	human_setup &
 	mouse_setup &
+	rat_setup &
 elif [ -z $species ]; then
 	### The species variable is unset
-	echo "Please use the -s option with 'human', 'mouse', or 'both' depending on the type of analyses you intend to run"
+	echo "Please use the -s option with 'human', 'mouse', 'rat', or 'all' depending on the type of analyses you intend to run"
 	exit 1
 fi
 

@@ -2,15 +2,15 @@
 
 A pipeline for the identification, quantification and analysis of ncRNAs (especially tRNA fragments) in small/miRNA-seq datasets
 
-Many ncRNA identification pipelines are based on differential gene expression. This is a useful method but can fall short if portions of the differentially expressed ncRNAs are degraded, thus reducing the DE identification power. tsRNAsearch addresses this issue by applying a standard DE analysis and two separate (but related) methods to identify fragmented ncRNAs, especially tsRNAs.
+Many ncRNA identification pipelines are based on differential gene expression. This is a useful method but can fall short if portions of the differentially expressed ncRNAs are degraded/not present, thus reducing the differential expression identification power. tsRNAsearch addresses this issue by applying a standard differential expression analysis and two additional methods to identify fragmented ncRNAs, especially tRNA fragments.
 
 ## Quickstart
 ### Installation
 Run the setup.sh script to install required software:
 
 ```
-#Please indicate the species you wish to analyse using the -s parameter. Options are human/mouse/both.
-sudo ./setup.sh -s both
+#Please indicate the species you wish to analyse using the -s parameter. Options are human/mouse/rat/all.
+sudo ./setup.sh -s all
 ```
 
 This script will install the following pieces of software at root level:
@@ -22,7 +22,7 @@ This script will install the following pieces of software at root level:
 * R/Rscript (and R libraries)
 * samtools
 
-Add tsRNAsearch.sh to your path or call the programme using bash/sh.
+Add tsRNAsearch to your path or call the programme using bash/sh.
 
 ### Analysing a single RNA-seq dataset
 We have supplied data to test that the pipeline is functioning correctly:
@@ -38,7 +38,7 @@ On finishing the run, the pipeline will produce a run report as direct output (R
 tsRNAsearch -s mouse -d ExampleData/ -e additional-files/Example_ExperimentLayout.csv -o MyResults > Run-report.log 
 ```
 
-On finishing the run, a HTML report will appear in the *MyResults* directory. In addition, *MyResults* will contain directories named *Data* and *Plots* containing (you guessed it) data and plots.
+On finishing the run, a HTML report will appear in the *MyResults* directory. In addition, *MyResults* will contain directories named *Data* and *Plots* containing data and plots.
 
 ## More Information
 #### ncRNA identification methods:
@@ -74,7 +74,7 @@ On finishing the run, a HTML report will appear in the *MyResults* directory. In
 * -R *Remove all unnecessary/intermediate files {default: __no__}*
 
 ### Methods to Address Difficulty in Correctly Identifying tRNA reads
-There are 625 tRNA genes in the human genome. Each tRNA species (e.g. Arginine) has multiple genes coding for it, many of which are identical or vastly similar. Therefore, correctly matching a read with its tRNA gene of origin is difficult. Two methods have been implemented to address this:
+There are 625 tRNA genes in the human genome. Each tRNA species has multiple genes coding for it, many of which are identical or vastly similar (e.g. Arginine). Therefore, correctly matching a read with its tRNA gene of origin is difficult. Two methods have been implemented to address this:
 * CD-HIT was used to extract representative sequences from all ncRNA sequences. The ncRNA STAR database was built using these representative sequences.
 * The STAR output (SAM file) is processed in such a way that all reads mapping to multiple database sequences from the same ncRNA species (e.g. read maps to multiple Proline-CCC genes) are collapsed into a single SAM entry. This single SAM entry is thereby considered a single-mapping read and is not removed by downstream processing steps.
 
