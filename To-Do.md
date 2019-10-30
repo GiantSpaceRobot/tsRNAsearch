@@ -5,4 +5,4 @@ Update after publication:
 * Integrate MINTmap tRNA fragment license plates for identified tsRNAs
 
 Update now:
-* Remake rat and mouse databases
+
