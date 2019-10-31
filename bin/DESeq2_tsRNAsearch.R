@@ -78,11 +78,26 @@ if (length(args)==0) {
     dir.create(paste0(myPath, "DE_Results"))
   }
   file.CSV <- read.csv(args[4], header=FALSE)
+  #print(file.CSV)
   lvls.df <- as.data.frame(table(file.CSV$V2))
-  ReplicateNumber1 <- lvls.df[1,2]
-  Condition1 <- toString(lvls.df[1,1])
-  ReplicateNumber2 <- lvls.df[2,2]
-  Condition2 <- toString(lvls.df[2,1])
+  #file.CSV <- read.csv("/home/paul/Documents/Data/EpimiRNA_Data/Comparisons/Mouse_IAKA_KA2w-vs-KA2w-ctrl_Layout.csv", header = F)
+  #table(file.CSV)
+  #print(lvls.df)
+  #arg2 <- "KA_2w_vs_control"
+  my.conditions <- unlist(strsplit(args[2], "_vs_"))
+  #my.conditions <- unlist(strsplit(arg2, "_vs_"))
+  Condition1 <- my.conditions[1]
+  Condition2 <- my.conditions[2]
+  ReplicateNumber1 <- lvls.df[grep(Condition1, lvls.df$Var1),][1,2]
+  ReplicateNumber2 <- lvls.df[grep(Condition2, lvls.df$Var1),][1,2]
+  #condition2reps <- paste0(Condition2, 1:ReplicateNumber2)
+  #class(ReplicateNumber1)
+  #ReplicateNumber1 <- lvls.df[1,2]
+  #Condition1 <- toString(lvls.df[1,1])
+  #ReplicateNumber2 <- lvls.df[2,2]
+  #Condition2 <- toString(lvls.df[2,1])
+  #print(Condition1)
+  #print(Condition2)
   myPath <- args[1]
   message("A .csv file was provided, and the directory provided exists.")
 }
@@ -143,13 +158,22 @@ DESeq2.function <- function(path.to.files){
   ### Read files
   path.to.files <- myPath
   file.names <- dir(path.to.files, pattern =".count")
+  #print(file.names)
   cDataAll <- NULL
   for (i in 1:length(file.names)){
     full.path <- paste0(path.to.files, file.names[i])
     file <- read.table(full.path, header = TRUE)
     cDataAll <- cbind(cDataAll, file[,2])
   }
-  colnames(cDataAll) <- (file.names)
+  #Condition1 <- "CytC"
+  #Condition2 <- "CytC-ctrl"
+  condition1reps <- paste0(Condition1, 1:ReplicateNumber1)
+  condition2reps <- paste0(Condition2, 1:ReplicateNumber2)
+  newcolnames <- c(condition1reps, condition2reps) # Create column names using the provided condition names
+  #print(head(cDataAll))
+  colnames(cDataAll) <- (newcolnames)
+  #print(head(cDataAll))
+  #colnames(cDataAll) <- (file.names)
   rownames(cDataAll) <- file[,1]
 
   ### checkpoint
@@ -443,10 +467,16 @@ DESeq2.function <- function(path.to.files){
   
   ### Create barplots for all features identified
   my.levels <- as.character(levels.default(groups)) # Get names of levels
+  #print(my.levels)
+  #my.levels <- c(Condition1, Condition2)
   level1 <- my.levels[1] # get name of level 1
   level2 <- my.levels[2] # get name of level 2
+  #print(head(cDataAll))
+  #library(dplyr)
   level1.df <- select(data.frame(cDataAll), contains(level1)) # Subset main count matrix using condition 1
   level2.df <- select(data.frame(cDataAll), contains(level2)) # Subset main count matrix using condition 2
+  #print(head(level1.df))
+  #print(head(level2.df))
   level1.df$total.raw <- rowSums(level1.df) #Calculate total read count for condition 1
   level2.df$total.raw <- rowSums(level2.df) #Calculate total read count for condition 1
   level1.df$total.rpm <- level1.df$total.raw/(sum(level1.df$total.raw)/1000000) # Calculate reads per million
