@@ -61,7 +61,7 @@ filled.DF <- subset(filled.DF, select=-c(empty)) # Remove empty column
 melted.DF <- melt(filled.DF)
 melted.DF$Row.names <- as.numeric(melted.DF$Row.names) 
 ### Plot
-pdf(paste0(args[2], "pdf"))
+pdf(paste0(args[2], ".pdf"))
 ggplot(data = melted.DF, mapping = aes(x = Row.names, y = value)) +
   geom_line() +
   labs(title = "Read Alignment Lengths",
