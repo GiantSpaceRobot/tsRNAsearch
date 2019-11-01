@@ -323,6 +323,9 @@ function bam_to_plots () {  ### Steps for plotting regions with high variation i
 			Rscript bin/Single-replicate-analysis.R \
 				$1/accepted_hits_sorted.depth \
 				$1/$2_$3_Results &
+			Rscript bin/tRNA_Alignment_Length.R \
+				$1/tsRNAs_aligned.sam \
+				$1/$2_$3_tRNA-alignment-length.pdf
 		else
 			Rscript bin/Bedgraph_plotter.R \
 				$1/accepted_hits_sorted.depth \
