@@ -7,3 +7,4 @@ Update after publication:
 Update now:
 * Use base64 to permanently add PDFs/images to HTML
 * Also convert HTML to PDF
+* Add read length profiles
