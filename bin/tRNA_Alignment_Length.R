@@ -45,6 +45,7 @@ close(con)
 length.DF <- data.frame(length.vector, row.names = NULL)
 names(length.DF) <- c("tRNA", "alignment.length")
 length.summary.DF <- t(as.data.frame.matrix(table(length.DF))) # Get table of counts for each tRNA
+write.table(paste0(args[2], ".txt"), x = length.summary.DF, quote = F) # Write length summary as output for further analysis
 proportion.DF <- prop.table(length.summary.DF, margin=2)*100 # Get table of proportions
 ### Generate empty table with complete rownames
 max.val <- max(as.integer(rownames(proportion.DF)))
@@ -60,7 +61,7 @@ filled.DF <- subset(filled.DF, select=-c(empty)) # Remove empty column
 melted.DF <- melt(filled.DF)
 melted.DF$Row.names <- as.numeric(melted.DF$Row.names) 
 ### Plot
-pdf(args[2])
+pdf(paste0(args[2], "pdf"))
 ggplot(data = melted.DF, mapping = aes(x = Row.names, y = value)) +
   geom_line() +
   labs(title = "Read Alignment Lengths",
