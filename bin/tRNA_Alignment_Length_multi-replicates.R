@@ -18,33 +18,16 @@ if (length(args)==0) {
   stop("Error: Not enough command line arguments provided. Input file and output file names required.")
 } 
 
-length.vector <- NULL # Create empty DF
-con <- file(args[1], "rt") # Allows file to be read one line at a time
-#con <- file("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/31-10-19_subset_KA2w-vs-KA2w-ctrl/RMK2W_RH_101/tRNA-alignment/tsRNAs_aligned.sam", "rt")
-while (length(oneLine <- readLines(con, n = 1, warn = FALSE)) > 0) { # Read one line at a time (SAM files are usually very large)
-  my.string <- oneLine
-  if (grepl(pattern = "^@", x = my.string) == T){
-  } else {
-    my.string
-    split.line <- strsplit(my.string, "\t")
-    ### Get tRNA type
-    trna <- split.line[[1]][3]
-    trna.type <- strsplit(trna, '-')[[1]][2] 
-    ### Get longest perfect matching alignment in each SAM line
-    CIGAR <- split.line[[1]][6]
-    CIGAR.split <- unlist(strsplit(CIGAR, "(?<=[A-Z])", perl = TRUE))
-    CIGAR.split.matching <- CIGAR.split[grep("M", CIGAR.split)]
-    CIGAR.longest.match <- max(as.integer(gsub("[A-Z]", "", CIGAR.split.matching))) # Get largest integer
-    ### Add newly created row to dataframe
-    new.row <- c(trna.type, CIGAR.longest.match)
-    length.vector <- rbind(length.vector, new.row)
-  }
-} 
-close(con)
-### Clean up dataframe 
-length.DF <- data.frame(length.vector, row.names = NULL)
-names(length.DF) <- c("tRNA", "alignment.length")
-length.summary.DF <- t(as.data.frame.matrix(table(length.DF))) # Get table of counts for each tRNA
+myPath <- "/home/paul/Documents/Pipelines/tsRNAsearch/my.test/"
+file.names <- dir(myPath, pattern =".txt")
+cDataAll <- NULL
+for (i in 1:length(file.names)){
+  print(i)
+  full.path <- paste0(myPath, file.names[i])
+  file <- read.table(full.path, header = TRUE)
+  cDataAll <- merge(cDataAll, file, by=0, all=T)
+}
+
 write.table(paste0(args[2], ".txt"), x = length.summary.DF, quote = F) # Write length summary as output for further analysis
 proportion.DF <- prop.table(length.summary.DF, margin=2)*100 # Get table of proportions
 ### Generate empty table with complete rownames
