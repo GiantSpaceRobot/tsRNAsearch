@@ -933,5 +933,7 @@ $FinishTime
 $parametersHTML
 
 $version
-"
+" > $myPath/$outDir/Data/Run-Summary.Rmd
+Rscript -e 'library(rmarkdown); library(knitr); rmarkdown::render($myPath/$outDir/Data/Run-Summary.Rmd, "html_document")'
+
 string_padder "$FinishTime"
