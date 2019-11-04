@@ -5,7 +5,5 @@ Update after publication:
 * Integrate MINTmap tRNA fragment license plates for identified tsRNAs
 
 Update now:
-* Use base64 to permanently add PDFs/images to HTML
 * Also convert HTML to PDF
-* Use Rmd format to show results?
 * Write script to make read length coverage profiles for tsRNAsearch main script
