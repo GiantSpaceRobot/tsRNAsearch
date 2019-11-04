@@ -42,7 +42,7 @@ species="human"
 skip="no"
 Plots="no"
 remove="no"
-version="tsRNAsearch version 0.11"
+version="tsRNAsearch version 0.12"
 while getopts ":hs:A:t:d:f:S:R:e:o:" o; do
     case "${o}" in
 		h)
@@ -487,7 +487,7 @@ if [[ $(wc -l < $myPath/$outDir/Data/All-Features-Identified.txt) -ge 2 ]]; then
 	Rscript bin/Bedgraph_plotter_DEGs.R \
 		$myPath/$outDir/Data/Intermediate-files/Everything.cond1_concatenated_mean_stdev.tsRNA.depth \
 		$myPath/$outDir/Data/Intermediate-files/Everything.cond2_concatenated_mean_stdev.tsRNA.depth \
-		additional-files/"${species}_All-ncRNAs.txt" \
+		additional-files/"${species}_all-ncRNAs.txt" \
 		$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_All-tsRNAs.pdf \
 		0 \
 		"yes" & # The Mus-musculus file does nothing here, other than act as a non-empty file which prompts the script to plot all features because plot everything = "yes" is provided
@@ -644,7 +644,7 @@ FinishTime="Pipeline finished at $(date)"
 
 ### Results summary for HTML
 summary_results_html=`cat $myPath/$outDir/Data/${condition1}_vs_${condition2}.summarised.top-results.html`
-summary_results_Rmd="$myPath/$outDir/Data/${condition1}_vs_${condition2}.summarised.top-results.txt"
+#summary_results_Rmd="$myPath/$outDir/Data/${condition1}_vs_${condition2}.summarised.top-results.txt"
 ### Generate HTML file:
 echo "
 <!DOCTYPE html>
@@ -766,167 +766,177 @@ $summary_results_html
 </html>
 " > $myPath/$outDir/${condition1}_vs_${condition2}.Results-summary.html
 
-echo "
+echo -e "
 ---
-title: "tsRNAsearch Report"
+title: 'tsRNAsearch Report'
+output: 
+  html_document:
+    self_contained: no
+    toc: true
+    number_sections: true
+    theme: cerulean
 ---
 
 # ${condition1} versus ${condition2}
 
-## Quantities of ncRNA features identified
+### Quantities of ncRNA features identified
 
 Proportions of ncRNA groups identified (normalised by reads per million)
 
-```{r BarPlot-RPM, fig.align='center', out.width = '600pt', out.height = '600pt'}
-knitr::include_graphics("$myPath/$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_RPM-normalised.pdf")
-```
+\x60\x60\x60{r BarPlot-RPM, fig.align='center', out.width = '600pt', out.height = '600pt', error=TRUE, echo=FALSE}
+knitr::include_graphics('$myPath/$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_RPM-normalised.pdf')
+\x60\x60\x60
 
 Number of raw reads identified for each ncRNA group
 
-```{r BarPlot-Raw, fig.align='center', out.width = '600pt', out.height = '600pt'}
-knitr::include_graphics("$myPath/$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_Raw-readcounts.pdf")
-```
+\x60\x60\x60{r BarPlot-Raw, fig.align='center', out.width = '600pt', out.height = '600pt', error=TRUE, echo=FALSE}
+knitr::include_graphics('$myPath/$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_Raw-readcounts.pdf')
+\x60\x60\x60
 
-## Venn diagram comparing the three methods used (DESeq2, distribution algorithm, cleavage algorithm)
+### Venn diagram comparing the three methods used (DESeq2, distribution algorithm, cleavage algorithm)
 
-```{r Method comparison venn diagram, fig.align='center', out.width = '600pt', out.height = '600pt'}
-knitr::include_graphics("$myPath/$outDir/Plots/${condition1}_vs_${condition2}_VennDiagram.png")
-```
+\x60\x60\x60{r Method comparison venn diagram, fig.align='center', out.width = '600pt', out.height = '600pt', error=TRUE, echo=FALSE}
+knitr::include_graphics('$myPath/$outDir/Plots/${condition1}_vs_${condition2}_VennDiagram.png')
+\x60\x60\x60
 
-### Details of the intersections can be found here:
+#### Details of the intersections can be found here:
 
-$myPath/$outDir/Data/VennDiagramGeneration/${condition1}_vs_${condition2}.intersect...
+* $myPath/$outDir/Data/VennDiagramGeneration/${condition1}_vs_${condition2}.intersect...
 
-### Files used to generate the Venn Diagram can be found here:
+#### Files used to generate the Venn Diagram can be found here:
 
-$myPath/$outDir/Data/VennDiagramGeneration
+* $myPath/$outDir/Data/VennDiagramGeneration
 
 ### Summary Report Table
-```{r Summary report, echo=FALSE}
+\x60\x60\x60{r Summary report, echo=FALSE, error=TRUE}
 library(knitr)
-my.table <- read.csv($summary_results_Rmd, sep = "\t")
-kable(my.table[1:20, ], caption = "Top 20 results shown (sorted by distribution score)")
-```
+my.table <- read.csv($myPath/$outDir/Data/${condition1}_vs_${condition2}.summarised.top-results.txt, sep = '\t')
+kable(my.table[1:20, ], caption = 'Top 20 results shown (sorted by distribution score)')
+\x60\x60\x60
 
-# Differential Expression Results (DESeq2)
+## Differential Expression Results (DESeq2)
 Principal Component Analysis (PCA) of all samples
 
-```{r PCA, fig.align='center', out.width = '600pt', out.height = '600pt'}
-knitr::include_graphics("$myPath/$outDir/Plots/${condition1}_vs_${condition2}_tpm-PCA.pdf")
-```
+\x60\x60\x60{r PCA, fig.align='center', out.width = '600pt', out.height = '600pt', error=TRUE, echo=FALSE}
+knitr::include_graphics('$myPath/$outDir/Plots/${condition1}_vs_${condition2}_tpm-PCA.pdf')
+\x60\x60\x60
 
 Sample distance matrix
 
-```{r Distance Matrix, fig.align='center', out.width = '600pt', out.height = '600pt'}
-knitr::include_graphics("$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Distance-Matrix.pdf")
-```
+\x60\x60\x60{r Distance Matrix, fig.align='center', out.width = '600pt', out.height = '600pt', error=TRUE, echo=FALSE}
+knitr::include_graphics('$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Distance-Matrix.pdf')
+\x60\x60\x60
 
 Volcano plot showing differentially expressed genes
 
-```{r Volcano Plot, fig.align='center', out.width = '600pt', out.height = '600pt'}
-knitr::include_graphics("$myPath/$outDir/Plots/${condition1}_vs_${condition2}_VolcanoPlot.pdf")
-```
+\x60\x60\x60{r Volcano Plot, fig.align='center', out.width = '600pt', out.height = '600pt', error=TRUE, echo=FALSE}
+knitr::include_graphics('$myPath/$outDir/Plots/${condition1}_vs_${condition2}_VolcanoPlot.pdf')
+\x60\x60\x60
 
 Differentially expressed tRNAs
 
-```{r tsRNAs-DE, fig.align='center', out.width = '600pt', out.height = '600pt'}
-knitr::include_graphics("$myPath/$outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-DE-negLog10_padj.pdf")
-```
+\x60\x60\x60{r tsRNAs-DE, fig.align='center', out.width = '600pt', out.height = '600pt', error=TRUE, echo=FALSE}
+knitr::include_graphics('$myPath/$outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-DE-negLog10_padj.pdf')
+\x60\x60\x60
 
-### Coverage plots for all differentially expressed tRNAs
+#### Coverage plots for all differentially expressed tRNAs
 
-```{r tsRNAs-DE-Coverage, fig.align='center', out.width = '600pt', out.height = '600pt'}
-knitr::include_graphics("$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-tsRNAs.pdf")
-```
+\x60\x60\x60{r tsRNAs-DE-Coverage, fig.align='center', out.width = '600pt', out.height = '600pt', error=TRUE, echo=FALSE}
+knitr::include_graphics('$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-tsRNAs.pdf')
+\x60\x60\x60
 
 Differentially expressed ncRNAs (other than tRNAs)
 
-```{r ncRNAs-DE, fig.align='center', out.width = '600pt', out.height = '600pt'}
-knitr::include_graphics("$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_ncRNAs.high-DE-negLog10_padj.pdf")
-```
+\x60\x60\x60{r ncRNAs-DE, fig.align='center', out.width = '600pt', out.height = '600pt', error=TRUE, echo=FALSE}
+knitr::include_graphics('$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_ncRNAs.high-DE-negLog10_padj.pdf')
+\x60\x60\x60
 
-### Coverage plots for all differentially expressed ncRNAs
+#### Coverage plots for all differentially expressed ncRNAs
 
-```{r ncRNAs-DE-Coverage, fig.align='center', out.width = '600pt', out.height = '600pt'}
-knitr::include_graphics("$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-ncRNAs.pdf")
-```
+\x60\x60\x60{r ncRNAs-DE-Coverage, fig.align='center', out.width = '600pt', out.height = '600pt', error=TRUE, echo=FALSE}
+knitr::include_graphics('$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-ncRNAs.pdf')
+\x60\x60\x60
 
 Full results for features differentially regulated in ${condition1} versus ${condition2} here:
 
-$myPath/$outDir/Data/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output.csv
-$myPath/$outDir/Data/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output-upregulated.csv
-$myPath/$outDir/Data/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output-downregulated.csv
+* $myPath/$outDir/Data/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output.csv
+* $myPath/$outDir/Data/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output-upregulated.csv
+* $myPath/$outDir/Data/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output-downregulated.csv
 
-# Distribution Algorithm Results
+## Distribution Algorithm Results
 
 Highest scoring tRNA fragments identified using the distribution algorithm
 
-```{r tsRNAs-Distribution, fig.align='center', out.width = '600pt', out.height = '600pt'}
-knitr::include_graphics("$myPath/$outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-distribution-score.pdf")
-```
+\x60\x60\x60{r tsRNAs-Distribution, fig.align='center', out.width = '600pt', out.height = '600pt', error=TRUE, echo=FALSE}
+knitr::include_graphics('$myPath/$outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-distribution-score.pdf')
+\x60\x60\x60
 
-Full results here: $myPath/$outDir/Data/Distribution_results/${condition1}_vs_${condition2}_High-distribution-tsRNAs.txt
+Full results here:
+* $myPath/$outDir/Data/Distribution_results/${condition1}_vs_${condition2}_High-distribution-tsRNAs.txt
 
-### Coverage plots for all tRNAs with irregular distribution identified by the distribution algorithm
+#### Coverage plots for all tRNAs with irregular distribution identified by the distribution algorithm
 
-```{r tsRNAs-Distribution-Coverage, fig.align='center', out.width = '600pt', out.height = '600pt'}
-knitr::include_graphics("$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-tsRNAs.pdf")
-```
+\x60\x60\x60{r tsRNAs-Distribution-Coverage, fig.align='center', out.width = '600pt', out.height = '600pt', error=TRUE, echo=FALSE}
+knitr::include_graphics('$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-tsRNAs.pdf')
+\x60\x60\x60
 
 Highest scoring ncRNA fragments identified using the distribution algorithm
 
-```{r ncRNAs-Distribution, fig.align='center', out.width = '600pt', out.height = '600pt'}
-knitr::include_graphics("$myPath/$outDir/Plots/${condition1}_vs_${condition2}_ncRNAs.high-distribution-score.pdf")
-```
+\x60\x60\x60{r ncRNAs-Distribution, fig.align='center', out.width = '600pt', out.height = '600pt', error=TRUE, echo=FALSE}
+knitr::include_graphics('$myPath/$outDir/Plots/${condition1}_vs_${condition2}_ncRNAs.high-distribution-score.pdf')
+\x60\x60\x60
 
-Full results here: $myPath/$outDir/Data/Distribution_results/${condition1}_vs_${condition2}_High-distribution-ncRNAs.txt
+Full results here:
+* $myPath/$outDir/Data/Distribution_results/${condition1}_vs_${condition2}_High-distribution-ncRNAs.txt
 
-### Coverage plots for all sno/miRNAs with irregular distribution identified by the distribution algorithm
+#### Coverage plots for all sno/miRNAs with irregular distribution identified by the distribution algorithm
 
-```{r ncRNAs-Distribution-Coverage, fig.align='center', out.width = '600pt', out.height = '600pt'}
-knitr::include_graphics("$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-ncRNAs.pdf")
-```
+\x60\x60\x60{r ncRNAs-Distribution-Coverage, fig.align='center', out.width = '600pt', out.height = '600pt', error=TRUE, echo=FALSE}
+knitr::include_graphics('$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-ncRNAs.pdf')
+\x60\x60\x60
 
 # Cleavage Algorithm Results
 Highest scoring tRNA fragments identified using the cleavage algorithm
 
-```{r tsRNAs-Cleavage, fig.align='center', out.width = '600pt', out.height = '600pt'}
-knitr::include_graphics("$myPath/$outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-cleavage-score.pdf")
-```
+\x60\x60\x60{r tsRNAs-Cleavage, fig.align='center', out.width = '600pt', out.height = '600pt', error=TRUE, echo=FALSE}
+knitr::include_graphics('$myPath/$outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-cleavage-score.pdf')
+\x60\x60\x60
 
-Full results here: $myPath/$outDir/Data/Cleavage_results/${condition1}_vs_${condition2}_High-cleavage-tsRNAs.txt
+Full results here:
+* $myPath/$outDir/Data/Cleavage_results/${condition1}_vs_${condition2}_High-cleavage-tsRNAs.txt
 
-### Coverage plots for all tRNAs with irregular 5' vs 3' coverage identified by the cleavage algorithm
+#### Coverage plots for all tRNAs with irregular 5' vs 3' coverage identified by the cleavage algorithm
 
-```{r tsRNAs-Cleavage-Coverage, fig.align='center', out.width = '600pt', out.height = '600pt'}
-knitr::include_graphics("$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-tsRNAs.pdf")
-```
+\x60\x60\x60{r tsRNAs-Cleavage-Coverage, fig.align='center', out.width = '600pt', out.height = '600pt', error=TRUE, echo=FALSE}
+knitr::include_graphics('$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-tsRNAs.pdf')
+\x60\x60\x60
 
 Highest scoring ncRNA fragments identified using the cleavage algorithm
 
-```{r ncRNAs-Cleavage, fig.align='center', out.width = '600pt', out.height = '600pt'}
-knitr::include_graphics("$myPath/$outDir/Plots/${condition1}_vs_${condition2}_ncRNAs.high-cleavage-score.pdf")
-```
+\x60\x60\x60{r ncRNAs-Cleavage, fig.align='center', out.width = '600pt', out.height = '600pt', error=TRUE, echo=FALSE}
+knitr::include_graphics('$myPath/$outDir/Plots/${condition1}_vs_${condition2}_ncRNAs.high-cleavage-score.pdf')
+\x60\x60\x60
 
-Full results here: $myPath/$outDir/Data/Cleavage_results/${condition1}_vs_${condition2}_High-cleavage-ncRNAs.txt
+Full results here: 
+* $myPath/$outDir/Data/Cleavage_results/${condition1}_vs_${condition2}_High-cleavage-ncRNAs.txt
 
-### Coverage plots for all sno/miRNAs with irregular 5' vs 3' coverage identified by the cleavage algorithm
+#### Coverage plots for all sno/miRNAs with irregular 5' vs 3' coverage identified by the cleavage algorithm
 
-```{r ncRNAs-Cleavage-Coverage, fig.align='center', out.width = '600pt', out.height = '600pt'}
-knitr::include_graphics("$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-ncRNAs.pdf")
-```
+\x60\x60\x60{r ncRNAs-Cleavage-Coverage, fig.align='center', out.width = '600pt', out.height = '600pt', error=TRUE, echo=FALSE}
+knitr::include_graphics('$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-ncRNAs.pdf')
+\x60\x60\x60
 
-# More results:
+## More results:
 
 tRNA fragments identified where read origin accurate only to isoacceptor level 
 
-```{r tsRNAs-Multimappers-Coverage, fig.align='center', out.width = '600pt', out.height = '600pt'}
-knitr::include_graphics("$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_tsRNAs-with-multimapping-reads.pdf")
-```
+\x60\x60\x60{r tsRNAs-Multimappers-Coverage, fig.align='center', out.width = '600pt', out.height = '600pt', error=TRUE, echo=FALSE}
+knitr::include_graphics('$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_tsRNAs-with-multimapping-reads.pdf')
+\x60\x60\x60
 
-### All tRNA coverage plots can be found here 
+#### All tRNA coverage plots can be found here 
 
-$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_All-tsRNAs.pdf
+* $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_All-tsRNAs.pdf
 
 $StartTime
 $FinishTime
@@ -934,6 +944,6 @@ $parametersHTML
 
 $version
 " > $myPath/$outDir/Data/Run-Summary.Rmd
-Rscript -e 'library(rmarkdown); library(knitr); rmarkdown::render($myPath/$outDir/Data/Run-Summary.Rmd, "html_document")'
+Rscript bin/Rmarkdown-to-HTML.R $myPath/$outDir/Data/Run-Summary.Rmd $myPath/$outDir/Run-Summary.html
 
 string_padder "$FinishTime"
