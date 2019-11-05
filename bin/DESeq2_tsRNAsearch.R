@@ -473,10 +473,21 @@ DESeq2.function <- function(path.to.files){
   level2 <- my.levels[2] # get name of level 2
   #print(head(cDataAll))
   #library(dplyr)
-  level1.df <- select(data.frame(cDataAll), contains(level1)) # Subset main count matrix using condition 1
-  level2.df <- select(data.frame(cDataAll), contains(level2)) # Subset main count matrix using condition 2
-  #print(head(level1.df))
-  #print(head(level2.df))
+  #level1 <- "CytC"
+  #level2 <- "CytC-ctrl"
+  #cDataAll <- data.frame("CytC1"=0,
+  #                 "CytC2"=0, 
+  #                 "CytC-ctrl1"=0,
+  #                 "CytC-ctrl2"=0) 
+  
+  #level1.df <- select(data.frame(cDataAll), contains(level1)) # Subset main count matrix using condition 1
+  level1.df <- data.frame(cDataAll) %>% select(c(1:ReplicateNumber1)) # Subset main count matrix to get condition 1
+  #level2.df <- select(data.frame(cDataAll), contains(level2)) # Subset main count matrix using condition 2
+  level2.df <- data.frame(cDataAll) %>% select(c((ReplicateNumber1+1):(ReplicateNumber1+ReplicateNumber2))) # Subset main count matrix to get condition 2
+  print("first")
+  print(head(level1.df))
+  print("second")
+  print(head(level2.df))
   level1.df$total.raw <- rowSums(level1.df) #Calculate total read count for condition 1
   level2.df$total.raw <- rowSums(level2.df) #Calculate total read count for condition 1
   level1.df$total.rpm <- level1.df$total.raw/(sum(level1.df$total.raw)/1000000) # Calculate reads per million
@@ -492,6 +503,8 @@ DESeq2.function <- function(path.to.files){
 ### Function to create barplots
 create.barplot <- function(column.cond1, column.cond2, normalisation.method, my.rownames, name1, name2) {
   subtitle <- ifelse(normalisation.method == "RPM", "Normalised to reads per million (RPM)", "Raw read counts displayed") # Create subtitle for plot
+  #print(column.cond1)
+  #print(column.cond2)
   barplot.df <- data.frame(cbind(column.cond1, column.cond2))
   names(barplot.df)[1] <- "cond1" #level1 # Add correct colname to DF
   names(barplot.df)[2] <- "cond2" #level2 # Add correct colname to DF
@@ -503,6 +516,7 @@ create.barplot <- function(column.cond1, column.cond2, normalisation.method, my.
     barplot.df$mapped[ substr( barplot.df$features, 0, nchar(as.character(GTF$V1[row]))) == GTF$V1[row] ] <- GTF$ncRNA.type[row]
   }
   barplot.df$mapped <- as.character(barplot.df$mapped) # Convert from factor to character
+  print(head(barplot.df))
   ### Assign ncRNA labels for as many ncRNA types as possible
   for(row in seq_len( nrow(barplot.df))) {
     if(is.na(barplot.df$mapped[row])) {   # If no ncRNA type has been assigned yet:
@@ -519,6 +533,7 @@ create.barplot <- function(column.cond1, column.cond2, normalisation.method, my.
   names(grouped.df)[1] <- "Feature" # Add correct colname to DF
   names(grouped.df)[2] <- name1 # Add correct colname to DF
   names(grouped.df)[3] <- name2 # Add correct colname to DF
+  print(head(grouped.df))
   melted.df <- melt(data = grouped.df, id.vars = "Feature")
   df.cols <- length(unique(melted.df$Feature)) # Expand color palette
   mycolors <- colorRampPalette(brewer.pal(11, "RdYlBu"))(df.cols) # Expand RdYlBu to # of colours needed based on DF
