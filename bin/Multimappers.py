@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
  
 """
 Take multimappers depth file and output list of 

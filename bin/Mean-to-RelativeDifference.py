@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
  
 """
 Calculate the relative difference of the mean of read counts

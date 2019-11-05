@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
  
 """
 Remove features from GTF that are found in provided text file

@@ -1,3 +1,5 @@
+#!/usr/bin/env python2
+
 # Collapses SAM files
 
 import sys

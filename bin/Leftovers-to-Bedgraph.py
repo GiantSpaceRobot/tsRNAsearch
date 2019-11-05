@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
  
 """
 Expand leftovers tRNA group files into Bedgraph format

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
  
 """
 Calculate the mean and standard dev for 

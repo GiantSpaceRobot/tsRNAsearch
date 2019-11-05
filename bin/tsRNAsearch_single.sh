@@ -227,7 +227,7 @@ function SAMcollapse () {
 	for i in $outDir/tempDir/edit_*; 
 	do
 		base=$(basename $i)
-		python bin/SAMcollapse.py \
+		python2 bin/SAMcollapse.py \
 			$i \
 			${fileToCollapse}_${base} \
 			>> $outDir/tRNA-alignment/collapsed-reads.txt & 
@@ -269,7 +269,7 @@ function bam_to_plots () {  ### Steps for plotting regions with high variation i
 		> $1/accepted_hits.depth   # A lot faster than bedtools genomecov
 	cp $1/accepted_hits.depth $1/accepted_hits_raw.depth
 	### Normalise by reads per million (RPM)
-	python bin/Depth-to-Depth_RPM.py \
+	python2 bin/Depth-to-Depth_RPM.py \
 		$1/accepted_hits_raw.depth \
 		$mapped \
 		$1/accepted_hits.depth 
@@ -290,7 +290,7 @@ function bam_to_plots () {  ### Steps for plotting regions with high variation i
 			$tRNAGTF \
 			$1/accepted_hits_flipped.depth
 		### Collapse tRNAs from the same tRNA species
-		python bin/Bedgraph_collapse-tRNAs.py \
+		python2 bin/Bedgraph_collapse-tRNAs.py \
 			$1/accepted_hits_flipped.depth \
 			$1/accepted_hits_collapsed.depth
 		### Rename input depth file
@@ -340,7 +340,7 @@ function bam_to_plots () {  ### Steps for plotting regions with high variation i
 		cp $1/$2_$3_Coverage-plots.pdf $outDir/Data_and_Plots/$2_$3_Coverage-plots.pdf
 	fi
 	### Output the mean, standard deviation and coefficient of variance of each ncRNA/gene
-	python bin/Bedgraph-analyser.py \
+	python2 bin/Bedgraph-analyser.py \
 		$1/accepted_hits_sorted.depth \
 		$1/accepted_hits_sorted.tsv
 	### Gather all ncRNAs/genes with a mean coverage greater than 0 (pointless step but the cutoff used to be higher than 0)
@@ -601,11 +601,11 @@ bam_to_plots $outDir/tRNA-alignment $singleFile_basename tsRNA &
 bam_to_plots $outDir/ncRNA-alignment $singleFile_basename ncRNA &
 
 ### Process multi-mapping tRNAs
-python bin/Leftovers-to-Bedgraph.py \
+python2 bin/Leftovers-to-Bedgraph.py \
 	$outDir/tRNA-alignment/tRNAs-almost-mapped.txt \
 	additional-files/${species}_tRNA-lengths.txt \
 	$outDir/tRNA-alignment/tRNAs-almost-mapped.depth
-python bin/Depth-to-Depth_RPM.py \
+python2 bin/Depth-to-Depth_RPM.py \
 	$outDir/tRNA-alignment/tRNAs-almost-mapped.depth \
 	$mapped \
 	$outDir/tRNA-alignment/$singleFile_basename.tRNAs-almost-mapped_RPM.depth
@@ -616,28 +616,28 @@ mv $outDir/tRNA-alignment/$singleFile_basename.tRNAs-almost-mapped_RPM.sorted.de
 
 ### Get RPM-normalised FCount count data
 string_padder "Get RPM-normalised read-counts"
-python bin/FCount-to-RPM.py \
+python2 bin/FCount-to-RPM.py \
 	$outDir/FCount-count-output/$singleFile_basename.all-features.count \
 	$mapped \
 	$outDir/FCount-to-RPM/$singleFile_basename.all-features &
-python bin/FCount-to-RPM.py \
+python2 bin/FCount-to-RPM.py \
 	$outDir/FCount-count-output/tRNA-alignment.count \
 	$mapped \
 	$outDir/FCount-to-RPM/tRNA-alignment & 
-python bin/FCount-to-RPM.py \
+python2 bin/FCount-to-RPM.py \
 	$outDir/FCount-count-output/ncRNA-alignment.count \
 	$mapped \
 	$outDir/FCount-to-RPM/ncRNA-alignment &
-#python bin/FCount-to-RPM.py $outDir/FCount-count-output/mRNA-ncRNA-alignment.count $mapped $outDir/FCount-to-RPM/mRNA-ncRNA-alignment &
+#python2 bin/FCount-to-RPM.py $outDir/FCount-count-output/mRNA-ncRNA-alignment.count $mapped $outDir/FCount-to-RPM/mRNA-ncRNA-alignment &
 wait
 sleep 5  # Make sure everything is finished running
 
 ### Collapse count file
 string_padder "Collapsing count files..."
-python bin/CollapseCountfile.py \
+python2 bin/CollapseCountfile.py \
 	$outDir/FCount-count-output/$singleFile_basename.all-features.count \
 	$outDir/FCount-count-output/$singleFile_basename.collapsed.all-features.count  # For DESeq2
-python bin/CollapseCountfile.py \
+python2 bin/CollapseCountfile.py \
 	$outDir/FCount-to-RPM/$singleFile_basename.all-features.rpm.count \
 	$outDir/FCount-to-RPM/$singleFile_basename.collapsed.all-features.rpm.count # For Cleavage + Distribution algorithms
 

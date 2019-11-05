@@ -6,4 +6,5 @@ Update after publication:
 
 Update now:
 * Also convert HTML to PDF
-* Write script to make read length coverage profiles for tsRNAsearch main script
+* Change python to python2 in python scripts
+* Add code to python scripts so they try to use python 2 automatically
