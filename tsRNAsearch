@@ -836,7 +836,7 @@ knitr::include_graphics('$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Ve
 
 \x60\x60\x60{r Summary report, echo=TRUE, error=TRUE}
 library(knitr)
-my.table <- read.csv($myPath/$outDir/Data/${condition1}_vs_${condition2}.summarised.top-results.txt, sep = '\t')
+my.table <- read.csv(\"$myPath/$outDir/Data/${condition1}_vs_${condition2}.summarised.top-results.txt\", sep = '\t')
 kable(my.table[1:20, ], caption = 'Top 20 results shown (sorted by distribution score)')
 \x60\x60\x60
 
@@ -889,7 +889,7 @@ knitr::include_graphics('$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Fe
 ### Differentially expressed ncRNAs (other than tRNAs)
 
 \x60\x60\x60{r ncRNAs-DE, fig.align='center', out.width = '600pt', out.height = '600pt', error=TRUE, echo=FALSE}
-knitr::include_graphics('$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_ncRNAs.high-DE-negLog10_padj.pdf')
+knitr::include_graphics('$myPath/$outDir/Plots/${condition1}_vs_${condition2}_ncRNAs.high-DE-negLog10_padj.pdf')
 \x60\x60\x60
 
 ### Coverage plots for all differentially expressed ncRNAs
