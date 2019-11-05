@@ -8,6 +8,7 @@
 
 library(reshape2)
 library(ggplot2)
+library(plyr)
 library(dplyr)
 library(stringr)
 
@@ -18,17 +19,37 @@ if (length(args)==0) {
   stop("Error: Not enough command line arguments provided. Input file and output file names required.")
 } 
 
-myPath <- "/home/paul/Documents/Pipelines/tsRNAsearch/my.test/"
+#myPath <- "/home/paul/Documents/Pipelines/tsRNAsearch/my.test/"
+myPath <- args[1]
 file.names <- dir(myPath, pattern =".txt")
-cDataAll <- NULL
+cDataAll <- data.frame(my.rownames=(0))
 for (i in 1:length(file.names)){
-  print(i)
   full.path <- paste0(myPath, file.names[i])
-  file <- read.table(full.path, header = TRUE)
-  cDataAll <- merge(cDataAll, file, by=0, all=T)
+  my.file <- read.table(full.path, header = TRUE)
+  my.file$my.rownames <- rownames(my.file)
+  cDataAll <- merge(cDataAll, my.file, by="my.rownames", all = TRUE)
 }
+rownames(cDataAll) <- cDataAll$my.rownames
+intermediate.df1 <- cDataAll %>%
+  select(-my.rownames) #%>% # Remove rownames column
+intermediate.df1 <- intermediate.df1[-1,] %>%
+  #filter_all(any_vars(!is.na(.))) #%>% # Remove rows where all values are NA (i.e. the empty column added on cDataAll initiation)
+  t() %>%
+  data.frame()
+intermediate.df1[is.na(intermediate.df1)] <- 0
+intermediate.df1$tRNAs <- gsub("\\..*", "", rownames(intermediate.df1))
+intermediate.df2 <- ddply(intermediate.df1, "tRNAs", numcolwise(sum))
+rownames(intermediate.df2) <- intermediate.df2$tRNAs
+length.summary.DF <- intermediate.df2 %>%
+  select(-tRNAs) %>%
+  t() %>%
+  data.frame()
+rownames(length.summary.DF) <- as.numeric(gsub(".*X", "", rownames(length.summary.DF)))
+length.summary.DF <- as.matrix(length.summary.DF)
 
-write.table(paste0(args[2], ".txt"), x = length.summary.DF, quote = F) # Write length summary as output for further analysis
+### Write table
+write.table(paste0(args[1], args[2], "_tRNA-read-alignment-lengths.txt"), x = length.summary.DF, quote = F) # Write length summary as output
+### Convert counts to proportions
 proportion.DF <- prop.table(length.summary.DF, margin=2)*100 # Get table of proportions
 ### Generate empty table with complete rownames
 max.val <- max(as.integer(rownames(proportion.DF)))
@@ -44,11 +65,12 @@ filled.DF <- subset(filled.DF, select=-c(empty)) # Remove empty column
 melted.DF <- melt(filled.DF)
 melted.DF$Row.names <- as.numeric(melted.DF$Row.names) 
 ### Plot
-pdf(paste0(args[2], ".pdf"))
+pdf(paste0(args[1], args[2], "_tRNA-read-alignment-lengths.pdf"))
 ggplot(data = melted.DF, mapping = aes(x = Row.names, y = value)) +
   geom_line() +
-  labs(title = "Read Alignment Lengths",
+  labs(title = paste0("Read Alignment Lengths (", args[2], ")"),
        x = "Length of read alignment",
        y = "Relative count") +
   facet_wrap(facets = vars(variable))
 dev.off()
+

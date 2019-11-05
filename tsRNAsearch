@@ -248,6 +248,10 @@ if [[ $inFile != "NA" ]]; then
 	exit 0 # Exit successfully
 fi
 
+### Define conditions
+condition1=$( awk -F ',' '{print $2}' "$expFile" | uniq | head -n 1 ) # Get the first condition name
+condition2=$( awk -F ',' '{print $2}' "$expFile" | uniq | tail -n 1 ) # Get the second condition name
+
 ### Create dir substructure
 mkdir -p $outDir/Data
 mkdir -p $outDir/Data/Distribution_results
@@ -255,6 +259,9 @@ mkdir -p $outDir/Data/Cleavage_results
 mkdir -p $outDir/Data/Intermediate-files
 mkdir -p $outDir/Data/Intermediate-files/DataTransformations
 mkdir -p $outDir/Plots
+mkdir -p $outDir/Data/Intermediate-files/LengthPlotData
+mkdir -p $outDir/Data/Intermediate-files/LengthPlotData/$condition1
+mkdir -p $outDir/Data/Intermediate-files/LengthPlotData/$condition2
 
 ### Run tsRNAsearch on each RNA-seq file
 for f in $inDir/*; do
@@ -267,6 +274,7 @@ for f in $inDir/*; do
 	readsMapped=$(awk '{sum+=$2} END{print sum;}' $outDir/$filename/FCount-count-output/$filename.collapsed.all-features.count)
 	cp $outDir/$filename/FCount-count-output/$filename.collapsed.all-features.count $outDir/Data/Intermediate-files/ 
 	cp $outDir/$filename/Data_and_Plots/$filename.collapsed.all-features.rpm.count $outDir/Data/Intermediate-files/$filename.collapsed.all-features.RPM.Count
+	cp $outDir/$filename/tRNA-alignment/*tsRNA_tRNA-alignment-length.txt $outDir/Data/Intermediate-files/LengthPlotData/$filename
 done
 
 ### Gather raw count files
@@ -279,10 +287,6 @@ mv $outDir/Data/Intermediate-files/FCount.all-features $outDir/Data/Intermediate
 
 ### Carry out DESeq2 analysis
 string_padder "Carrying out DESeq2 analysis..."
-#condition1=$( awk -F ',' 'NR == 1 {print $2}' "$expFile" ) # Get element in first row second column (condition)
-#condition2=$( grep -v $condition1 "$expFile" | awk -F ',' 'NR == 1 {print $2}') # Get the second condition using the inverse of the first one
-condition1=$( awk -F ',' '{print $2}' "$expFile" | uniq | head -n 1 ) # Get the first condition name
-condition2=$( awk -F ',' '{print $2}' "$expFile" | uniq | tail -n 1 ) # Get the second condition name
 Rscript --vanilla bin/DESeq2_tsRNAsearch.R "$myPath/$outDir/Data/Intermediate-files/" "${condition1}_vs_${condition2}" "$ncRNA_GTF" "$expFile"
 grep $condition1 "$expFile" > $myPath/$outDir/Data/Intermediate-files/predicted_exp_layout_cond1.csv
 grep $condition2 "$expFile" > $myPath/$outDir/Data/Intermediate-files/predicted_exp_layout_cond2.csv
@@ -491,6 +495,22 @@ if [[ $(wc -l < $myPath/$outDir/Data/All-Features-Identified.txt) -ge 2 ]]; then
 		$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_All-tsRNAs.pdf \
 		0 \
 		"yes" & # The Mus-musculus file does nothing here, other than act as a non-empty file which prompts the script to plot all features because plot everything = "yes" is provided
+	### Move tRNA read length files into correct directory based on condition
+	for f in $outDir/Data/Intermediate-files/LengthPlotData/*; do
+		if [ ! -d "$f" ]; then # If f is not a directory, continue
+			current_filename=$(basename $f)
+			current_condition=$(grep ${current_filename} "$expFile" | awk -F ',' '{print $2}') # Get condition name for the current file
+			mv $f $outDir/Data/Intermediate-files/LengthPlotData/$current_condition/${current_filename}_tRNA-lengths.txt
+		fi
+	done
+	### Plot tRNA read alignment lengths for both conditions
+	Rscript bin/tRNA_Alignment_Length_multi-replicates.R \
+		$outDir/Data/Intermediate-files/LengthPlotData/$condition1/ \
+		${condition1}
+	Rscript bin/tRNA_Alignment_Length_multi-replicates.R \
+		$outDir/Data/Intermediate-files/LengthPlotData/$condition2/ \
+		${condition2}
+	cp $outDir/Data/Intermediate-files/LengthPlotData/*/*.pdf $outDir/Plots/
 	if [[ $Plots == "yes" ]]; then
 		### Plot all sno/miRNAs if -A 'yes' parameter selected
 		Rscript bin/Bedgraph_plotter_DEGs.R \
@@ -676,6 +696,11 @@ echo "
 <br />Top 20 results shown (sorted by distribution score)
 $summary_results_html
 <br />
+<body><h4>tRNA Read Alignment Lengths
+<br />
+<embed src="$myPath/$outDir/Plots/${condition1}_tRNA-read-alignment-lengths.pdf" width="800px" height="800px" />
+<br />
+<embed src="$myPath/$outDir/Plots/${condition2}_tRNA-read-alignment-lengths.pdf" width="800px" height="800px" />
 <br />
 <body><h2>Differential Expression Results (DESeq2)</h2>
 <br />Principal Component Analysis (PCA) of all samples
@@ -777,7 +802,7 @@ output:
     theme: cerulean
 ---
 
-Analysis comparing ${condition1} versus ${condition2}
+# Overview of tsRNAsearch analysis comparing ${condition1} versus ${condition2}
 
 ## Quantities of ncRNA features identified
 
@@ -809,10 +834,20 @@ knitr::include_graphics('$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Ve
 
 ## Summary Report Table
 
-\x60\x60\x60{r Summary report, echo=FALSE, error=TRUE}
+\x60\x60\x60{r Summary report, echo=TRUE, error=TRUE}
 library(knitr)
 my.table <- read.csv($myPath/$outDir/Data/${condition1}_vs_${condition2}.summarised.top-results.txt, sep = '\t')
 kable(my.table[1:20, ], caption = 'Top 20 results shown (sorted by distribution score)')
+\x60\x60\x60
+
+## tRNA Read Alignment Length
+
+\x60\x60\x60{r tRNA read alignment length condition 1, fig.align='center', out.width = '600pt', out.height = '600pt', error=TRUE, echo=FALSE}
+knitr::include_graphics('$myPath/$outDir/Plots/${condition1}_tRNA-read-alignment-lengths.pdf')
+\x60\x60\x60
+
+\x60\x60\x60{r tRNA read alignment length condition 2, fig.align='center', out.width = '600pt', out.height = '600pt', error=TRUE, echo=FALSE}
+knitr::include_graphics('$myPath/$outDir/Plots/${condition2}_tRNA-read-alignment-lengths.pdf')
 \x60\x60\x60
 
 # Differential Expression Results (DESeq2)
