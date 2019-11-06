@@ -39,6 +39,9 @@ tsRNAsearch -s mouse -d ExampleData/ -e additional-files/Example_ExperimentLayou
 
 On finishing the run, a HTML report will appear in the *MyResults* directory. In addition, *MyResults* will contain directories named *Data* and *Plots* containing data and plots.
 
+#### Example of HTML output
+[HTML results](http://htmlpreview.github.io/?https://github.com/GiantSpaceRobot/tsRNAsearch/additional-files/CytC_vs_TotalRNA.Results-summary.html)
+
 ## More Information
 #### ncRNA identification methods:
 * DESeq2
