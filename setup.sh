@@ -1,6 +1,6 @@
 #!/bin/bash
 
-usage() { echo "Usage: $0 -s human/mouse/both -p threads
+usage() { echo "Usage: $0 -s human/mouse/rat/all -p threads
 " 1>&2; }
 
 threads=1 # Default CPU number unless overwritten by parameters provided
@@ -17,8 +17,10 @@ while getopts ":hs:p:" o; do
 				species="human"
 			elif [ $s_option = "mouse" ]; then
 				species="mouse"
-			elif [ $s_option = "both" ]; then
-				species="both"
+			elif [ $s_option = "rat" ]; then
+				species="rat"
+			elif [ $s_option = "all" ]; then
+				species="all"
 			else
 				usage
 				echo "Error: the acceptable arguments for the -s parameter are 'human', 'mouse', 'both'"

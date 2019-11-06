@@ -17,7 +17,6 @@ This script will install the following pieces of software at root level:
 
 * fastqc
 * cutadapt
-* STAR
 * python/pip (and python modules)
 * R/Rscript (and R libraries)
 * samtools
