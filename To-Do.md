@@ -5,6 +5,4 @@ Update after publication:
 * Integrate MINTmap tRNA fragment license plates for identified tsRNAs
 
 Update now:
-* Also convert HTML to PDF
-* Change python to python2 in python scripts
-* Add code to python scripts so they try to use python 2 automatically
+* Encode all figures in HTMLs?

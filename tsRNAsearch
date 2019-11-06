@@ -187,7 +187,7 @@ parameters="$(echo -e "Parameters:
 	Skip pre-processing (-S): $skip
 	Remove intermediate files (-R): $remove
 ")"
-parametersHTML="
+parametersHTML="$(echo -e "
 <br />Parameters:
 <br />    Species (-s): $species
 <br />    Input directory containing fastq/fastq.gz files (-d): $inDir
@@ -197,7 +197,7 @@ parametersHTML="
 <br />    Number of threads to use for the analysis (-t): $threads
 <br />    Plot all features (-A): $Plots
 <br />    Skip pre-processing (-S): $skip
-<br />    Remove intermediate files (-R): $remove"
+<br />    Remove intermediate files (-R): $remove")"
 echo "$parameters"
 
 ### Create dir substructure
