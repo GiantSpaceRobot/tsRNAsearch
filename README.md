@@ -37,10 +37,7 @@ On finishing the run, the pipeline will produce a run report as direct output (R
 tsRNAsearch -s mouse -d ExampleData/ -e additional-files/Example_ExperimentLayout.csv -o MyResults > Run-report.log 
 ```
 
-On finishing the run, a HTML report will appear in the *MyResults* directory. In addition, *MyResults* will contain directories named *Data* and *Plots* containing data and plots.
-
-#### Example of HTML output
-[HTML results](http://htmlpreview.github.io/?https://github.com/GiantSpaceRobot/tsRNAsearch/blob/master/additional-files/ExampleOutput/CytC_vs_TotalRNA.Results-summary.html)
+On finishing the run, a HTML report will appear in the *MyResults* directory. In addition, *MyResults* will contain directories named *Data* and *Plots* containing data and plots. [Example of pipeline results](https://giantspacerobot.github.io/tsRNAsearch_ExampleOutput/CytC_vs_TotalRNA.Results-summary.Base64encoded.html)
 
 ## More Information
 #### ncRNA identification methods:
