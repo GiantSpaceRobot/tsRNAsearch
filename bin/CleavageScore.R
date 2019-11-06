@@ -172,7 +172,12 @@ if(nrow(newdata) > 20){
   newdata.subset <- newdata
 }
 
-pdf.width <- nrow(newdata.subset)*0.2 + 3
+if (nrow(newdata.subset) < 5){
+  pdf.width <- 7
+} else {
+  pdf.width <- nrow(newdata.subset)*0.2 + 3
+}
+
 pdf(file = paste0(args[3], ".high-cleavage-score.pdf"), width = pdf.width, height = 5)
 ggplot(data = newdata.subset, mapping = aes(feature, 
                                             newdata.subset$cleavage.score, 
