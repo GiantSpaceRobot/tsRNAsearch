@@ -20,7 +20,6 @@ if (length(args)==0) {
 
 length.vector <- NULL # Create empty DF
 con <- file(args[1], "rt") # Allows file to be read one line at a time
-#con <- file("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/31-10-19_subset_KA2w-vs-KA2w-ctrl/RMK2W_RH_101/tRNA-alignment/tsRNAs_aligned.sam", "rt")
 while (length(oneLine <- readLines(con, n = 1, warn = FALSE)) > 0) { # Read one line at a time (SAM files are usually very large)
   my.string <- oneLine
   if (grepl(pattern = "^@", x = my.string) == T){

@@ -78,26 +78,12 @@ if (length(args)==0) {
     dir.create(paste0(myPath, "DE_Results"))
   }
   file.CSV <- read.csv(args[4], header=FALSE)
-  #print(file.CSV)
   lvls.df <- as.data.frame(table(file.CSV$V2))
-  #file.CSV <- read.csv("/home/paul/Documents/Data/EpimiRNA_Data/Comparisons/Mouse_IAKA_KA2w-vs-KA2w-ctrl_Layout.csv", header = F)
-  #table(file.CSV)
-  #print(lvls.df)
-  #arg2 <- "KA_2w_vs_control"
   my.conditions <- unlist(strsplit(args[2], "_vs_"))
-  #my.conditions <- unlist(strsplit(arg2, "_vs_"))
   Condition1 <- my.conditions[1]
   Condition2 <- my.conditions[2]
   ReplicateNumber1 <- lvls.df[grep(Condition1, lvls.df$Var1),][1,2]
   ReplicateNumber2 <- lvls.df[grep(Condition2, lvls.df$Var1),][1,2]
-  #condition2reps <- paste0(Condition2, 1:ReplicateNumber2)
-  #class(ReplicateNumber1)
-  #ReplicateNumber1 <- lvls.df[1,2]
-  #Condition1 <- toString(lvls.df[1,1])
-  #ReplicateNumber2 <- lvls.df[2,2]
-  #Condition2 <- toString(lvls.df[2,1])
-  #print(Condition1)
-  #print(Condition2)
   myPath <- args[1]
   message("A .csv file was provided, and the directory provided exists.")
 }
@@ -127,11 +113,8 @@ if (file.exists(paste0(myPath, "DE_Results/DESeq2"))){
 #-----------------#
 
 # If libraries not installed, install them
-#source("http://bioconductor.org/biocLite.R")
-#biocLite(DESeq2)
 #library(devtools)
 #devtools::install_github('kevinblighe/EnhancedVolcano')
-
 suppressMessages(library(DESeq2))
 suppressMessages(library(dplyr))
 suppressMessages(library(gplots))
@@ -158,22 +141,16 @@ DESeq2.function <- function(path.to.files){
   ### Read files
   path.to.files <- myPath
   file.names <- dir(path.to.files, pattern =".count")
-  #print(file.names)
   cDataAll <- NULL
   for (i in 1:length(file.names)){
     full.path <- paste0(path.to.files, file.names[i])
     file <- read.table(full.path, header = TRUE)
     cDataAll <- cbind(cDataAll, file[,2])
   }
-  #Condition1 <- "CytC"
-  #Condition2 <- "CytC-ctrl"
   condition1reps <- paste0(Condition1, 1:ReplicateNumber1)
   condition2reps <- paste0(Condition2, 1:ReplicateNumber2)
   newcolnames <- c(condition1reps, condition2reps) # Create column names using the provided condition names
-  #print(head(cDataAll))
   colnames(cDataAll) <- (newcolnames)
-  #print(head(cDataAll))
-  #colnames(cDataAll) <- (file.names)
   rownames(cDataAll) <- file[,1]
 
   ### checkpoint
@@ -287,7 +264,6 @@ DESeq2.function <- function(path.to.files){
   sampleDists <- data.frame(sampleDists)
   colnames(sampleDists) <- gsub(x = colnames(sampleDists), pattern = ".collapsed.all.features.count", replacement = "") # Remove string from colnames
   rownames(sampleDists) <- gsub(x = rownames(sampleDists), pattern = ".collapsed.all.features.count", replacement = "") # Remove string from rownames 
-  #(mycols <- brewer.pal(length(file.names), "Paired")[1:length(unique(file.names))])
   pdf(paste0(path.to.files, "DE_Results/", ResultsFile, "_Distance-Matrix.pdf"),
       width=12,height=12)
   par(mar=c(6,4,4,5)+0.1) 
@@ -312,7 +288,6 @@ DESeq2.function <- function(path.to.files){
   x=fit$points[,1]
   y=fit$points[,2]
   names(x) <- gsub(x = names(x), pattern = ".collapsed.all.features.count", replacement = "") # Remove string from names
-  #names(y) <- gsub(x = names(y), pattern = ".collapsed.all.features.count", replacement = "") # Remove string from names
   pdf(paste0(path.to.files, "DE_Results/", ResultsFile, "_tpm-PCA.pdf"),
       width=8,height=8)
   par(xpd = T, mar = par()$mar + c(5,4,4,8))
@@ -332,8 +307,7 @@ DESeq2.function <- function(path.to.files){
          bty = "n",
          lty=NULL)
   garbage <- dev.off()
-  #par(mar=c(5, 4, 4, 2) + 0.1)
-  
+
   ### checkpoint
   print("Checkpoint 8")
 
@@ -384,7 +358,7 @@ DESeq2.function <- function(path.to.files){
   newdata.subset$negLog10 <- -log10(newdata.subset$padj)
   ncRNAs.df <- subset(newdata.subset, startsWith(as.character(features), "ENS"))
   tsRNAs.df <- newdata.subset[ !(newdata.subset$features %in% ncRNAs.df$features), ] # newdata.susbet minus all rows in ncRNAs.df (to get tsRNAs.df)
-  #tsRNAs.df <- subset(newdata.subset, startsWith(as.character(features), "chr"))
+
   # If there are more than 20 features, show top 20
   if(nrow(tsRNAs.df) > 20){
     tsRNAs.df.subset <- head(tsRNAs.df, n = 20)
@@ -398,6 +372,7 @@ DESeq2.function <- function(path.to.files){
   } else {
     ncRNAs.df.subset <- ncRNAs.df
   }
+  
   ### replace Inf values (extremely low adj p-value) with -Log10 of 300
   tsRNAs.df.subset <- data.frame(lapply(tsRNAs.df.subset, function(x) {gsub(Inf, "300", x)}))
   tsRNAs.df.subset$negLog10 <- as.numeric(levels(tsRNAs.df.subset$negLog10))[tsRNAs.df.subset$negLog10] #Convert factor type to numeric
@@ -467,27 +442,10 @@ DESeq2.function <- function(path.to.files){
   
   ### Create barplots for all features identified
   my.levels <- as.character(levels.default(groups)) # Get names of levels
-  #print(my.levels)
-  #my.levels <- c(Condition1, Condition2)
   level1 <- my.levels[1] # get name of level 1
   level2 <- my.levels[2] # get name of level 2
-  #print(head(cDataAll))
-  #library(dplyr)
-  #level1 <- "CytC"
-  #level2 <- "CytC-ctrl"
-  #cDataAll <- data.frame("CytC1"=0,
-  #                 "CytC2"=0, 
-  #                 "CytC-ctrl1"=0,
-  #                 "CytC-ctrl2"=0) 
-  
-  #level1.df <- select(data.frame(cDataAll), contains(level1)) # Subset main count matrix using condition 1
   level1.df <- data.frame(cDataAll) %>% select(c(1:ReplicateNumber1)) # Subset main count matrix to get condition 1
-  #level2.df <- select(data.frame(cDataAll), contains(level2)) # Subset main count matrix using condition 2
   level2.df <- data.frame(cDataAll) %>% select(c((ReplicateNumber1+1):(ReplicateNumber1+ReplicateNumber2))) # Subset main count matrix to get condition 2
-  #print("first")
-  #print(head(level1.df))
-  #print("second")
-  #print(head(level2.df))
   level1.df$total.raw <- rowSums(level1.df) #Calculate total read count for condition 1
   level2.df$total.raw <- rowSums(level2.df) #Calculate total read count for condition 1
   level1.df$total.rpm <- level1.df$total.raw/(sum(level1.df$total.raw)/1000000) # Calculate reads per million
@@ -503,8 +461,6 @@ DESeq2.function <- function(path.to.files){
 ### Function to create barplots
 create.barplot <- function(column.cond1, column.cond2, normalisation.method, my.rownames, name1, name2) {
   subtitle <- ifelse(normalisation.method == "RPM", "Normalised to reads per million (RPM)", "Raw read counts displayed") # Create subtitle for plot
-  #print(column.cond1)
-  #print(column.cond2)
   barplot.df <- data.frame(cbind(column.cond1, column.cond2))
   names(barplot.df)[1] <- "cond1" #level1 # Add correct colname to DF
   names(barplot.df)[2] <- "cond2" #level2 # Add correct colname to DF
@@ -516,7 +472,6 @@ create.barplot <- function(column.cond1, column.cond2, normalisation.method, my.
     barplot.df$mapped[ substr( barplot.df$features, 0, nchar(as.character(GTF$V1[row]))) == GTF$V1[row] ] <- GTF$ncRNA.type[row]
   }
   barplot.df$mapped <- as.character(barplot.df$mapped) # Convert from factor to character
-  #print(head(barplot.df))
   ### Assign ncRNA labels for as many ncRNA types as possible
   for(row in seq_len( nrow(barplot.df))) {
     if(is.na(barplot.df$mapped[row])) {   # If no ncRNA type has been assigned yet:
@@ -527,13 +482,11 @@ create.barplot <- function(column.cond1, column.cond2, normalisation.method, my.
       }
     } 
   } ### End of ncRNA label assignment loop
-  #barplot.df <- barplot.df[complete.cases(barplot.df),]
   barplot.df$mapped <- as.factor(barplot.df$mapped)
   grouped.df <- barplot.df %>% group_by(mapped) %>% summarise(cond1.sum = sum(cond1), cond2.sum = sum(cond2))
   names(grouped.df)[1] <- "Feature" # Add correct colname to DF
   names(grouped.df)[2] <- name1 # Add correct colname to DF
   names(grouped.df)[3] <- name2 # Add correct colname to DF
-  #print(head(grouped.df))
   melted.df <- melt(data = grouped.df, id.vars = "Feature")
   df.cols <- length(unique(melted.df$Feature)) # Expand color palette
   mycolors <- colorRampPalette(brewer.pal(11, "RdYlBu"))(df.cols) # Expand RdYlBu to # of colours needed based on DF
@@ -541,21 +494,10 @@ create.barplot <- function(column.cond1, column.cond2, normalisation.method, my.
     geom_bar(stat = "identity", width = 0.5) + 
     ggtitle(paste0("Features identified in ", name1, " vs ", name2)) +
     scale_fill_manual(values = mycolors) +
-    #theme_minimal() +
-    #coord_flip() +
     theme(legend.position = "bottom") +
     labs(x = "", 
          y = normalisation.method, 
          subtitle = subtitle)
-  #results.barplot <- ggplot(data = melted.df, mapping = aes(variable, value, fill = Feature)) +
-  #  geom_bar(stat = "identity", width = 0.5) + 
-  #  ggtitle(paste0("Features identified in ", name1, " vs ", name2)) +
-  #  scale_fill_brewer(palette = "RdYlBu") +
-  #  #theme_minimal() +
-  #  #coord_flip() +
-  #  labs(x = "", 
-  #       y = normalisation.method, 
-  #       subtitle = subtitle)
   return(results.barplot)
 }
 

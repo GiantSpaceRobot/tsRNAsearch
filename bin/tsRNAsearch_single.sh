@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Usage: tsRNAsearch.sh -h
+# Usage: tsRNAsearch_single.sh -h
 # Author: Paul Donovan
 # Email: pauldonovan@rcsi.com
 # 19-Oct-2018
@@ -16,18 +16,18 @@ asciiArt() { echo '
                                                           
 
 	' 1>&1; }
-usage() { echo "Usage (single-end): $0 -o OutputDirectory/ -s /path/to/SeqFile.fastq.gz
+usage() { echo "Usage: $0 -o OutputDirectory/ -f /path/to/SeqFile.fastq.gz
 " 1>&2; }
 info() { echo "
 Options:
 
 	-h	Print the usage and options information
-	-s	Analyse data against 'human' or 'mouse'? {default: human}
+	-s	Analyse data against 'human', 'mouse', or 'rat'? {default: human}
 	-f	Single-end file for analysis
 	-o	Output directory for the results and log files
 	-A	Plot all features? yes/no {default: yes}
 	-t	Number of threads to use {default is to calculate the number of processors and use 75%}
-	-S	Skip pre-processing of data (i.e. skip Fastp) {default: no}
+	-S	Skip pre-processing of data (i.e. skip FastQC and trim_galore) {default: no}
 
 	Input file format should be FASTQ (.fq/.fastq) or gzipped FASTQ (.gz)
 	" 1>&2; }
@@ -78,67 +78,14 @@ while getopts ":hs:t:f:o:A:S:" o; do
     esac
 done
 
-######### Make sure that the absolute paths of files and directories have been specified
-### If the pathname specified by $outDir does not begin with a slash, quit (we need full path name)
-#if [[ ! $outDir = /* ]]; then
-#    echo "Error: File paths must absolute. Please specify the full path for the output directory."
-#    exit 1
-#fi
-
-### If the pathname specified by $expFile does not begin with a slash, quit (we need full path name)
-#if [ "$singleFile" ]; then
-#    if [[ ! $singleFile = /* ]]; then
-#        echo "Error: File paths must absolute. Please specify the full path for the FASTQ input file."
-#        exit 1
-#    fi
-#fi
-#########
-
 echo "Started analysing "$singleFile" on $(date)" # Print pipeline start-time
 
-### Are we analysing Human or Mouse? -g parameter
-#if [ "$species" ]; then
-#    if [[ $species == "human" ]]; then
-#		#speciesDB="DBs/species_index/human/"
-#		ncRNADB="DBs/species_index/human-ncRNAs/"
-#		#speciesGTF="DBs/Homo_sapiens.GRCh37.87.gtf"
-#		tRNAGTF="DBs/hg19-wholetRNA-CCA_cdhit.gtf"
-#		ncRNA_GTF="DBs/hg19-ncRNA_cdhit.gtf"
-#		tRNA_introns="additional-files/tRNA-introns-for-removal_hg19.tsv"
-#		empty_tRNAs="additional-files/hg19_empty_tRNA.count"
-#		empty_ncRNAs="additional-files/hg19_empty_ncRNA.count"
-#		empty_mRNAs="additional-files/hg19_empty_mRNA-ncRNA.count"
-#	elif [[ $species == "mouse" ]]; then
-#		#speciesDB="DBs/species_index/mouse/"
-#		ncRNADB="DBs/species_index/mouse-ncRNAs/"
-#		#speciesGTF="DBs/Mus_musculus.GRCm38.95.gtf"
-#		tRNAGTF="DBs/mm10-tRNAs_renamed_cdhit.gtf"
-#		ncRNA_GTF="DBs/mouse_ncRNAs_relative_cdhit.gtf"
-#		tRNA_introns="additional-files/tRNA-introns-for-removal_mm10.tsv"
-#		empty_tRNAs="additional-files/mm10_empty_tRNA.count"
-#		empty_ncRNAs="additional-files/mm10_empty_ncRNA.count"
-#		empty_mRNAs="additional-files/mm10_empty_mRNA-ncRNA.count"
-#	fi
-#else # If species was not specified, default to use human species/files
-#	#species="human"
-#	#speciesDB="DBs/species_index/human/"
-#	ncRNADB="DBs/species_index/human-ncRNAs/"
-#	#speciesGTF="DBs/Homo_sapiens.GRCh37.87.gtf"
-#	tRNAGTF="DBs/hg19-wholetRNA-CCA_cdhit.gtf"
-#	ncRNA_GTF="DBs/hg19-ncRNA_cdhit.gtf"
-#	tRNA_introns="additional-files/tRNA-introns-for-removal_hg19.tsv"
-#	empty_tRNAs="additional-files/hg19_empty_tRNA.count"
-#	empty_ncRNAs="additional-files/hg19_empty_ncRNA.count"
-#	empty_mRNAs="additional-files/hg19_empty_mRNA-ncRNA.count"
-#fi
 ncRNADB="DBs/species_index/${species}-ncRNAs/"
 tRNAGTF="DBs/${species}_tRNAs_relative_cdhit.gtf"
 ncRNA_GTF="DBs/${species}_ncRNAs_relative_cdhit.gtf"
 tRNA_introns="additional-files/${species}_tRNA-introns-for-removal.tsv"
 empty_tRNAs="additional-files/${species}_empty_tRNA.count"
 empty_ncRNAs="additional-files/${species}_empty_ncRNA.count"
-#empty_mRNAs="additional-files/hg19_empty_mRNA-ncRNA.count"
-
 
 ### Define functions
 # Function to pad text with characters to make sentences stand out more
@@ -385,13 +332,6 @@ else
 	featureCount_threads=$threads
 fi
 
-### Do not exceed 16 threads for fastp as per user manual guidelines
-#if (( $threads > 16 )); then 
-#	fastp_threads=16
-#else
-#	fastp_threads=$threads
-#fi
-
 # Check if the output directory exists. If not, create it
 string_padder "Creating directory structure"
 mkdir -p $outDir
@@ -421,7 +361,6 @@ if [ $skip = "no" ]; then
 	# Make directories for pre-processing
 	mkdir -p $outDir/pre-processing
 	string_padder "Pre-processing reads using trim_galore..."
-	#bin/fastp -w $fastp_threads -i $singleFile -o $outDir/pre-processing/$trimmedFile -j $outDir/pre-processing/fastp.output.json -h $outDir/pre-processing/fastp.output.html
 	bin/trim_galore \
 		--stringency 10 \
 		--length 15 \
@@ -433,13 +372,6 @@ else
 	# Skip pre-processing by using the provided RNA-seq file
 	readsForAlignment=$singleFile
 fi
-
-# Run FastQC on newly trimmed file
-#string_padder "Running FastQC on Fastq read file..."
-#fastqc \
-#	-o $outDir/FastQC/ \
-#	-f fastq \
-#	$readsForAlignment
 
 ### Align reads to ncRNA database using STAR
 string_padder "Running tRNA/ncRNA alignment step..."
@@ -477,16 +409,12 @@ if [ -f $outDir/tRNA-alignment/aligned_tRNAdb.sam ]; then  #If STAR successfully
 	cat $outDir/tRNA-alignment/SamHeader.sam $outDir/tRNA-alignment/ncRNAs.sam \
 		> $outDir/tRNA-alignment/ncRNAs_aligned.sam
 	wait
-	#samtools view -bS $outDir/tRNA-alignment/tsRNAs_aligned.sam > $outDir/tRNA-alignment/accepted_hits_unsorted.bam
-	#samtools sort $outDir/tRNA-alignment/accepted_hits_unsorted.bam > $outDir/tRNA-alignment/accepted_hits.bam 
 	samtools view -bS $outDir/tRNA-alignment/tsRNAs_aligned.sam \
 		| samtools sort \
 		> $outDir/tRNA-alignment/accepted_hits.bam
 	samtools index $outDir/tRNA-alignment/accepted_hits.bam &
 	mv $outDir/tRNA-alignment/unmapped.fastq $outDir/tRNA-alignment/$myFile
 	### Move ncRNA BAM to directory
-	#samtools view -bS $outDir/tRNA-alignment/ncRNAs.sam > $outDir/ncRNA-alignment/accepted_hits_unsorted.bam
-	#samtools sort $outDir/ncRNA-alignment/accepted_hits_unsorted.bam > $outDir/ncRNA-alignment/accepted_hits.bam 
 	samtools view -bS $outDir/tRNA-alignment/ncRNAs.sam \
 		| samtools sort \
 		> $outDir/ncRNA-alignment/accepted_hits.bam
@@ -503,44 +431,9 @@ else
 	cp $outDir/trim_galore_output/$trimmedFile $outDir/tRNA-alignment/$trimmedFile
 fi
 
-#string_padder "Running mRNA/ncRNA alignment step..."
-### STAR ###
-#STAR --runThreadN $threads --genomeDir $speciesDB --readFilesIn $outDir/tRNA-alignment/$myFile --outFileNamePrefix $outDir/mRNA-ncRNA-alignment/ --outReadsUnmapped Fastx --outFilterMatchNmin 15 #$STARparam
-#mv $outDir/mRNA-ncRNA-alignment/Aligned.out.sam $outDir/mRNA-ncRNA-alignment/aligned.sam
-#mv $outDir/mRNA-ncRNA-alignment/Unmapped.out.mate1 $outDir/mRNA-ncRNA-alignment/unmapped.fastq
-### STAR ###
-
-#if [ -f $outDir/mRNA-ncRNA-alignment/aligned.sam ]; then  #If hisat2 successfully mapped reads, convert the unmapped to FASTQ
-#	echo -e "\nConverting SAM to BAM and sorting..."
-#	samtools view -bS $outDir/mRNA-ncRNA-alignment/aligned.sam > $outDir/mRNA-ncRNA-alignment/accepted_hits_unsorted.bam
-#	rm $outDir/mRNA-ncRNA-alignment/aligned.sam &
-#	samtools sort $outDir/mRNA-ncRNA-alignment/accepted_hits_unsorted.bam > $outDir/mRNA-ncRNA-alignment/accepted_hits.bam
-#	samtools index $outDir/mRNA-ncRNA-alignment/accepted_hits.bam &
-#	mv $outDir/mRNA-ncRNA-alignment/unmapped.fastq $outDir/mRNA-ncRNA-alignment/UnmappedReads.fq &
-#else
-#	echo "
-#	mRNA/ncRNA alignment output not found. Reads likely did not map to mRNA/ncRNA reference. 
-#	"
-#	cp $outDir/tRNA-alignment/$myFile $outDir/mRNA-ncRNA-alignment/$trimmedFile
-#fi
-
 # Produce read counts for the three alignment steps. If one of the alignment steps failed, use an empty htseq-count output file.
 string_padder "Alignment steps complete. Moving on to read-counting using FCount-count"
 
-# Count for alignment step 3
-#if [ ! -f $outDir/mRNA-ncRNA-alignment/accepted_hits.bam ]; then
-#	echo "
-#No alignment file found for mRNA/ncRNA alignment. Using blank count file instead
-#"
-#	cp $empty_mRNAs $outDir/FCount-count-output/mRNA-ncRNA-alignment.count &
-#else
-#	echo "
-#Counting mRNA/ncRNA alignment reads
-#"
-#	bin/featureCounts -T $featureCount_threads -a $speciesGTF -o $outDir/FCount-count-output/mRNA-ncRNA-alignment.fcount $outDir/mRNA-ncRNA-alignment/accepted_hits.bam
-#	grep -v featureCounts $outDir/FCount-count-output/mRNA-ncRNA-alignment.fcount | grep -v ^Geneid | awk -v OFS='\t' '{print $1, $7}' > $outDir/FCount-count-output/mRNA-ncRNA-alignment.count
-#fi
-	
 # Count for alignment step 2
 if [ ! -f $outDir/ncRNA-alignment/accepted_hits.bam ]; then
 	echo "
@@ -628,7 +521,6 @@ python2 bin/FCount-to-RPM.py \
 	$outDir/FCount-count-output/ncRNA-alignment.count \
 	$mapped \
 	$outDir/FCount-to-RPM/ncRNA-alignment &
-#python2 bin/FCount-to-RPM.py $outDir/FCount-count-output/mRNA-ncRNA-alignment.count $mapped $outDir/FCount-to-RPM/mRNA-ncRNA-alignment &
 wait
 sleep 5  # Make sure everything is finished running
 

@@ -121,7 +121,7 @@ newdata <- newdata[!grepl("Inf", newdata$cleavage.score),] # Remove Inf
 newdata <- newdata[newdata$`5vs3.ratio.percent` > 200, ] # Get high 5' / 3' ratios
 newdata <- newdata[newdata$mean.coverage > 10, ] # Get high 5' / 3' ratios
 
-# If there are more than 50 features, show top 50
+# If there are more than 20 features, show top 20
 if(nrow(newdata) > 20){
   newdata.subset <- head(newdata, n = 20)
 } else {
@@ -170,7 +170,12 @@ write.table(newdata,
             row.names = FALSE,
             col.names = TRUE)
 
-pdf.width <- nrow(newdata.subset)*0.2 + 3
+if (nrow(newdata.subset) < 5) {
+	pdf.width <- 7
+} else {
+	pdf.width <- nrow(newdata.subset)*0.2 + 3
+}
+
 pdf(file = paste0(args[2], ".high-distribution-score.pdf"), width = pdf.width, height = 5)
 ggplot(data = newdata.subset, mapping = aes(feature, `distribution.score`, color=`distribution.score`)) +
   geom_point() +

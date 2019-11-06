@@ -19,7 +19,6 @@ if (length(args)==0) {
   stop("Error: Not enough command line arguments provided. Input file and output file names required.")
 } 
 
-#myPath <- "/home/paul/Documents/Pipelines/tsRNAsearch/my.test/"
 myPath <- args[1]
 file.names <- dir(myPath, pattern =".txt")
 cDataAll <- data.frame(my.rownames=(0))
@@ -31,9 +30,8 @@ for (i in 1:length(file.names)){
 }
 rownames(cDataAll) <- cDataAll$my.rownames
 intermediate.df1 <- cDataAll %>%
-  select(-my.rownames) #%>% # Remove rownames column
+  select(-my.rownames) # Remove rownames column
 intermediate.df1 <- intermediate.df1[-1,] %>%
-  #filter_all(any_vars(!is.na(.))) #%>% # Remove rows where all values are NA (i.e. the empty column added on cDataAll initiation)
   t() %>%
   data.frame()
 intermediate.df1[is.na(intermediate.df1)] <- 0

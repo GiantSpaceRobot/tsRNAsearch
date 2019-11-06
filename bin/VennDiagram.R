@@ -1,8 +1,8 @@
 #!/usr/bin/env Rscript
 args = commandArgs(trailingOnly=TRUE)
 
-library("VennDiagram")
-library("gplots")
+library(VennDiagram)
+library(gplots)
 futile.logger::flog.threshold(futile.logger::ERROR, name = "VennDiagramLogger") # Suppress VennDiagram messages/log file generation
 
 # Borrowed this code from https://www.r-bloggers.com/working-with-venn-diagrams/
@@ -27,7 +27,6 @@ geneLists <- c("DE" = input1, #DESeq2
                "CS" = input3) #Cleavage score
 
 my.venn <- venn.diagram(geneLists, 
-                   #filename = paste0(args[4], "_VennDiagram.png"), 
                    filename = NULL,
                    #fill=c("darkmagenta", "darkblue", "red"), 
                    fill=c("#3e4574", "#00a9ff", "#ff0c3e"),
@@ -35,8 +34,6 @@ my.venn <- venn.diagram(geneLists,
                    cex = 2, 
                    cat.fontface=4,
                    imagetype = "png",
-                   #cat.pos = c(340,20,0),
-                   #cat.col = c("#3e4574", "#00a9ff", "#ff0c3e"),
                    cat.cex = 1.5,
                    category.names=c("DESeq2", "Distribution", "Cleavage"),
                    main.cex = 1.5,
@@ -49,9 +46,6 @@ grid.draw(my.venn) # Draw venn diagram in new smaller plot
 dev.off()
 
 a <- venn(geneLists, show.plot=FALSE)
-
-# You can inspect the contents of this object with the str() function
-#str(a)
 
 # By inspecting the structure of the a object created, 
 # you notice two attributes: 1) dimnames 2) intersections

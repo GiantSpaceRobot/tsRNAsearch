@@ -11,12 +11,6 @@ if (length(args)==0) {
   stop("Require 2 command line arguments e.g. 'Rscript Layout-generator.R /path/to/FASTQ-files/ Layout.csv' ")
 } else if (length(args)==2) { 
   myPath <- args[1]
-  #outDir <- args[2]
-  ### Make sure path name starts and ends in slash (need full path name)
-  #if (startsWith(args[2], "/") == TRUE) {
-  #} else {
-  #stop("Output directory path must be full path and must begin with '/'")
-  #}
 
   if (dir.exists(myPath)) {
     outDir <- getwd()
@@ -32,8 +26,6 @@ if (length(args)==0) {
     df2 <- df
     colnames(df2) <- NULL
     df2[,2] <- paste0("Condition",df2[,2],sep="")
-    #setwd(outDir)
-    #write.table(df2, sep = ",", quote = FALSE, file = "predicted_exp_layout.csv", row.names = FALSE)
     write.table(df2, sep = ",", quote = FALSE, file = paste0(outDir, "/", args[2], sep=""), row.names = FALSE)
     message("\nClustering resulted in this division (see column 3):")
     rownames(df2) <- NULL

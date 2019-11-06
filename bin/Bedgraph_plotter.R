@@ -27,7 +27,6 @@ fileData <- read.table(args[1],
 
 df1 <- split( fileData , f = fileData$chrom )  # Split dataframe based on column 1 elements
 
-
 pdf(args[2])
 for(subset in df1) {
   feature <- as.character(subset[1,1])
@@ -50,5 +49,4 @@ for(subset in df1) {
   }
 }
 dev.off()
-
 

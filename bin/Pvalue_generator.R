@@ -87,7 +87,7 @@ newdata <- results.df[complete.cases(results.df), ]  # Remove NAs
 newdata <- newdata[!grepl("Inf", newdata$negLog10.pval),] # Remove Inf
 newdata$feature <- factor(newdata$feature, levels = newdata$feature[order(newdata$negLog10.pval)]) # Refactorise to rank order for plotting 
 
-# If there are more than 50 features, show top 20
+# If there are more than 20 features, show top 20
 if(nrow(newdata) > 20){
   newdata.subset <- head(newdata, n = 20)
 } else {
@@ -101,8 +101,11 @@ write.table(newdata,
             row.names = FALSE,
             col.names = TRUE)
 
-#my.max <- max(newdata.subset$distribution.score)
-pdf.width <- nrow(newdata.subset)*0.2 + 3
+if (nrow(newdata.subset) < 5){
+  pdf.width <- 7
+} else {
+  pdf.width <- nrow(newdata.subset)*0.2 + 3
+}
 pdf(file = paste0(args[4], ".low.p.values.pdf"), width = pdf.width, height = 5)
 ggplot(data = newdata.subset, mapping = aes(feature, `negLog10.pval`, color=`negLog10.pval`)) +
   geom_point() +

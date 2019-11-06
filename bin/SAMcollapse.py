@@ -14,7 +14,7 @@ for samLine in SAMList:
     if samLine[0].startswith("@"): #if a header
         Output.write(line + "\n")
     else:
-        read = str(samLine[0])#.split("_simread")[0])
+        read = str(samLine[0])
         if read in myDict.keys():
             myDict[read].append(line)
         else:
@@ -75,7 +75,6 @@ for k,v in myDict.iteritems():
 Output.close()
 
 print counter, counterGroup
-#print "SAMcollapse.py results:\n%s reads collapsed at the tRNA species level (e.g. 2 gene copies of ProCCG)\n%s reads collapsed at the tRNA group level (e.g. ProCCG and ProAAG)" % (counter, counterGroup)
 
 leftovers = open(sys.argv[2] + "_tRNAs-almost-mapped.txt", "w")
 for k,v in tRNAgroupDict.iteritems():

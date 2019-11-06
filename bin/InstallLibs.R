@@ -6,7 +6,7 @@
 ### 
 ###-------------------------------------------------------------------------------
 
-source("https://bioconductor.org/biocLite.R")
+#source("https://bioconductor.org/biocLite.R")
 
 if(!require(ggplot2)){
   install.packages("ggplot2")
@@ -27,7 +27,6 @@ if(!require(DESeq2)){
   install.packages("DESeq2")
   library(DESeq2)
 } 
-
 if(!require(DESeq2)){ 
   # If DESeq2 still not loaded, try install from github
   install.packages("devtools") 
@@ -54,6 +53,11 @@ if(!require(dplyr)){
   library(dplyr)
 }
 
+if(!require(stringr)){
+  install.packages("stringr")
+  library(stringr)
+}
+
 if(!require(reshape2)){
   install.packages("reshape2")
   library(reshape2)
@@ -62,4 +66,14 @@ if(!require(reshape2)){
 if(!require(xtable)){
   install.packages("xtable")
   library(xtable)
+}
+
+if(!require(rmarkdown)){
+  install.packages("rmarkdown")
+  library(rmarkdown)
+}
+
+if(!require(knitr)){
+  install.packages("knitr")
+  library(knitr)
 }
