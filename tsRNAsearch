@@ -594,6 +594,7 @@ mv $myPath/$outDir/Data/Intermediate-files/DE_Results/ \
 	$myPath/$outDir/Data/
 cp $myPath/$outDir/Data/DE_Results/*pdf \
 	$myPath/$outDir/Plots/ #Copy PDFs to Plots dir
+cp $myPath/$outDir/Data/Intermediate-files/Feature-P-values*.pdf $myPath/$outDir/Plots/
 cp $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_tsRNAs.cleavage-score.all-features.txt $myPath/$outDir/Data/Cleavage_results/ 
 cp $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_ncRNAs.cleavage-score.all-features.txt $myPath/$outDir/Data/Cleavage_results/
 cp $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.distribution-score.all-features.txt $myPath/$outDir/Data/Distribution_results/
@@ -755,6 +756,9 @@ $summary_results_html
 <br />tRNA fragments identified where read origin accurate only to isoacceptor level 
 <br />
 <embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_tsRNAs-with-multimapping-reads.pdf" width="800px" height="800px" />
+<br />
+<br />Features ranked by combined p-value (Fisher's method)
+<embed src="$myPath/$outDir/Plots/Encoded/Feature-Pvalues.low.p.values.pdf" width="800px" height="800px" />
 <br />
 <body><h4>All tRNA plots can be found here</h4> 
 <ul>
@@ -920,6 +924,10 @@ $(cat $myPath/$outDir/Plots/Encoded/${condition1}_vs_${condition2}_Features_Pote
 
 $(cat $myPath/$outDir/Plots/Encoded/${condition1}_vs_${condition2}_Features_tsRNAs-with-multimapping-reads.pdf.txt)
 
+### Features ranked by combined p-value (Fisher's method)
+
+$(cat $myPath/$outDir/Plots/Encoded/Feature-Pvalues.low.p.values.pdf.txt)
+
 ## Other
 
 ### All tRNA coverage plots can be found here: 
@@ -966,6 +974,7 @@ pdfunite \
 	$myPath/$outDir/Plots/${condition1}_vs_${condition2}_ncRNAs.high-cleavage-score.pdf \
 	$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-ncRNAs.pdf \
 	$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_tsRNAs-with-multimapping-reads.pdf \
+	$myPath/$outDir/Plots/Feature-Pvalues.low.p.values.pdf \
 	$myPath/$outDir/${condition1}_vs_${condition2}.Results-summary.simple.pdf # This is the output file 
 
 string_padder "$FinishTime"

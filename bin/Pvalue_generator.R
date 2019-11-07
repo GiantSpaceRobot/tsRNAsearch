@@ -101,11 +101,12 @@ write.table(newdata,
             row.names = FALSE,
             col.names = TRUE)
 
-if (nrow(newdata.subset) < 5){
-  pdf.width <- 7
-} else {
-  pdf.width <- nrow(newdata.subset)*0.2 + 3
-}
+#if (nrow(newdata.subset) < 5){
+#  pdf.width <- 7
+#} else {
+#  pdf.width <- nrow(newdata.subset)*0.2 + 3
+#}
+pdf.width <- 7
 pdf(file = paste0(args[4], ".low.p.values.pdf"), width = pdf.width, height = 5)
 ggplot(data = newdata.subset, mapping = aes(feature, `negLog10.pval`, color=`negLog10.pval`)) +
   geom_point() +
