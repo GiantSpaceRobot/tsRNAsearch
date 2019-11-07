@@ -42,7 +42,7 @@ species="human"
 skip="no"
 Plots="no"
 remove="no"
-version="tsRNAsearch version 0.13.1"
+version="tsRNAsearch version 0.13.2"
 while getopts ":hs:A:t:d:f:S:R:e:o:" o; do
     case "${o}" in
 		h)
@@ -176,18 +176,18 @@ StartTime="Pipeline initiated at $(date)"
 
 ncRNA_GTF="DBs/${species}_ncRNAs_relative_cdhit.gtf"
 
-parameters="$(echo -e "Parameters:
-	Species (-s): $species
-	Input directory containing fastq/fastq.gz files (-d): $inDir
-	Input fast/fastq.gz file (-f): $inFile
-	Experiment layout file (-e): $expFile
-	Output directory that tsRNAsearch will create and populate with results (-o): $outDir
-	Number of threads to use for the analysis (-t): $threads
-	Plot all features (-A): $Plots
-	Skip pre-processing (-S): $skip
-	Remove intermediate files (-R): $remove
-")"
-parametersHTML="$(echo -e "
+echo -e "Parameters:
+Species (-s): $species
+Input directory containing fastq/fastq.gz files (-d): $inDir
+Input fast/fastq.gz file (-f): $inFile
+Experiment layout file (-e): $expFile
+Output directory that tsRNAsearch will create and populate with results (-o): $outDir
+Number of threads to use for the analysis (-t): $threads
+Plot all features (-A): $Plots
+Skip pre-processing (-S): $skip
+Remove intermediate files (-R): $remove
+"
+parametersHTML="$(echo -n -e "
 <br />Parameters:
 <br />    Species (-s): $species
 <br />    Input directory containing fastq/fastq.gz files (-d): $inDir
@@ -198,7 +198,6 @@ parametersHTML="$(echo -e "
 <br />    Plot all features (-A): $Plots
 <br />    Skip pre-processing (-S): $skip
 <br />    Remove intermediate files (-R): $remove")"
-echo "$parameters"
 
 ### Create dir substructure
 mkdir -p $outDir
