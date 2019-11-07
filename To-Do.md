@@ -5,5 +5,4 @@ Update after publication:
 * Integrate MINTmap tRNA fragment license plates for identified tsRNAs
 
 Update now:
-* Encode all figures in HTMLs
 * Add more comparisons to RunOvernight.sh

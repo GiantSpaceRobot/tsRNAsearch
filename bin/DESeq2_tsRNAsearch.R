@@ -428,7 +428,7 @@ DESeq2.function <- function(path.to.files){
   volcano <- EnhancedVolcano(res,
                   lab = rownames(res),
                   x = 'log2FoldChange',
-                  y = 'pvalue',
+                  y = 'padj',
                   xlim = c(-5, 8),  
                   pCutoff = 0.05, 
                   FCcutoff = 0.5,

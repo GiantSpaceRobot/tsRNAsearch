@@ -62,7 +62,7 @@ On finishing the run, a HTML report will appear in the *MyResults* directory. In
 * Generate reports (HTML, PDFs, CSVs, and text reports)
 #### Parameters:
 * -h *Print the usage and options information*
-* -s *Analyse data against '__human__' or '__mouse__'? {default: __human__}*
+* -s *Analyse data against '__human__', '__mouse__', or '__rat__'? {default: __human__}*
 * -d *Directory containing the files for analysis (file formats: FASTQ or gzipped FASTQ). Directory should have no other contents.*
 * -f *Single-end file for analysis*
 * -o *Output directory for the results files*
