@@ -383,8 +383,11 @@ DESeq2.function <- function(path.to.files){
   
   ### checkpoint
   print("Checkpoint 11")
-  
-  pdf.width <- nrow(tsRNAs.df.subset)*0.2 + 3
+  if (nrow(tsRNAs.df.subset) < 5){
+    pdf.width <- 7
+  } else {
+    pdf.width <- nrow(tsRNAs.df.subset)*0.2 + 3
+  }
   pdf(file = paste0(path.to.files, args[2], "_tsRNAs.high-DE-negLog10_padj.pdf"), width = pdf.width, height = 5)
   print(ggplot(data = tsRNAs.df.subset, mapping = aes(features, 
                                               tsRNAs.df.subset$negLog10, 
@@ -403,7 +406,12 @@ DESeq2.function <- function(path.to.files){
   dev.off()
   
   ### Plot ncRNAs:
-  pdf.width <- nrow(ncRNAs.df.subset)*0.2 + 3
+  if (nrow(ncRNAs.df.subset) < 5){
+    pdf.width <- 7
+  } else {
+    pdf.width <- nrow(ncRNAs.df.subset)*0.2 + 3
+  }
+  
   pdf(file = paste0(path.to.files, args[2], "_ncRNAs.high-DE-negLog10_padj.pdf"), width = pdf.width, height = 5)
   print(ggplot(data = ncRNAs.df.subset, mapping = aes(features, 
                                                 ncRNAs.df.subset$negLog10, 
