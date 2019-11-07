@@ -758,7 +758,7 @@ $summary_results_html
 <embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_tsRNAs-with-multimapping-reads.pdf" width="800px" height="800px" />
 <br />
 <br />Features ranked by combined p-value (Fisher's method)
-<embed src="$myPath/$outDir/Plots/Encoded/Feature-Pvalues.low.p.values.pdf" width="800px" height="800px" />
+<embed src="$myPath/$outDir/Plots/Encoded/Feature-P-values.low.p.values.pdf" width="800px" height="800px" />
 <br />
 <body><h4>All tRNA plots can be found here</h4> 
 <ul>
@@ -926,7 +926,7 @@ $(cat $myPath/$outDir/Plots/Encoded/${condition1}_vs_${condition2}_Features_tsRN
 
 ### Features ranked by combined p-value (Fisher's method)
 
-$(cat $myPath/$outDir/Plots/Encoded/Feature-Pvalues.low.p.values.pdf.txt)
+$(cat $myPath/$outDir/Plots/Encoded/Feature-P-values.low.p.values.pdf.txt)
 
 ## Other
 
@@ -974,7 +974,7 @@ pdfunite \
 	$myPath/$outDir/Plots/${condition1}_vs_${condition2}_ncRNAs.high-cleavage-score.pdf \
 	$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-ncRNAs.pdf \
 	$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_tsRNAs-with-multimapping-reads.pdf \
-	$myPath/$outDir/Plots/Feature-Pvalues.low.p.values.pdf \
+	$myPath/$outDir/Plots/Feature-P-values.low.p.values.pdf \
 	$myPath/$outDir/${condition1}_vs_${condition2}.Results-summary.simple.pdf # This is the output file 
 
 string_padder "$FinishTime"
