@@ -245,9 +245,10 @@ function bam_to_plots () {  ### Steps for plotting regions with high variation i
 		### Copy the collapsed depth file and name it so that the remaining steps below do not have errors
 		cp $1/accepted_hits_collapsed.depth $1/accepted_hits.depth
 		### Plot tRNA alignment lengths
+		grep -v ^@ $1/tsRNAs_aligned.sam > $1/tsRNAs_aligned.noheader.sam 
 		Rscript bin/tRNA_Alignment_Length.R \
-				$1/tsRNAs_aligned.sam \
-				$1/$2_$3_tRNA-alignment-length
+				$1/tsRNAs_aligned.noheader.sam \
+				$1/$2_$3_tRNA-alignment-length &
 	fi
 	### Sort by feature name and nucleotide position
 	sort -k1,1 -k2,2n $1/accepted_hits.depth \
