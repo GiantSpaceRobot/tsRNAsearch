@@ -187,8 +187,7 @@ Plot all features (-A): $Plots
 Skip pre-processing (-S): $skip
 Remove intermediate files (-R): $remove
 "
-parametersHTML="$(echo -n -e "
-<br />Parameters:
+parametersHTML="$(echo -n -e "Parameters:
 <br />    Species (-s): $species
 <br />    Input directory containing fastq/fastq.gz files (-d): $inDir
 <br />    Input fastq/fastq.gz file (-f): $inFile
