@@ -434,6 +434,11 @@ Rscript bin/Pvalue_generator.R \
 	$myPath/$outDir/Data/Intermediate-files/Everything.cond2.depth \
 	$ncRNA_GTF \
 	$myPath/$outDir/Data/Intermediate-files/Feature-P-values
+sort -t$'\t' -k2,2g \
+	Feature-P-values_FisherMethod_pvalues.tsv \
+	| grep -v Fishers.method.pvalue \
+	| awk -F '\t' '($2 + 0) < 0.05' \
+	> $myPath/$outDir/Data/Intermediate-files/FisherMethod_Features.txt
 
 ### Generating summary text files
 string_padder "Generating summary text files..."
@@ -560,6 +565,7 @@ if [[ $(wc -l < $myPath/$outDir/Data/All-Features-Identified.txt) -ge 2 ]]; then
 		$myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_short-names.txt \
 		$myPath/$outDir/Data/Intermediate-files/DataTransformations/High-distribution-scores_feature-names.txt \
 		$myPath/$outDir/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt \
+		$myPath/$outDir/Data/Intermediate-files/FisherMethod_Features.txt  \
 		$myPath/$outDir/Plots/${condition1}_vs_${condition2}
 	mkdir $myPath/$outDir/Data/VennDiagramGeneration
 	cp $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_short-names.txt \

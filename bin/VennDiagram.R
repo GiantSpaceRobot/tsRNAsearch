@@ -22,22 +22,30 @@ if (inherits(input3, 'try-error')){
   input3 <- data.frame(feature=character())
 } 
 
+input4 <- try(read.table(args[4], sep = "\t"), silent = TRUE)
+if (inherits(input4, 'try-error')){ 
+  input4 <- data.frame(feature=character())
+}
+input4 <- data.frame(gsub(' .*', '' , input4$V1))
+colnames(input4) <- c("V1")
+
 geneLists <- c("DE" = input1, #DESeq2 
                "DS" = input2, #Distribution score
-               "CS" = input3) #Cleavage score
+               "CS" = input3, #Cleavage score
+               "FM" = input4) #Fisher's method
 
 my.venn <- venn.diagram(geneLists, 
                    filename = NULL,
                    #fill=c("darkmagenta", "darkblue", "red"), 
-                   fill=c("#3e4574", "#00a9ff", "#ff0c3e"),
-                   alpha=c(0.5,0.5,0.5), 
+                   fill=c("#3e4574", "#00a9ff", "#ff0c3e", "#ffc60c"),
+                   alpha=c(0.5,0.5,0.5,0.5), 
                    cex = 2, 
                    cat.fontface=4,
                    imagetype = "png",
                    cat.cex = 1.5,
-                   category.names=c("DESeq2", "Distribution", "Cleavage"),
+                   category.names=c("DESeq2", "Distribution", "Cleavage", "Fisher"),
                    main.cex = 1.5,
-                   main="Features identified by the three tsRNAsearch methods")
+                   main="Features identified by the four tsRNAsearch methods")
 
 png(file = paste0(args[4], "_VennDiagram.png"))
 grid.newpage() # Create new grid
@@ -55,8 +63,32 @@ inters <- attr(a,"intersections")
 # We can summarize the contents of each venn compartment, as follows:
 # in 1) ConditionA only, 2) ConditionB only, 3) ConditionA & ConditionB
 
-write.table(inters$`DE.V1:DS.V1:CS.V1`, 
+write.table(inters$`DE.V1:DS.V1:CS.V1:FM.V1`, 
             file = paste0(args[4], ".intersect.all.txt"),
+            quote = FALSE, 
+            sep = "\t",
+            row.names = FALSE,
+            col.names = FALSE)
+write.table(inters$`DE.V1:DS.V1:CS.V1`, 
+            file = paste0(args[4], ".intersect.DESeq2_Distribution_Cleavage.txt"),
+            quote = FALSE, 
+            sep = "\t",
+            row.names = FALSE,
+            col.names = FALSE)
+write.table(inters$`DS.V1:CS.V1:FM.V1`, 
+            file = paste0(args[4], ".intersect.Distribution_Cleavage_Fisher.txt"),
+            quote = FALSE, 
+            sep = "\t",
+            row.names = FALSE,
+            col.names = FALSE)
+write.table(inters$`DE.V1:CS.V1:FM.V1`, 
+            file = paste0(args[4], ".intersect.DESeq2_Cleavage_Fisher.txt"),
+            quote = FALSE, 
+            sep = "\t",
+            row.names = FALSE,
+            col.names = FALSE)
+write.table(inters$`DE.V1:DS.V1:FM.V1`, 
+            file = paste0(args[4], ".intersect.DESeq2_Distribution_Fisher.txt"),
             quote = FALSE, 
             sep = "\t",
             row.names = FALSE,
@@ -73,8 +105,26 @@ write.table(inters$`DE.V1:CS.V1`,
             sep = "\t",
             row.names = FALSE,
             col.names = FALSE)
+write.table(inters$`DE.V1:FM.V1`, 
+            file = paste0(args[4], ".intersect.DESeq2_Fisher.txt"),
+            quote = FALSE, 
+            sep = "\t",
+            row.names = FALSE,
+            col.names = FALSE)
 write.table(inters$`DS.V1:CS.V1`, 
             file = paste0(args[4], ".intersect.Distribution_Cleavage.txt"),
+            quote = FALSE, 
+            sep = "\t",
+            row.names = FALSE,
+            col.names = FALSE)
+write.table(inters$`DS.V1:FM.V1`, 
+            file = paste0(args[4], ".intersect.Distribution_Fisher.txt"),
+            quote = FALSE, 
+            sep = "\t",
+            row.names = FALSE,
+            col.names = FALSE)
+write.table(inters$`CS.V1:FM.V1`, 
+            file = paste0(args[4], ".intersect.Cleavage_Fisher.txt"),
             quote = FALSE, 
             sep = "\t",
             row.names = FALSE,
@@ -93,6 +143,12 @@ write.table(inters$DS.V1,
             col.names = FALSE)
 write.table(inters$CS.V1, 
             file = paste0(args[4], ".intersect.Cleavage-only.txt"),
+            quote = FALSE, 
+            sep = "\t",
+            row.names = FALSE,
+            col.names = FALSE)
+write.table(inters$FM.V1, 
+            file = paste0(args[4], ".intersect.Fisher-only.txt"),
             quote = FALSE, 
             sep = "\t",
             row.names = FALSE,
