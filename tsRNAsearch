@@ -209,6 +209,7 @@ if [[ $inFile != "NA" ]]; then
 		-o "$myPath/$outDir/$filename" \
 		-t "$threads" \
 		-A "yes" \
+		-R "$remove" \ 
 		-S "$skip"
 	exit 0 # Exit successfully
 fi
@@ -617,6 +618,7 @@ if [[ $remove == "yes" ]]; then
 	rm -rf $myPath/$outDir/Data/Intermediate-files/ # Remove all intermediate files
 	find $myPath/$outDir/ -name '*bam' -delete   # Remove BAMs
 	find $myPath/$outDir/ -name '*sam' -delete   # SAMs
+	find $myPath/$outDir/ -name '*tempFile' -delete   # tempFiles
 	find $myPath/$outDir/ -name '*.gz' -delete   # .gz files
 	find $myPath/$outDir/ -name '*fastq' -delete # .fastq files
 	find $myPath/$outDir/ -name '*fq' -delete    # .fq files

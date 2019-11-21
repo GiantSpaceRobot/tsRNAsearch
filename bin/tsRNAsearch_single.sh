@@ -43,7 +43,7 @@ fi
 ### Define defaults
 species="human"
 skip="no"
-while getopts ":hs:t:f:o:A:S:" o; do
+while getopts ":hs:t:f:o:A:S:R:" o; do
     case "${o}" in
 		h)
 			asciiArt
@@ -65,6 +65,9 @@ while getopts ":hs:t:f:o:A:S:" o; do
 			;;
 		A)
 			Plots="$OPTARG"
+			;;
+		R)
+			remove="$OPTARG"
 			;;
 		S)
 			skip="$OPTARG"
@@ -547,6 +550,19 @@ if [[ $Plots == "yes" ]]; then
 	cp $outDir/tRNA-alignment/*Results.* $outDir/Data_and_Plots/
 	cp $outDir/ncRNA-alignment/*Results.* $outDir/Data_and_Plots/
 fi
+
+### If -R == yes, remove intermediate files
+if [[ $remove == "yes" ]]; then 
+	rm -rf $outDir/Data/Intermediate-files/ # Remove all intermediate files
+	find $outDir/ -name '*bam' -delete   # Remove BAMs
+	find $outDir/ -name '*sam' -delete   # SAMs
+	find $outDir/ -name '*tempFile' -delete   # tempFiles
+	find $outDir/ -name '*.gz' -delete   # .gz files
+	find $outDir/ -name '*fastq' -delete # .fastq files
+	find $outDir/ -name '*fq' -delete    # .fq files
+	find $outDir/ -name '*accepted_hits*depth' -delete    # .depth files
+fi
+
 echo "Finished analysing "$singleFile" on $(date)" # Print pipeline end-time
 echo "_____________________________________________________________________________________________________________________
 

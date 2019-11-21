@@ -7,9 +7,7 @@ Update after publication:
 Update now:
 * Test against Unitas, MINTmap, tDRmapper, SPORTS1.0
 * Create singularity image of pipeline
-* Create test to ensure Coverage-flipper script is acting correctly in human, mouse, rat
 * Test setup.sh on server/virtual machine
-* -R does nothing in single dataset analysis
 * make a HTML report for single dataset analysis
 * Flip coordinates for single dataset analysis
 * In CRC_Mouse_Healthy-vs-CRC/CRC1_vs_Healthy.Results-summary HTML file, Snora68 is in results table but in none of the plot images.
