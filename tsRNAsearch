@@ -42,7 +42,7 @@ species="human"
 skip="no"
 Plots="no"
 remove="no"
-version="tsRNAsearch version 0.13.3"
+version="tsRNAsearch version 0.13.4"
 while getopts ":hs:A:t:d:f:S:R:e:o:" o; do
     case "${o}" in
 		h)
@@ -128,7 +128,7 @@ for fname in $(cat $1); do
 	cond1base="$(cut -d '.' -f1 <<< $cond1)"
 	echo "Finding file for $fname ($cond1base)..."
 	find $myPath/$outDir/ -type f -name "$cond1base*tsRNA.depth" -exec cp {} $myPath/$outDir/Data/Intermediate-files/$2_file$count.tsRNA.depth \; & # Gather tsRNAs
-	find $myPath/$outDir/ -type f -name "$cond1base*ncRNA.depth" -exec cp {} $myPath/$outDir/Data/Intermediate-files/$2_file$count.ncRNA.depth \; & # Gather sno/miRNAs
+	find $myPath/$outDir/ -type f -name "$cond1base*ncRNA.depth" -exec cp {} $myPath/$outDir/Data/Intermediate-files/$2_file$count.ncRNA.depth \; & # Gather ncRNAs
 	wait
 	mapped=$(grep "mapped" $myPath/$outDir/$cond1base/Stats.log | awk '{print $3}')
 	mv $myPath/$outDir/Data/Intermediate-files/$2_file$count.tsRNA.depth $myPath/$outDir/Data/Intermediate-files/$2_file$count.tsRNA.depth.readspermil
@@ -181,8 +181,8 @@ Species (-s): $species
 Input directory containing fastq/fastq.gz files (-d): $inDir
 Input fast/fastq.gz file (-f): $inFile
 Experiment layout file (-e): $expFile
-Output directory that tsRNAsearch will create and populate with results (-o): $outDir
-Number of threads to use for the analysis (-t): $threads
+Output directory (-o): $outDir
+Number of threads used (-t): $threads
 Plot all features (-A): $Plots
 Skip pre-processing (-S): $skip
 Remove intermediate files (-R): $remove
@@ -192,8 +192,8 @@ parametersHTML="$(echo -n -e "Parameters:
 <br />    Input directory containing fastq/fastq.gz files (-d): $inDir
 <br />    Input fastq/fastq.gz file (-f): $inFile
 <br />    Experiment layout file (-e): $expFile
-<br />    Output directory that tsRNAsearch will create and populate with results (-o): $outDir
-<br />    Number of threads to use for the analysis (-t): $threads
+<br />    Output directory (-o): $outDir
+<br />    Number of threads used (-t): $threads
 <br />    Plot all features (-A): $Plots
 <br />    Skip pre-processing (-S): $skip
 <br />    Remove intermediate files (-R): $remove")"
@@ -208,7 +208,7 @@ if [[ $inFile != "NA" ]]; then
 		-f "$inFile" \
 		-o "$myPath/$outDir/$filename" \
 		-t "$threads" \
-		-A "$Plots" \
+		-A "yes" \
 		-S "$skip"
 	exit 0 # Exit successfully
 fi
@@ -731,7 +731,7 @@ $summary_results_html
 <br />
 <br />Full results here: $myPath/$outDir/Data/Distribution_results/${condition1}_vs_${condition2}_High-distribution-ncRNAs.txt
 <br />
-<body><h4>Coverage plots for all sno/miRNAs with irregular distribution identified by the distribution algorithm</h4>
+<body><h4>Coverage plots for all ncRNAs with irregular distribution identified by the distribution algorithm</h4>
 <embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-ncRNAs.pdf" width="800px" height="800px" />
 <br />
 <body><h2>Cleavage Algorithm Results</h2>
@@ -748,7 +748,7 @@ $summary_results_html
 <embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_ncRNAs.high-cleavage-score.pdf" width="800px" height="800px" />
 <br />Full results here: $myPath/$outDir/Data/Cleavage_results/${condition1}_vs_${condition2}_High-cleavage-ncRNAs.txt
 <br />
-<body><h4>Coverage plots for all sno/miRNAs with irregular 5' vs 3' coverage identified by the cleavage algorithm</h4>
+<body><h4>Coverage plots for all ncRNAs with irregular 5' vs 3' coverage identified by the cleavage algorithm</h4>
 <embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-ncRNAs.pdf" width="800px" height="800px" />
 <br />
 <body><h2>More results:</h2>
@@ -885,7 +885,7 @@ Full results here:
 
 * $myPath/$outDir/Data/Distribution_results/${condition1}_vs_${condition2}_High-distribution-ncRNAs.txt
 
-### Coverage plots for all sno/miRNAs with irregular distribution identified by the distribution algorithm
+### Coverage plots for all ncRNAs with irregular distribution identified by the distribution algorithm
 
 $(cat $myPath/$outDir/Plots/Encoded/${condition1}_vs_${condition2}_Features_High-distribution-ncRNAs.pdf.txt)
 
@@ -913,7 +913,7 @@ Full results here:
 
 * $myPath/$outDir/Data/Cleavage_results/${condition1}_vs_${condition2}_High-cleavage-ncRNAs.txt
 
-### Coverage plots for all sno/miRNAs with irregular 5' vs 3' coverage identified by the cleavage algorithm
+### Coverage plots for all ncRNAs with irregular 5' vs 3' coverage identified by the cleavage algorithm
 
 $(cat $myPath/$outDir/Plots/Encoded/${condition1}_vs_${condition2}_Features_Potentially-cleaved-ncRNAs.pdf.txt)
 

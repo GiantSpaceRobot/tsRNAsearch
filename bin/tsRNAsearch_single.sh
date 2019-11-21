@@ -232,10 +232,12 @@ function bam_to_plots () {  ### Steps for plotting regions with high variation i
 			cp $1/accepted_hits.depth $1/accepted_hits_intron-removed.depth
 		fi
 		### Flip the read coverage of tRNAs that are in the minus orientation
-		Rscript bin/Coverage-flipper.R \
-			$1/accepted_hits_intron-removed.depth \
-			$tRNAGTF \
-			$1/accepted_hits_flipped.depth
+		## This step is not required when using GtRNAdb derived FASTA files as these are all in the plus orientation
+		#Rscript bin/Coverage-flipper.R \
+		#	$1/accepted_hits_intron-removed.depth \
+		#	$tRNAGTF \
+		#	$1/accepted_hits_flipped.depth
+		cp $1/accepted_hits_intron-removed.depth $1/accepted_hits_flipped.depth
 		### Collapse tRNAs from the same tRNA species
 		python2 bin/Bedgraph_collapse-tRNAs.py \
 			$1/accepted_hits_flipped.depth \
@@ -339,7 +341,6 @@ mkdir -p $outDir
 mkdir -p $outDir/FastQC
 mkdir -p $outDir/tRNA-alignment
 mkdir -p $outDir/ncRNA-alignment
-mkdir -p $outDir/mRNA-ncRNA-alignment
 mkdir -p $outDir/FCount-count-output
 mkdir -p $outDir/FCount-to-RPM
 mkdir -p $outDir/Data_and_Plots
