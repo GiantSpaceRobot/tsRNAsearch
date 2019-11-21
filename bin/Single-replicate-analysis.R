@@ -120,6 +120,7 @@ newdata <- results.df[complete.cases(results.df), ]  # Remove NAs
 newdata <- newdata[!grepl("Inf", newdata$cleavage.score),] # Remove Inf
 newdata <- newdata[newdata$`5vs3.ratio.percent` > 200, ] # Get high 5' / 3' ratios
 newdata <- newdata[newdata$mean.coverage > 10, ] # Get high 5' / 3' ratios
+newdata$feature <- factor(newdata$feature, levels = newdata$feature[order(newdata$cleavage.score)])
 
 # If there are more than 20 features, show top 20
 if(nrow(newdata) > 20){
@@ -141,7 +142,8 @@ ggplot(data = newdata.subset, mapping = aes(feature, `cleavage.score`, color=`cl
   geom_point() +
   scale_y_continuous(trans='log2') +
   ggtitle("Feature Cleavage Score") +
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
+  coord_flip() +
+  #theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
   scale_color_gradient(low="blue", high="red") +
   labs(colour = "Cleavage\nscore", 
        x = "ncRNA/gene", 
@@ -155,6 +157,7 @@ results.df <- results.df[order(-results.df$distribution.score),]
 newdata <- results.df[complete.cases(results.df), ]  # Remove NAs
 newdata <- newdata[!grepl("Inf", newdata$distribution.score),] # Remove Inf
 newdata <- newdata[newdata$mean.coverage > 10, ] # Get high 5' / 3' ratios
+newdata$feature <- factor(newdata$feature, levels = newdata$feature[order(newdata$distribution.score)])
 
 # If there are more than 50 features, show top 50
 if(nrow(newdata) > 20){
@@ -181,7 +184,8 @@ ggplot(data = newdata.subset, mapping = aes(feature, `distribution.score`, color
   geom_point() +
   scale_y_continuous(trans='log2') +
   ggtitle("Feature Distribution Score") +
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
+  coord_flip() +
+  #theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
   scale_color_gradient(low="blue", high="red") +
   labs(colour = "Distribution\nscore", 
        x = "ncRNA/gene", 

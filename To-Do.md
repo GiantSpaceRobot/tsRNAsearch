@@ -9,8 +9,6 @@ Update now:
 * Create singularity image of pipeline
 * Test setup.sh on server/virtual machine
 * make a HTML report for single dataset analysis
-* Flip coordinates for single dataset analysis
 * In CRC_Mouse_Healthy-vs-CRC/CRC1_vs_Healthy.Results-summary HTML file, Snora68 is in results table but in none of the plot images.
 * Plot Fishers test features
-* Add fishers to venn diagram
 * Predict which type of tsRNA each tsRNA is. e.g. 5'-tiRNA, itRNA
