@@ -47,7 +47,7 @@ my.venn <- venn.diagram(geneLists,
                    main.cex = 1.5,
                    main="Features identified by the four tsRNAsearch methods")
 
-png(file = paste0(args[4], "_VennDiagram.png"))
+png(file = paste0(args[5], "_VennDiagram.png"))
 grid.newpage() # Create new grid
 pushViewport(viewport(width=unit(0.8, "npc"), height = unit(0.8, "npc"))) # Resize this grid (80%)
 grid.draw(my.venn) # Draw venn diagram in new smaller plot
@@ -64,91 +64,91 @@ inters <- attr(a,"intersections")
 # in 1) ConditionA only, 2) ConditionB only, 3) ConditionA & ConditionB
 
 write.table(inters$`DE.V1:DS.V1:CS.V1:FM.V1`, 
-            file = paste0(args[4], ".intersect.all.txt"),
+            file = paste0(args[5], ".intersect.all.txt"),
             quote = FALSE, 
             sep = "\t",
             row.names = FALSE,
             col.names = FALSE)
 write.table(inters$`DE.V1:DS.V1:CS.V1`, 
-            file = paste0(args[4], ".intersect.DESeq2_Distribution_Cleavage.txt"),
+            file = paste0(args[5], ".intersect.DESeq2_Distribution_Cleavage.txt"),
             quote = FALSE, 
             sep = "\t",
             row.names = FALSE,
             col.names = FALSE)
 write.table(inters$`DS.V1:CS.V1:FM.V1`, 
-            file = paste0(args[4], ".intersect.Distribution_Cleavage_Fisher.txt"),
+            file = paste0(args[5], ".intersect.Distribution_Cleavage_Fisher.txt"),
             quote = FALSE, 
             sep = "\t",
             row.names = FALSE,
             col.names = FALSE)
 write.table(inters$`DE.V1:CS.V1:FM.V1`, 
-            file = paste0(args[4], ".intersect.DESeq2_Cleavage_Fisher.txt"),
+            file = paste0(args[5], ".intersect.DESeq2_Cleavage_Fisher.txt"),
             quote = FALSE, 
             sep = "\t",
             row.names = FALSE,
             col.names = FALSE)
 write.table(inters$`DE.V1:DS.V1:FM.V1`, 
-            file = paste0(args[4], ".intersect.DESeq2_Distribution_Fisher.txt"),
+            file = paste0(args[5], ".intersect.DESeq2_Distribution_Fisher.txt"),
             quote = FALSE, 
             sep = "\t",
             row.names = FALSE,
             col.names = FALSE)
 write.table(inters$`DE.V1:DS.V1`, 
-            file = paste0(args[4], ".intersect.DESeq2_Distribution.txt"),
+            file = paste0(args[5], ".intersect.DESeq2_Distribution.txt"),
             quote = FALSE, 
             sep = "\t",
             row.names = FALSE,
             col.names = FALSE)
 write.table(inters$`DE.V1:CS.V1`, 
-            file = paste0(args[4], ".intersect.DESeq2_Cleavage.txt"),
+            file = paste0(args[5], ".intersect.DESeq2_Cleavage.txt"),
             quote = FALSE, 
             sep = "\t",
             row.names = FALSE,
             col.names = FALSE)
 write.table(inters$`DE.V1:FM.V1`, 
-            file = paste0(args[4], ".intersect.DESeq2_Fisher.txt"),
+            file = paste0(args[5], ".intersect.DESeq2_Fisher.txt"),
             quote = FALSE, 
             sep = "\t",
             row.names = FALSE,
             col.names = FALSE)
 write.table(inters$`DS.V1:CS.V1`, 
-            file = paste0(args[4], ".intersect.Distribution_Cleavage.txt"),
+            file = paste0(args[5], ".intersect.Distribution_Cleavage.txt"),
             quote = FALSE, 
             sep = "\t",
             row.names = FALSE,
             col.names = FALSE)
 write.table(inters$`DS.V1:FM.V1`, 
-            file = paste0(args[4], ".intersect.Distribution_Fisher.txt"),
+            file = paste0(args[5], ".intersect.Distribution_Fisher.txt"),
             quote = FALSE, 
             sep = "\t",
             row.names = FALSE,
             col.names = FALSE)
 write.table(inters$`CS.V1:FM.V1`, 
-            file = paste0(args[4], ".intersect.Cleavage_Fisher.txt"),
+            file = paste0(args[5], ".intersect.Cleavage_Fisher.txt"),
             quote = FALSE, 
             sep = "\t",
             row.names = FALSE,
             col.names = FALSE)
 write.table(inters$DE.V1, 
-            file = paste0(args[4], ".intersect.DESeq2-only.txt"),
+            file = paste0(args[5], ".intersect.DESeq2-only.txt"),
             quote = FALSE, 
             sep = "\t",
             row.names = FALSE,
             col.names = FALSE)
 write.table(inters$DS.V1, 
-            file = paste0(args[4], ".intersect.Distribution-only.txt"),
+            file = paste0(args[5], ".intersect.Distribution-only.txt"),
             quote = FALSE, 
             sep = "\t",
             row.names = FALSE,
             col.names = FALSE)
 write.table(inters$CS.V1, 
-            file = paste0(args[4], ".intersect.Cleavage-only.txt"),
+            file = paste0(args[5], ".intersect.Cleavage-only.txt"),
             quote = FALSE, 
             sep = "\t",
             row.names = FALSE,
             col.names = FALSE)
 write.table(inters$FM.V1, 
-            file = paste0(args[4], ".intersect.Fisher-only.txt"),
+            file = paste0(args[5], ".intersect.Fisher-only.txt"),
             quote = FALSE, 
             sep = "\t",
             row.names = FALSE,

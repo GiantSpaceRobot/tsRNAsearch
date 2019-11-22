@@ -222,6 +222,7 @@ condition2=$( awk -F ',' '{print $2}' "$expFile" | uniq | tail -n 1 ) # Get the 
 mkdir -p $outDir/Data
 mkdir -p $outDir/Data/Distribution_results
 mkdir -p $outDir/Data/Cleavage_results
+mkdir -p $outDir/Data/FishersMethod_results
 mkdir -p $outDir/Data/Intermediate-files
 mkdir -p $outDir/Data/Intermediate-files/DataTransformations
 mkdir -p $outDir/Plots
@@ -433,17 +434,19 @@ Rscript bin/Pvalue_generator.R \
 	$myPath/$outDir/Data/Intermediate-files/Everything.cond1.depth \
 	$myPath/$outDir/Data/Intermediate-files/Everything.cond2.depth \
 	$ncRNA_GTF \
-	$myPath/$outDir/Data/Intermediate-files/Feature-P-values
+	$myPath/$outDir/Data/FishersMethod_results/Feature-P-values
 sort -t$'\t' -k2,2g \
-	Feature-P-values_FisherMethod_pvalues.tsv \
+	$myPath/$outDir/Data/FishersMethod_results/Feature-P-values_FisherMethod_pvalues.tsv \
 	| grep -v Fishers.method.pvalue \
 	| awk -F '\t' '($2 + 0) < 0.05' \
-	> $myPath/$outDir/Data/Intermediate-files/FisherMethod_Features.txt
+	> $myPath/$outDir/Data/FishersMethod_results/FisherMethod_Features.txt
+grep -v ^ENS $myPath/$outDir/Data/FishersMethod_results/FisherMethod_Features.txt > $myPath/$outDir/Data/FishersMethod_results/FisherMethod_tsRNAs.txt
+grep ^ENS $myPath/$outDir/Data/FishersMethod_results/FisherMethod_Features.txt > $myPath/$outDir/Data/FishersMethod_results/FisherMethod_ncRNAs.txt
 
 ### Generating summary text files
 string_padder "Generating summary text files..."
 Rscript bin/ResultsTable.R \
-	$myPath/$outDir/Data/Intermediate-files/Feature-P-values_FisherMethod_pvalues.tsv \
+	$myPath/$outDir/Data/FishersMethod_results/Feature-P-values_FisherMethod_pvalues.tsv \
 	$myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.distribution-score.all-features.txt \
 	$myPath/$outDir/Data/Intermediate-files/DataTransformations/ncRNA.cond1-vs-cond2.distribution-score.all-features.txt \
 	$myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_tsRNAs.cleavage-score.all-features.txt \
@@ -491,6 +494,7 @@ if [[ $(wc -l < $myPath/$outDir/Data/All-Features-Identified.txt) -ge 2 ]]; then
 			$Plots \
 			$ncRNA_GTF &
 	fi
+	string_padder "Plotting feature coverage..." 
 	# tsRNAs
 	Rscript bin/Bedgraph_plotter_DEGs.R \
 		$myPath/$outDir/Data/Intermediate-files/cond1_concatenated_mean_stdev.tsRNA.depth \
@@ -498,21 +502,28 @@ if [[ $(wc -l < $myPath/$outDir/Data/All-Features-Identified.txt) -ge 2 ]]; then
 		$myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt \
 		$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-tsRNAs.pdf \
 		0 \
-		"no" &
+		"no" # DESeq2 tsRNAs
 	Rscript bin/Bedgraph_plotter_DEGs.R \
 		$myPath/$outDir/Data/Intermediate-files/cond1_concatenated_mean_stdev.tsRNA.depth \
 		$myPath/$outDir/Data/Intermediate-files/cond2_concatenated_mean_stdev.tsRNA.depth \
 		$myPath/$outDir/Data/Intermediate-files/DataTransformations/High-distribution-scores_feature-names.txt \
 		$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-tsRNAs.pdf \
 		0 \
-		"no" &
+		"no" & # Distribution score tsRNAs
 	Rscript bin/Bedgraph_plotter_DEGs.R \
 		$myPath/$outDir/Data/Intermediate-files/cond1_concatenated_mean_stdev.tsRNA.depth \
 		$myPath/$outDir/Data/Intermediate-files/cond2_concatenated_mean_stdev.tsRNA.depth \
 		$myPath/$outDir/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt \
 		$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-tsRNAs.pdf \
 		0 \
-		"no" &
+		"no" & # Cleavage score tsRNAs
+	Rscript bin/Bedgraph_plotter_DEGs.R \
+		$myPath/$outDir/Data/Intermediate-files/cond1_concatenated_mean_stdev.tsRNA.depth \
+		$myPath/$outDir/Data/Intermediate-files/cond2_concatenated_mean_stdev.tsRNA.depth \
+		$myPath/$outDir/Data/FishersMethod_results/FisherMethod_tsRNAs.txt \
+		$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Fishers-method-tsRNAs.pdf \
+		0 \
+		"no" & # Fisher's method tsRNAs
 	# multi-mapping tsRNAs
 	cat \
 		$myPath/$outDir/Data/Intermediate-files/Multimappers.cond1_concatenated_mean_stdev.tsRNA.depth \
@@ -543,7 +554,7 @@ if [[ $(wc -l < $myPath/$outDir/Data/All-Features-Identified.txt) -ge 2 ]]; then
 		$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-ncRNAs.pdf \
 		0 \
 		"no" \
-		$ncRNA_GTF &
+		$ncRNA_GTF & # DESeq2 ncRNAs
 	Rscript bin/Bedgraph_plotter_DEGs.R \
 		$myPath/$outDir/Data/Intermediate-files/cond1_concatenated_mean_stdev.ncRNA.depth \
 		$myPath/$outDir/Data/Intermediate-files/cond2_concatenated_mean_stdev.ncRNA.depth \
@@ -551,7 +562,7 @@ if [[ $(wc -l < $myPath/$outDir/Data/All-Features-Identified.txt) -ge 2 ]]; then
 		$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-ncRNAs.pdf \
 		0 \
 		"no" \
-		$ncRNA_GTF &
+		$ncRNA_GTF & # Distribution score ncRNAs
 	Rscript bin/Bedgraph_plotter_DEGs.R \
 		$myPath/$outDir/Data/Intermediate-files/cond1_concatenated_mean_stdev.ncRNA.depth \
 		$myPath/$outDir/Data/Intermediate-files/cond2_concatenated_mean_stdev.ncRNA.depth \
@@ -559,13 +570,21 @@ if [[ $(wc -l < $myPath/$outDir/Data/All-Features-Identified.txt) -ge 2 ]]; then
 		$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-ncRNAs.pdf \
 		0 \
 		"no" \
-		$ncRNA_GTF &
+		$ncRNA_GTF & # Cleavage score ncRNAs
+	Rscript bin/Bedgraph_plotter_DEGs.R \
+		$myPath/$outDir/Data/Intermediate-files/cond1_concatenated_mean_stdev.ncRNA.depth \
+		$myPath/$outDir/Data/Intermediate-files/cond2_concatenated_mean_stdev.ncRNA.depth \
+		$myPath/$outDir/Data/FishersMethod_results/FisherMethod_ncRNAs.txt \
+		$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Fishers-method-ncRNAs.pdf \
+		0 \
+		"no" \
+		$ncRNA_GTF & # Fisher's method ncRNAs
 	# Venn diagram
 	Rscript bin/VennDiagram.R \
 		$myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_short-names.txt \
 		$myPath/$outDir/Data/Intermediate-files/DataTransformations/High-distribution-scores_feature-names.txt \
 		$myPath/$outDir/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt \
-		$myPath/$outDir/Data/Intermediate-files/FisherMethod_Features.txt  \
+		$myPath/$outDir/Data/FishersMethod_results/FisherMethod_Features.txt  \
 		$myPath/$outDir/Plots/${condition1}_vs_${condition2}
 	mkdir $myPath/$outDir/Data/VennDiagramGeneration
 	cp $myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_short-names.txt \
@@ -574,6 +593,8 @@ if [[ $(wc -l < $myPath/$outDir/Data/All-Features-Identified.txt) -ge 2 ]]; then
 		$myPath/$outDir/Data/VennDiagramGeneration/Distribution-Algorithm-Features.txt
 	cp $myPath/$outDir/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt \
 		$myPath/$outDir/Data/VennDiagramGeneration/Cleavage-Algorithm-Features.txt
+	cp $myPath/$outDir/Data/FishersMethod_results/FisherMethod_Features.txt \
+		$myPath/$outDir/Data/VennDiagramGeneration/FisherMethod_Features.txt
 	mv $myPath/$outDir/Plots/${condition1}_vs_${condition2}.intersect*txt \
 		$myPath/$outDir/Data/VennDiagramGeneration/
 else
@@ -595,12 +616,12 @@ done
 mv $outDir/Data/Intermediate-files/FCount.rpm.all-features \
 	$outDir/Data/FCount.all-features.RPM.Count
 
-### Move results to Data directory
+### Move results to Data and Plots directorys
 mv $myPath/$outDir/Data/Intermediate-files/DE_Results/ \
 	$myPath/$outDir/Data/
 cp $myPath/$outDir/Data/DE_Results/*pdf \
 	$myPath/$outDir/Plots/ #Copy PDFs to Plots dir
-cp $myPath/$outDir/Data/Intermediate-files/Feature-P-values*.pdf $myPath/$outDir/Plots/
+cp $myPath/$outDir/Data/FishersMethod_results/Feature-P-values*.pdf $myPath/$outDir/Plots/
 cp $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_tsRNAs.cleavage-score.all-features.txt $myPath/$outDir/Data/Cleavage_results/ 
 cp $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_ncRNAs.cleavage-score.all-features.txt $myPath/$outDir/Data/Cleavage_results/
 cp $myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.distribution-score.all-features.txt $myPath/$outDir/Data/Distribution_results/
@@ -645,7 +666,7 @@ for i in $myPath/$outDir/Plots/*; do # Encode using base64
 		base64 $i | sed ':a;N;$!ba;s/\n//g' >> $myPath/$outDir/Plots/Encoded/$my_file.txt
 		echo -n "\" width=\"600\" height=\"600\" align=middle></iframe>" >> $myPath/$outDir/Plots/Encoded/$my_file.txt
 	elif [[ $my_file =~ ".png" ]]; then # Encode PNGs
-	echo -n "<img src=\"data:application/png;base64," > $myPath/$outDir/Plots/Encoded/$my_file.txt
+		echo -n "<img src=\"data:application/png;base64," > $myPath/$outDir/Plots/Encoded/$my_file.txt
 		base64 $i | sed ':a;N;$!ba;s/\n//g' >> $myPath/$outDir/Plots/Encoded/$my_file.txt
 		echo -n "\" />" >> $myPath/$outDir/Plots/Encoded/$my_file.txt
 	fi
@@ -759,13 +780,28 @@ $summary_results_html
 <body><h4>Coverage plots for all ncRNAs with irregular 5' vs 3' coverage identified by the cleavage algorithm</h4>
 <embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-ncRNAs.pdf" width="800px" height="800px" />
 <br />
+<body><h2>Fisher's Method Results</h2>
+<br />Highest scoring tRNA fragments identified using Fisher's method
+<br />
+<embed src="$myPath/$outDir/Plots/Feature-P-values_tsRNAs.low.p.values.pdf" width="800px" height="800px" />
+<br />Full results here: $myPath/$outDir/Data/FishersMethod_results/${condition1}_vs_${condition2}_Fishers-method-tsRNAs.txt
+<br />
+<body><h4>Coverage plots for all tRNAs with irregular distribution identified by Fisher's method</h4>
+<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Fishers-method-tsRNAs.pdf" width="800px" height="800px" />
+<br />
+<br />Highest scoring ncRNA fragments identified using Fisher's method
+<br />
+<embed src="$myPath/$outDir/Plots/Feature-P-values_ncRNAs.low.p.values.pdf" width="800px" height="800px" />
+<br />
+<br />Full results here: $myPath/$outDir/Data/FishersMethod_results/${condition1}_vs_${condition2}_Fishers-method-ncRNAs.txt
+<br />
+<body><h4>Coverage plots for all ncRNAs with irregular distribution identified by Fisher's method</h4>
+<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Fishers-method-ncRNAs.pdf" width="800px" height="800px" />
+<br />
 <body><h2>More results:</h2>
 <br />tRNA fragments identified where read origin accurate only to isoacceptor level 
 <br />
 <embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_tsRNAs-with-multimapping-reads.pdf" width="800px" height="800px" />
-<br />
-<br />Features ranked by combined p-value (Fisher's method)
-<embed src="$myPath/$outDir/Plots/Encoded/Feature-P-values.low.p.values.pdf" width="800px" height="800px" />
 <br />
 <body><h4>All tRNA plots can be found here</h4> 
 <ul>
@@ -773,6 +809,7 @@ $summary_results_html
 </ul>
 <br />$StartTime
 <br />$FinishTime
+<br />
 <br />$parametersHTML
 <br />
 <br />$version
@@ -925,15 +962,39 @@ Full results here:
 
 $(cat $myPath/$outDir/Plots/Encoded/${condition1}_vs_${condition2}_Features_Potentially-cleaved-ncRNAs.pdf.txt)
 
+# Fisher's Method Results
+
+## Feature identified
+
+### Highest scoring tRNA fragments identified using Fisher's method
+
+$(cat $myPath/$outDir/Plots/Encoded/Feature-P-values_tsRNAs.low.p.values.pdf.txt)
+
+Full results here:
+
+* $myPath/$outDir/Data/FishersMethod_results/${condition1}_vs_${condition2}_tsRNAs.low.p.values.txt
+
+### Coverage plots for all tRNAs with irregular distribution identified using Fisher's method
+
+$(cat $myPath/$outDir/Plots/Encoded/${condition1}_vs_${condition2}_Features_Fishers-method-tsRNAs.pdf.txt)
+
+### Highest scoring ncRNA fragments identified using Fisher's method
+
+$(cat $myPath/$outDir/Plots/Encoded/Feature-P-values_ncRNAs.low.p.values.pdf.txt)
+
+Full results here:
+
+* $myPath/$outDir/Data/FishersMethod_results/${condition1}_vs_${condition2}_ncRNAs.low.p.values.txt
+
+### Coverage plots for all ncRNAs with irregular distribution identified using Fisher's method
+
+$(cat $myPath/$outDir/Plots/Encoded/${condition1}_vs_${condition2}_Features_Fishers-method-ncRNAs.pdf.txt)
+
 # More results:
 
 ### tRNA fragments identified where read origin accurate only to isoacceptor level 
 
 $(cat $myPath/$outDir/Plots/Encoded/${condition1}_vs_${condition2}_Features_tsRNAs-with-multimapping-reads.pdf.txt)
-
-### Features ranked by combined p-value (Fisher's method)
-
-$(cat $myPath/$outDir/Plots/Encoded/Feature-P-values.low.p.values.pdf.txt)
 
 ## Other
 
@@ -980,8 +1041,11 @@ pdfunite \
 	$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-tsRNAs.pdf \
 	$myPath/$outDir/Plots/${condition1}_vs_${condition2}_ncRNAs.high-cleavage-score.pdf \
 	$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-ncRNAs.pdf \
+	$myPath/$outDir/Plots/Feature-P-values_tsRNAs.low.p.values.pdf \
+	$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Fishers-method-tsRNAs.pdf \
+	$myPath/$outDir/Plots/Feature-P-values_ncRNAs.low.p.values.pdf \
+	$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Fishers-method-ncRNAs.pdf \
 	$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_tsRNAs-with-multimapping-reads.pdf \
-	$myPath/$outDir/Plots/Feature-P-values.low.p.values.pdf \
 	$myPath/$outDir/${condition1}_vs_${condition2}.Results-summary.simple.pdf # This is the output file 
 
 string_padder "$FinishTime"

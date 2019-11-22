@@ -8,6 +8,8 @@
 
 library(ggplot2)
 library(metap)
+library(stringr)
+library(dplyr)
 
 args = commandArgs(trailingOnly=TRUE)
 
@@ -86,29 +88,29 @@ results.df <- results.df[order(-results.df$negLog10.pval),]
 newdata <- results.df[complete.cases(results.df), ]  # Remove NAs
 newdata <- newdata[!grepl("Inf", newdata$negLog10.pval),] # Remove Inf
 newdata$feature <- factor(newdata$feature, levels = newdata$feature[order(newdata$negLog10.pval)]) # Refactorise to rank order for plotting 
+newdata.ncRNAs <- newdata %>% 
+  filter(str_detect(feature, "^ENS")) # Subset ncRNAs
+newdata.tsRNAs <- newdata %>% 
+  filter(!str_detect(feature, "^ENS")) # Subset tsRNAs
 
+### tsRNAs
 # If there are more than 20 features, show top 20
-if(nrow(newdata) > 20){
-  newdata.subset <- head(newdata, n = 20)
+if(nrow(newdata.tsRNAs) > 20){
+  newdata.tsRNAs.subset <- head(newdata.tsRNAs, n = 20)
 } else {
-  newdata.subset <- newdata
+  newdata.tsRNAs.subset <- newdata.tsRNAs
 }
 
-write.table(newdata, 
-            file = paste0(args[4], ".low.p.values.txt"),
+write.table(newdata.tsRNAs, 
+            file = paste0(args[4], "_tsRNAs.low.p.values.txt"),
             quote = FALSE, 
             sep = "\t",
             row.names = FALSE,
             col.names = TRUE)
 
-#if (nrow(newdata.subset) < 5){
-#  pdf.width <- 7
-#} else {
-#  pdf.width <- nrow(newdata.subset)*0.2 + 3
-#}
 pdf.width <- 7
-pdf(file = paste0(args[4], ".low.p.values.pdf"), width = pdf.width, height = 5)
-ggplot(data = newdata.subset, mapping = aes(feature, `negLog10.pval`, color=`negLog10.pval`)) +
+pdf(file = paste0(args[4], "_tsRNAs.low.p.values.pdf"), width = pdf.width, height = 5)
+ggplot(data = newdata.tsRNAs.subset, mapping = aes(feature, `negLog10.pval`, color=`negLog10.pval`)) +
   geom_point() +
   #scale_y_continuous(trans='log2') +
   #scale_y_continuous(breaks=seq(0, my.max, by = round(my.max/5))) +
@@ -122,3 +124,33 @@ ggplot(data = newdata.subset, mapping = aes(feature, `negLog10.pval`, color=`neg
        subtitle = "Max number of features shown = 20")
 dev.off()
 
+### ncRNAs
+# If there are more than 20 features, show top 20
+if(nrow(newdata.ncRNAs) > 20){
+  newdata.ncRNAs.subset <- head(newdata.ncRNAs, n = 20)
+} else {
+  newdata.ncRNAs.subset <- newdata.ncRNAs
+}
+
+write.table(newdata.ncRNAs, 
+            file = paste0(args[4], "_ncRNAs.low.p.values.txt"),
+            quote = FALSE, 
+            sep = "\t",
+            row.names = FALSE,
+            col.names = TRUE)
+
+pdf.width <- 7
+pdf(file = paste0(args[4], "_ncRNAs.low.p.values.pdf"), width = pdf.width, height = 5)
+ggplot(data = newdata.ncRNAs.subset, mapping = aes(feature, `negLog10.pval`, color=`negLog10.pval`)) +
+  geom_point() +
+  #scale_y_continuous(trans='log2') +
+  #scale_y_continuous(breaks=seq(0, my.max, by = round(my.max/5))) +
+  ggtitle("Combined p-values using Fisher's method") +
+  theme(axis.text.x = element_text(angle = 0, vjust = 0, hjust=0, size=8)) +
+  scale_color_gradient(low="blue", high="red") +
+  coord_flip() +
+  labs(colour = "", 
+       x = "ncRNA", 
+       y = "Fisher's method (-Log10 p-val)", 
+       subtitle = "Max number of features shown = 20")
+dev.off()
