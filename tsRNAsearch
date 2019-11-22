@@ -209,7 +209,7 @@ if [[ $inFile != "NA" ]]; then
 		-o "$myPath/$outDir/$filename" \
 		-t "$threads" \
 		-A "yes" \
-		-R "$remove" \ 
+		-R "$remove" \
 		-S "$skip"
 	exit 0 # Exit successfully
 fi

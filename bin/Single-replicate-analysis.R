@@ -128,6 +128,7 @@ if(nrow(newdata) > 20){
 } else {
   newdata.subset <- newdata
 }
+pdf.width <- 7
 
 write.table(newdata, 
             file = paste0(args[2], ".high-cleavage-score.txt"),
@@ -136,7 +137,7 @@ write.table(newdata,
             row.names = FALSE,
             col.names = TRUE)
 
-pdf.width <- nrow(newdata.subset)*0.2 + 3
+#pdf.width <- nrow(newdata.subset)*0.2 + 3
 pdf(file = paste0(args[2], ".high-cleavage-score.pdf"), width = pdf.width, height = 5)
 ggplot(data = newdata.subset, mapping = aes(feature, `cleavage.score`, color=`cleavage.score`)) +
   geom_point() +
@@ -173,11 +174,12 @@ write.table(newdata,
             row.names = FALSE,
             col.names = TRUE)
 
-if (nrow(newdata.subset) < 5) {
-	pdf.width <- 7
-} else {
-	pdf.width <- nrow(newdata.subset)*0.2 + 3
-}
+#if (nrow(newdata.subset) < 5) {
+#	pdf.width <- 7
+#} else {
+#	pdf.width <- nrow(newdata.subset)*0.2 + 3
+#}
+pdf.width <- 7
 
 pdf(file = paste0(args[2], ".high-distribution-score.pdf"), width = pdf.width, height = 5)
 ggplot(data = newdata.subset, mapping = aes(feature, `distribution.score`, color=`distribution.score`)) +

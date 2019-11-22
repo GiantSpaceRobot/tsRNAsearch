@@ -43,7 +43,6 @@ fi
 ### Define defaults
 species="human"
 skip="no"
-Plots="yes"
 while getopts ":hs:t:f:o:A:S:R:" o; do
     case "${o}" in
 		h)
@@ -348,7 +347,6 @@ mkdir -p $outDir/ncRNA-alignment
 mkdir -p $outDir/FCount-count-output
 mkdir -p $outDir/FCount-to-RPM
 mkdir -p $outDir/Data_and_Plots
-mkdir -p $outDir/Data_and_Plots/Encoded
 
 singleFile_base=${singleFile##*/}    # Remove pathname
 singleFile_basename="$( cut -d '.' -f 1 <<< "$singleFile_base" )" # Get filename before first occurence of .
@@ -539,12 +537,9 @@ python2 bin/CollapseCountfile.py \
 python2 bin/CollapseCountfile.py \
 	$outDir/FCount-to-RPM/$singleFile_basename.all-features.rpm.count \
 	$outDir/FCount-to-RPM/$singleFile_basename.collapsed.all-features.rpm.count # For Cleavage + Distribution algorithms
-wait
 
 ### Move results to Data_and_Plots
 cp $outDir/FCount-to-RPM/$singleFile_basename.collapsed.all-features.rpm.count $outDir/Data_and_Plots/
-### Move tRNA alignment length plot
-cp $outDir/tRNA-alignment/CytC_IP1_tsRNA_tRNA-alignment-length.pdf $outDir/Data_and_Plots/
 if [[ $Plots == "yes" ]]; then
 	### If extra plotting parameter (-A) was selected, copy these files 
 	Rscript bin/Bedgraph_plotter.R \
@@ -567,127 +562,6 @@ if [[ $remove == "yes" ]]; then
 	find $outDir/ -name '*fq' -delete    # .fq files
 	find $outDir/ -name '*accepted_hits*depth' -delete    # .depth files
 fi
-
-### Encode figures using base64
-for i in $outDir/Data_and_Plots/*; do # Encode using base64
-	my_file=$(basename $i)
-	if [[ $my_file =~ ".pdf" ]]; then # Encode PDFs
-		echo -n "<iframe src=\"data:application/pdf;base64," > $outDir/Data_and_Plots/Encoded/$my_file.txt
-		base64 $i | sed ':a;N;$!ba;s/\n//g' >> $outDir/Data_and_Plots/Encoded/$my_file.txt
-		echo -n "\" width=\"600\" height=\"600\" align=middle></iframe>" >> $outDir/Data_and_Plots/Encoded/$my_file.txt
-	elif [[ $my_file =~ ".png" ]]; then # Encode PNGs
-		echo -n "<img src=\"data:application/png;base64," > $outDir/Data_and_Plots/Encoded/$my_file.txt
-		base64 $i | sed ':a;N;$!ba;s/\n//g' >> $outDir/Data_and_Plots/Encoded/$my_file.txt
-		echo -n "\" />" >> $outDir/Data_and_Plots/Encoded/$my_file.txt
-	fi
-done
-
-### Generate HTML file:
-echo "
-<!DOCTYPE html>
-<html>
-<body><h1>tsRNAsearch Report - Single Sample Analysis</h1>
-<body><h2>${singleFile_basename}</h2>
-<body><h3>tRNA Read Alignment Lengths</h3>
-<br />
-<embed src="$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_tRNA-alignment-length.pdf" width="800px" height="800px" />
-<br />
-<body><h2>tRNA fragments (tsRNAs)</h2>
-<br />
-<body><h3>Distribution score</h3>
-<br />
-<embed src="$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_Results.high-distribution-score.pdf" width="800px" height="800px" />
-<br />
-<body><h3>Cleavage score</h3>
-<br />
-<embed src="$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_Results.high-cleavage-score.pdf" width="800px" height="800px" />
-<br />
-<body><h3>tsRNA Coverage Plots</h3>
-<br />
-<embed src="$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_Coverage-plots.pdf" width="800px" height="800px" />
-<br />
-<body><h2>ncRNA fragments</h2>
-<br />
-<body><h3>Distribution score</h3>
-<br />
-<embed src="$outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Results.high-distribution-score.pdf" width="800px" height="800px" />
-<br />
-<body><h3>Cleavage score</h3>
-<br />
-<embed src="$outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Results.high-cleavage-score.pdf" width="800px" height="800px" />
-<br />
-<body><h3>ncRNA Coverage Plots</h3>
-<br />
-<br />Large file: $outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Coverage-plots.pdf
-<br />
-</body>
-</html>
-" > $outDir/${singleFile_basename}.Results-summary.simple.html
-
-echo -e "
----
-title: 'tsRNAsearch Report'
-output: 
-  html_document:
-    self_contained: no
-    toc: true
-    number_sections: true
-    theme: cerulean
----
-
-# Overview of tsRNAsearch analysis of ${singleFile_basename}
-
-## tRNA Read Alignment Length
-
-$(cat $outDir/Data_and_Plots/Encoded/${singleFile_basename}_tsRNA_tRNA-alignment-length.pdf.txt)
-
-# tRNA fragments (tsRNAs)
-
-## Distribution score
-
-$(cat $outDir/Data_and_Plots/Encoded/${singleFile_basename}_tsRNA_Results.high-distribution-score.pdf.txt)
-
-## Cleavage score
-
-$(cat $outDir/Data_and_Plots/Encoded/${singleFile_basename}_tsRNA_Results.high-cleavage-score.pdf.txt)
-
-## tsRNA Coverage Plots
-
-$(cat $outDir/Data_and_Plots/Encoded/${singleFile_basename}_tsRNA_Coverage-plots.pdf.txt)
-
-# ncRNA fragments
-
-## Distribution score
-
-$(cat $outDir/Data_and_Plots/Encoded/${singleFile_basename}_ncRNA_Results.high-distribution-score.pdf.txt)
-
-## Cleavage score
-
-$(cat $outDir/Data_and_Plots/Encoded/${singleFile_basename}_ncRNA_Results.high-cleavage-score.pdf.txt)
-
-## ncRNA Coverage Plots
-
-$(cat $outDir/Data_and_Plots/Encoded/${singleFile_basename}_ncRNA_Coverage-plots.pdf.txt)
-
-## Other
-
-### All ncRNA coverage plots can be found here: 
-
-* $outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Coverage-plots.pdf
-
-" > $outDir/Data_and_Plots/Run-Summary.Rmd
-Rscript bin/Rmarkdown-to-HTML.R \
-	$outDir/Data_and_Plots/Run-Summary.Rmd \
-	$outDir/${singleFile_basename}.Results-summary.html
-
-pdfunite \
-	$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_tRNA-alignment-length.pdf \
-	$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_Results.high-distribution-score.pdf \
-	$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_Results.high-cleavage-score.pdf \
-	$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_Coverage-plots.pdf \
-	$outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Results.high-distribution-score.pdf \
-	$outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Results.high-cleavage-score.pdf \
-	$outDir/${singleFile_basename}.Results-summary.simple.pdf # This is the output file 
 
 echo "Finished analysing "$singleFile" on $(date)" # Print pipeline end-time
 echo "_____________________________________________________________________________________________________________________
