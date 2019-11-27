@@ -544,7 +544,7 @@ wait
 ### Move results to Data_and_Plots
 cp $outDir/FCount-to-RPM/$singleFile_basename.collapsed.all-features.rpm.count $outDir/Data_and_Plots/
 ### Move tRNA alignment length plot
-cp $outDir/tRNA-alignment/CytC_IP1_tsRNA_tRNA-alignment-length.pdf $outDir/Data_and_Plots/
+cp $outDir/tRNA-alignment/${singleFile_basename}_tsRNA_tRNA-alignment-length.pdf $outDir/Data_and_Plots/
 if [[ $Plots == "yes" ]]; then
 	### If extra plotting parameter (-A) was selected, copy these files 
 	Rscript bin/Bedgraph_plotter.R \
@@ -666,10 +666,6 @@ $(cat $outDir/Data_and_Plots/Encoded/${singleFile_basename}_ncRNA_Results.high-d
 $(cat $outDir/Data_and_Plots/Encoded/${singleFile_basename}_ncRNA_Results.high-cleavage-score.pdf.txt)
 
 ## ncRNA Coverage Plots
-
-$(cat $outDir/Data_and_Plots/Encoded/${singleFile_basename}_ncRNA_Coverage-plots.pdf.txt)
-
-## Other
 
 ### All ncRNA coverage plots can be found here: 
 

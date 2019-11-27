@@ -10,5 +10,4 @@ Update now:
 * Test setup.sh on server/virtual machine
 * Predict which type of tsRNA each tsRNA is. e.g. 5'-tiRNA, itRNA
 * Fishers test causes problems when only 1 replicate each compared. GBM_DMSO-vs-ITE
-* Remove ncRNA coverage plot from single analysis as there is text pointing to it
 * Repeat analysis of CRC adenocarcinoma
