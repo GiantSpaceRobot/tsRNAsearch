@@ -8,5 +8,7 @@ Update now:
 * Test against Unitas, MINTmap, tDRmapper, SPORTS1.0
 * Create singularity image of pipeline
 * Test setup.sh on server/virtual machine
-* In CRC_Mouse_Healthy-vs-CRC/CRC1_vs_Healthy.Results-summary HTML file, Snora68 is in results table but in none of the plot images.
 * Predict which type of tsRNA each tsRNA is. e.g. 5'-tiRNA, itRNA
+* Fishers test causes problems when only 1 replicate each compared. GBM_DMSO-vs-ITE
+* Remove ncRNA coverage plot from single analysis as there is text pointing to it
+* Repeat analysis of CRC adenocarcinoma

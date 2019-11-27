@@ -447,8 +447,8 @@ grep ^ENS $myPath/$outDir/Data/FishersMethod_results/FisherMethod_Features.txt >
 string_padder "Generating summary text files..."
 Rscript bin/ResultsTable.R \
 	$myPath/$outDir/Data/FishersMethod_results/Feature-P-values_FisherMethod_pvalues.tsv \
-	$myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.cond1-vs-cond2.distribution-score.all-features.txt \
-	$myPath/$outDir/Data/Intermediate-files/DataTransformations/ncRNA.cond1-vs-cond2.distribution-score.all-features.txt \
+	$myPath/$outDir/Data/Distribution_results/${condition1}_vs_${condition2}_High-distribution-tsRNAs.txt \
+	$myPath/$outDir/Data/Distribution_results/${condition1}_vs_${condition2}_High-distribution-ncRNAs.txt \
 	$myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_tsRNAs.cleavage-score.all-features.txt \
 	$myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_ncRNAs.cleavage-score.all-features.txt \
 	$myPath/$outDir/Data/Intermediate-files/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output.csv \
