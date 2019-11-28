@@ -556,6 +556,23 @@ if [[ $Plots == "yes" ]]; then
 	cp $outDir/ncRNA-alignment/*Results.* $outDir/Data_and_Plots/
 fi
 
+### Determine tsRNA types for each tRNA profile
+grep -v ^feature $outDir/tRNA-alignment/tRNAs-almost-mapped.depth \
+	> $outDir/tRNA-alignment/tRNAs-almost-mapped_no-header.depth
+cat $outDir/Data_and_Plots/${singleFile_basename}_tsRNA.depth \
+	$outDir/tRNA-alignment/tRNAs-almost-mapped_no-header.depth \
+	> $outDir/tRNA-alignment/All-tRNAs.depth
+Rscript bin/tsRNA-type-classification.R \
+	$outDir/tRNA-alignment/All-tRNAs.depth \
+	$outDir/Data_and_Plots/tsRNAs-classified-by-type.txt 
+awk '{print $1"\t"$2}' $outDir/Data_and_Plots/tsRNAs-classified-by-type.txt \
+	> $outDir/tRNA-alignment/tsRNAs-classified-by-type_clean.txt
+sed -e 's/^/<br \/>/' $outDir/tRNA-alignment/tsRNAs-classified-by-type_clean.txt \
+	> $outDir/tRNA-alignment/tsRNAs-classified-by-type_clean_HTML.txt
+tsRNAtype=$(cat $outDir/tRNA-alignment/tsRNAs-classified-by-type_clean_HTML.txt)
+sed -e 's/^/* /' $outDir/tRNA-alignment/tsRNAs-classified-by-type_clean.txt \
+	> $outDir/tRNA-alignment/tsRNAs-classified-by-type_clean_RmdHTML.txt
+
 ### If -R == yes, remove intermediate files
 if [[ $remove == "yes" ]]; then 
 	rm -rf $outDir/Data/Intermediate-files/ # Remove all intermediate files
@@ -606,6 +623,9 @@ echo "
 <br />
 <embed src="$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_Coverage-plots.pdf" width="800px" height="800px" />
 <br />
+<body><h3>Predicted tsRNA type</h3>
+$tsRNAtype
+<br />
 <body><h2>ncRNA fragments</h2>
 <br />
 <body><h3>Distribution score</h3>
@@ -655,6 +675,16 @@ $(cat $outDir/Data_and_Plots/Encoded/${singleFile_basename}_tsRNA_Results.high-c
 
 $(cat $outDir/Data_and_Plots/Encoded/${singleFile_basename}_tsRNA_Coverage-plots.pdf.txt)
 
+## Predicted tsRNA Type
+
+$(cat $outDir/tRNA-alignment/tsRNAs-classified-by-type_clean_RmdHTML.txt)
+
+\x60\x60\x60{r Summary report, echo=FALSE, error=TRUE}
+library(knitr)
+my.table <- read.csv(\"$outDir/tRNA-alignment/tsRNAs-classified-by-type_clean.txt\", sep = '\t')
+kable(my.table, caption = 'Predicted tsRNA type')
+\x60\x60\x60
+
 # ncRNA fragments
 
 ## Distribution score
@@ -667,7 +697,7 @@ $(cat $outDir/Data_and_Plots/Encoded/${singleFile_basename}_ncRNA_Results.high-c
 
 ## ncRNA Coverage Plots
 
-### All ncRNA coverage plots can be found here: 
+All ncRNA coverage plots can be found here: 
 
 * $outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Coverage-plots.pdf
 

@@ -640,6 +640,38 @@ if [[ $Plots == "yes" ]]; then
 		$myPath/$outDir/Plots/Individual-Runs/
 fi
 
+### Predict tsRNA type
+# Condition 1
+cat $myPath/$outDir/Data/Intermediate-files/DataTransformations/Combined.${condition1}.tRNAs-almost-mapped_RPM.depth.mean \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.${condition1}_concatenated.depth.mean \
+	> $myPath/$outDir/Data/Intermediate-files/${condition1}_tsRNAs.depth.mean
+Rscript bin/tsRNA-type-classification.R \
+	$myPath/$outDir/Data/Intermediate-files/${condition1}_tsRNAs.depth.mean \
+	$myPath/$outDir/Data/Intermediate-files/${condition1}_predicted-tsRNA-types.txt
+awk '{print $1"\t"$2}' $myPath/$outDir/Data/Intermediate-files/${condition1}_predicted-tsRNA-types.txt \
+	> $myPath/$outDir/Data/Intermediate-files/${condition1}_predicted-tsRNA-types_clean.txt
+# Condition 2
+cat $myPath/$outDir/Data/Intermediate-files/DataTransformations/Combined.${condition2}.tRNAs-almost-mapped_RPM.depth.mean \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/tsRNA.${condition2}_concatenated.depth.mean \
+	> $myPath/$outDir/Data/Intermediate-files/${condition2}_tsRNAs.depth.mean
+Rscript bin/tsRNA-type-classification.R \
+	$myPath/$outDir/Data/Intermediate-files/${condition2}_tsRNAs.depth.mean \
+	$myPath/$outDir/Data/Intermediate-files/${condition2}_predicted-tsRNA-types.txt
+awk '{print $1"\t"$2}' $myPath/$outDir/Data/Intermediate-files/${condition2}_predicted-tsRNA-types.txt \
+	> $myPath/$outDir/Data/Intermediate-files/${condition2}_predicted-tsRNA-types_clean.txt
+# Combined
+paste $myPath/$outDir/Data/Intermediate-files/${condition1}_predicted-tsRNA-types_clean.txt \
+	$myPath/$outDir/Data/Intermediate-files/${condition2}_predicted-tsRNA-types_clean.txt \
+	| grep -v ^feature \
+	> $myPath/$outDir/Data/Intermediate-files/Predicted-tsRNA-types.txt
+#echo -e "feature\t${condition1}\t${condition2}" \
+#	> $myPath/$outDir/Data/Predicted-tsRNA-types.txt
+awk -F '\t' '{print $1"\t"$2"\t"$4}' $myPath/$outDir/Data/Intermediate-files/Predicted-tsRNA-types.txt \
+	> $myPath/$outDir/Data/Predicted-tsRNA-types.txt
+sed -e 's/^/<br \/>/' $myPath/$outDir/Data/Predicted-tsRNA-types.txt \
+	> $myPath/$outDir/Data/Predicted-tsRNA-types_HTML.txt
+tsRNAtype=$(cat $myPath/$outDir/Data/Predicted-tsRNA-types_HTML.txt)
+
 ### If -R == yes, remove intermediate files
 if [[ $remove == "yes" ]]; then 
 	rm -rf $myPath/$outDir/Data/Intermediate-files/ # Remove all intermediate files
@@ -807,6 +839,12 @@ $summary_results_html
 <ul>
   <li>$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_All-tsRNAs.pdf</li>
 </ul>
+<br />
+<body><h3>Predicted tsRNA type</h3>
+<br /><b>feature\t${condition1}\t${condition2}</b>
+$tsRNAtype
+<br />
+<body><h3>More Information</h3>
 <br />$StartTime
 <br />$FinishTime
 <br />
@@ -1001,6 +1039,16 @@ $(cat $myPath/$outDir/Plots/Encoded/${condition1}_vs_${condition2}_Features_tsRN
 ### All tRNA coverage plots can be found here: 
 
 * $myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_All-tsRNAs.pdf
+
+### Predicted tsRNA types
+
+$(cat $myPath/$outDir/Data/Predicted-tsRNA-types.txt)
+
+\x60\x60\x60{r Predicted tsRNA types, echo=FALSE, error=TRUE}
+library(knitr)
+my.table <- read.csv(\"$myPath/$outDir/Data/Predicted-tsRNA-types.txt\", sep = '\t')
+kable(my.table, caption = 'Predicted tsRNA type')
+\x60\x60\x60
 
 ### Run information
 
