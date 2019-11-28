@@ -664,10 +664,12 @@ paste $myPath/$outDir/Data/Intermediate-files/${condition1}_predicted-tsRNA-type
 	$myPath/$outDir/Data/Intermediate-files/${condition2}_predicted-tsRNA-types_clean.txt \
 	| grep -v ^feature \
 	> $myPath/$outDir/Data/Intermediate-files/Predicted-tsRNA-types.txt
-#echo -e "feature\t${condition1}\t${condition2}" \
-#	> $myPath/$outDir/Data/Predicted-tsRNA-types.txt
+echo -e "feature\t${condition1}\t${condition2}" \
+	> $myPath/$outDir/Data/Predicted-tsRNA-types_header.txt
 awk -F '\t' '{print $1"\t"$2"\t"$4}' $myPath/$outDir/Data/Intermediate-files/Predicted-tsRNA-types.txt \
 	> $myPath/$outDir/Data/Predicted-tsRNA-types.txt
+cat $myPath/$outDir/Data/Predicted-tsRNA-types.txt \
+	$myPath/$outDir/Data/Predicted-tsRNA-types_header.txt
 sed -e 's/^/<br \/>/' $myPath/$outDir/Data/Predicted-tsRNA-types.txt \
 	> $myPath/$outDir/Data/Predicted-tsRNA-types_HTML.txt
 tsRNAtype=$(cat $myPath/$outDir/Data/Predicted-tsRNA-types_HTML.txt)
@@ -841,7 +843,7 @@ $summary_results_html
 </ul>
 <br />
 <body><h3>Predicted tsRNA type</h3>
-<br /><b>feature\t${condition1}\t${condition2}</b>
+<br /><b>feature  ${condition1}  ${condition2}</b>
 $tsRNAtype
 <br />
 <body><h3>More Information</h3>
@@ -1042,11 +1044,9 @@ $(cat $myPath/$outDir/Plots/Encoded/${condition1}_vs_${condition2}_Features_tsRN
 
 ### Predicted tsRNA types
 
-$(cat $myPath/$outDir/Data/Predicted-tsRNA-types.txt)
-
 \x60\x60\x60{r Predicted tsRNA types, echo=FALSE, error=TRUE}
 library(knitr)
-my.table <- read.csv(\"$myPath/$outDir/Data/Predicted-tsRNA-types.txt\", sep = '\t')
+my.table <- read.csv(\"$myPath/$outDir/Data/Predicted-tsRNA-types_header.txt\", sep = '\t')
 kable(my.table, caption = 'Predicted tsRNA type')
 \x60\x60\x60
 
@@ -1068,6 +1068,7 @@ $version
 Rscript bin/Rmarkdown-to-HTML.R \
 	$myPath/$outDir/Data/Run-Summary.Rmd \
 	$myPath/$outDir/${condition1}_vs_${condition2}.Results-summary.html
+rm $myPath/$outDir/Data/Predicted-tsRNA-types_*.txt # Remove unnecessary files
 
 pdfunite \
 	$myPath/$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_RPM-normalised.pdf \
