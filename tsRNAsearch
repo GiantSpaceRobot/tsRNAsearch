@@ -42,7 +42,7 @@ species="human"
 skip="no"
 Plots="no"
 remove="no"
-version="tsRNAsearch version 0.13.4"
+version="tsRNAsearch version 0.13.5"
 while getopts ":hs:A:t:d:f:S:R:e:o:" o; do
     case "${o}" in
 		h)
@@ -665,11 +665,12 @@ paste $myPath/$outDir/Data/Intermediate-files/${condition1}_predicted-tsRNA-type
 	| grep -v ^feature \
 	> $myPath/$outDir/Data/Intermediate-files/Predicted-tsRNA-types.txt
 echo -e "feature\t${condition1}\t${condition2}" \
-	> $myPath/$outDir/Data/Predicted-tsRNA-types_header.txt
+	> $myPath/$outDir/Data/Predicted-tsRNA-types_header-top.txt
 awk -F '\t' '{print $1"\t"$2"\t"$4}' $myPath/$outDir/Data/Intermediate-files/Predicted-tsRNA-types.txt \
 	> $myPath/$outDir/Data/Predicted-tsRNA-types.txt
-cat $myPath/$outDir/Data/Predicted-tsRNA-types.txt \
-	$myPath/$outDir/Data/Predicted-tsRNA-types_header.txt
+cat $myPath/$outDir/Data/Predicted-tsRNA-types_header-top.txt \
+	$myPath/$outDir/Data/Predicted-tsRNA-types.txt \
+	> $myPath/$outDir/Data/Predicted-tsRNA-types_header.txt
 sed -e 's/^/<br \/>/' $myPath/$outDir/Data/Predicted-tsRNA-types.txt \
 	> $myPath/$outDir/Data/Predicted-tsRNA-types_HTML.txt
 tsRNAtype=$(cat $myPath/$outDir/Data/Predicted-tsRNA-types_HTML.txt)
