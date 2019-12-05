@@ -35,6 +35,10 @@ df2 <- split( input2 , f = input2$V1 )  # Split dataframe based on column 1 elem
 results.df <- setNames(data.frame(matrix(ncol = 3, nrow = 0)), c("feature",
                                                                  "p.value",
                                                                  "p.adj"))  
+### Initialise empty dataframe with column headers
+top.results.df <- setNames(data.frame(matrix(ncol = 3, nrow = 0)), c("feature",
+                                                                 "p.value",
+                                                                 "p.adj"))  
 
 ### Loop over feature subsets
 for(subset1 in df1) {
@@ -50,6 +54,8 @@ for(subset1 in df1) {
   rpm2 <- subset(subset2, select = c(rep(FALSE,2), TRUE))
   reps.condition1 <- length(as.numeric(rpm1[1,])) #Get no. of replicates in condition 1
   reps.condition2 <- length(as.numeric(rpm2[1,])) #Get no. of replicates in condition 2
+  mean1 <- mean(rowSums(rpm1)/reps.condition1)
+  mean2 <- mean(rowSums(rpm2)/reps.condition2)
   ### If the number of replicates is greater than 1 for each condition, run t-test, otherwise assign p-value as 1.
   if (reps.condition1 == 1 | reps.condition2 == 1) { 
       # Use an alternative to t-test? Or calculate nothing? Go with nothing for now 
@@ -72,20 +78,29 @@ for(subset1 in df1) {
     new.row <- cbind(feature, "Fishers.method.pvalue" = fishers.method1$p) # Create new row for results dataframe
   }
   results.df <- rbind(results.df, new.row) # Add new to existing dataframe
-
+  if (mean1 >= 1 || mean2 >= 1) { # If the mean RPM of condition 1 or 2 is greater than 1, write to DF
+    top.results.df <- rbind(top.results.df, new.row) # Add new to existing dataframe
+  }
 }
 
 write.table(results.df, 
+            file = paste0(args[4], "_FisherMethod_pvalues_all-results.tsv"),
+            quote = FALSE, 
+            sep = "\t",
+            row.names = FALSE,
+            col.names = TRUE)
+
+write.table(top.results.df, 
             file = paste0(args[4], "_FisherMethod_pvalues.tsv"),
             quote = FALSE, 
             sep = "\t",
             row.names = FALSE,
             col.names = TRUE)
 
-results.df$Fishers.method.pvalue <- as.numeric(levels(results.df$Fishers.method.pvalue))[results.df$Fishers.method.pvalue]
-results.df$negLog10.pval <- as.numeric(format(-log10(results.df$Fishers.method.pvalue), scientific = F, digits = 2))
-results.df <- results.df[order(-results.df$negLog10.pval),]
-newdata <- results.df[complete.cases(results.df), ]  # Remove NAs
+top.results.df$Fishers.method.pvalue <- as.numeric(levels(top.results.df$Fishers.method.pvalue))[top.results.df$Fishers.method.pvalue]
+top.results.df$negLog10.pval <- as.numeric(format(-log10(top.results.df$Fishers.method.pvalue), scientific = F, digits = 2))
+top.results.df <- top.results.df[order(-top.results.df$negLog10.pval),]
+newdata <- top.results.df[complete.cases(top.results.df), ]  # Remove NAs
 newdata <- newdata[!grepl("Inf", newdata$negLog10.pval),] # Remove Inf
 newdata$feature <- factor(newdata$feature, levels = newdata$feature[order(newdata$negLog10.pval)]) # Refactorise to rank order for plotting 
 newdata.ncRNAs <- newdata %>% 

@@ -6,7 +6,8 @@ Update after publication:
 
 Update now:
 * Test against Unitas, MINTmap, tDRmapper, SPORTS1.0
-* Create singularity image of pipeline
+* Create singularity image of pipeline, or use Github docker package
 * Test setup.sh on server/virtual machine
 * Fishers test causes problems when only 1 replicate each compared. GBM_DMSO-vs-ITE
 * Repeat analysis of CRC adenocarcinoma
+* cd-hit in Add-new-species pipeline?

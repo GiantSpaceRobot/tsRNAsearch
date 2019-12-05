@@ -677,8 +677,6 @@ $(cat $outDir/Data_and_Plots/Encoded/${singleFile_basename}_tsRNA_Coverage-plots
 
 ## Predicted tsRNA Type
 
-$(cat $outDir/tRNA-alignment/tsRNAs-classified-by-type_clean_RmdHTML.txt)
-
 \x60\x60\x60{r Summary report, echo=FALSE, error=TRUE}
 library(knitr)
 my.table <- read.csv(\"$outDir/tRNA-alignment/tsRNAs-classified-by-type_clean.txt\", sep = '\t')

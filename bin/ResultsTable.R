@@ -33,7 +33,8 @@ joined2 <- join(x = cleavage.scores, y = DEGs, by = "feature")
 joined2.subset <- select(joined2, feature, "DESeq2.Log2FC" = log2FoldChange, "DESeq2.pvalue" = pvalue, "DESeq2.padj" = padj, cleavage.score)
 final.df <- join(x = joined1.subset, y = joined2.subset, by = "feature")
 final.df$distribution.score <- as.numeric(final.df$distribution.score) # Convert distribution.score column to numeric
-final.df <- final.df[order(-final.df$distribution.score),] # Sort by distribution score
+final.df <- final.df[order(final.df$Fishers.method.pvalue),] # Sort by Fisher's method combined p-value
+#final.df <- final.df[order(-final.df$distribution.score),] # Sort by distribution score
 
 # If there are more than 20 features, show top 20
 if(nrow(final.df) > 20){
