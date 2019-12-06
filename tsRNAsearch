@@ -243,6 +243,7 @@ for f in $inDir/*; do
 		-o "$myPath/$outDir/$filename" \
 		-t "$threads" \
 		-A "$Plots" \
+		-R "$remove" \
 		-S "$skip"
 	wait
 	readsMapped=$(awk '{sum+=$2} END{print sum;}' $outDir/$filename/FCount-count-output/$filename.collapsed.all-features.count)
