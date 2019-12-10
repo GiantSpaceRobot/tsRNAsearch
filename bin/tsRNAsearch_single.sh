@@ -575,7 +575,6 @@ sed -e 's/^/* /' $outDir/tRNA-alignment/tsRNAs-classified-by-type_clean.txt \
 
 ### If -R == yes, remove intermediate files
 if [[ $remove == "yes" ]]; then 
-	rm -rf $outDir/Data/Intermediate-files/ # Remove all intermediate files
 	find $outDir/ -name '*bam' -delete   # Remove BAMs
 	find $outDir/ -name '*sam' -delete   # SAMs
 	find $outDir/ -name '*tempFile' -delete   # tempFiles

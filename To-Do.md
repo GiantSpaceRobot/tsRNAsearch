@@ -10,3 +10,4 @@ Update now:
 * Fishers test causes problems when only 1 replicate each compared. GBM_DMSO-vs-ITE
 * Repeat analysis of CRC adenocarcinoma
 * cd-hit in Add-new-species pipeline?
+* Add error catching/empty file catching in python and R scripts
