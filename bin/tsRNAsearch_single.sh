@@ -123,7 +123,7 @@ function SAMcollapse () {
 		chunks=10 #
 		echo "Between 1,000 and 10,000 unique reads in SAM file. Splitting SAM into $chunks files..."
 	else
-		chunks=2
+		chunks=1
 		echo "Less than 1,000 unique reads in SAM file. Splitting SAM into $chunks files..."
 	fi
 	### Define variables
@@ -173,24 +173,36 @@ function SAMcollapse () {
 	done
 	### Run SAMcollapse.py. This loop will only run $threads_available_for_chunks processes at once
 	COUNTER=1
-	chunksDiv=$((chunks/10))
+	if (( $chunks == 1)); then # If there are so few reads in input that only one SAM chunk is present
+		chunksDiv=1
+	else # This is the most common situation: Very large SAM has been split into many chunks, divide the chunks by 10 to allow printing of progress
+		chunksDiv=$((chunks/10))
+	fi
 	echo "Collapsing every chunk of SAM..."
 	for i in $outDir/tempDir/edit_*; 
 	do
 		base=$(basename $i)
-		python2 bin/SAMcollapse.py \
-			$i \
-			${fileToCollapse}_${base} \
-			>> $outDir/tRNA-alignment/collapsed-reads.txt & 
-		if (( $COUNTER % $chunksDiv == 0 )); then
-			echo "Started job $COUNTER of $chunks"
-		fi
-		numjobs=($(jobs | wc -l))
-		COUNTER=$[$COUNTER + 1]
-		while (( $numjobs == $threads_available_for_chunks )); do
+		if (( $chunks > 1)); then
+			python2 bin/SAMcollapse.py \
+				$i \
+				${fileToCollapse}_${base} \
+				>> $outDir/tRNA-alignment/collapsed-reads.txt & 
+			if (( $COUNTER % $chunksDiv == 0 )); then # If SAM is split into 100 chunks, print progress when the counter reaches 10, 20, 30... 
+				echo "Started job $COUNTER of $chunks" # i.e. print progress every 10%
+			fi
 			numjobs=($(jobs | wc -l))
-			sleep 2 #Enter next loop iteration
-		done
+			COUNTER=$[$COUNTER + 1]
+			while (( $numjobs == $threads_available_for_chunks )); do
+				numjobs=($(jobs | wc -l))
+				sleep 2 #Enter next loop iteration
+			done
+		else
+			python2 bin/SAMcollapse.py \
+				$i \
+				${fileToCollapse}_${base} \
+				>> $outDir/tRNA-alignment/collapsed-reads.txt & 
+			echo "Started job $COUNTER of $chunks" 
+		fi
 	done
 	wait
 	readsCollapsedSpecies=$(awk '{split($0,a," "); sum += a[1]} END {print sum}' $outDir/tRNA-alignment/collapsed-reads.txt)
