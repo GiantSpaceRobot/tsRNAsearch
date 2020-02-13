@@ -26,6 +26,7 @@ Options:
 	-f	Single-end file for analysis
 	-o	Output directory for the results and log files
 	-A	Plot all features? yes/no {default: yes}
+	-l	Minimum read length {default: 15 bp}
 	-t	Number of threads to use {default is to calculate the number of processors and use 75%}
 	-S	Skip pre-processing of data (i.e. skip FastQC and trim_galore) {default: no}
 
@@ -44,7 +45,7 @@ fi
 species="human"
 skip="no"
 Plots="yes"
-while getopts ":hs:t:f:o:A:S:R:" o; do
+while getopts ":hs:t:l:f:o:A:S:R:" o; do
     case "${o}" in
 		h)
 			asciiArt
@@ -66,6 +67,9 @@ while getopts ":hs:t:f:o:A:S:R:" o; do
 			;;
 		A)
 			Plots="$OPTARG"
+			;;
+		l)
+			min_read_length="$OPTARG"
 			;;
 		R)
 			remove="$OPTARG"
@@ -382,7 +386,7 @@ if [ $skip = "no" ]; then
 	string_padder "Pre-processing reads using trim_galore..."
 	bin/trim_galore \
 		--stringency 10 \
-		--length 15 \
+		--length $min_read_length \
 		-o $outDir/pre-processing/ \
 		--fastqc_args "--outdir $outDir/FastQC/" \
 		$singleFile
@@ -404,7 +408,7 @@ bin/STAR \
 	--outSAMattributes AS nM HI NH \
 	--outFilterMultimapScoreRange 0 \
 	--outReadsUnmapped Fastx \
-	--outFilterMatchNmin 15 \
+	--outFilterMatchNmin $min_read_length \
 	$STARparam
 grep "Number of input reads" $outDir/tRNA-alignment/Log.final.out \
 	| awk -F '\t' '{print $2}' \

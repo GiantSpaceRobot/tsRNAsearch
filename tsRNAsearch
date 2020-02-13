@@ -30,6 +30,7 @@ Options
 	-o	Output directory for the results and log files
 	-e	CSV file containing file names and file groups (see examples in additional-files/)
 	-t	Number of threads to use {default is to calculate the number of processors and use 75%}
+	-l	Minumum read length (default: 15 bp)
 	-A	Plot all features? yes/no {default: no (only plot differentially expressed features)}
 	-S	Skip pre-processing of data (i.e. skip trim_galore) {default: no}
 	-R	Remove all unnecessary/intermediate files (clean results only) {default: no}
@@ -42,8 +43,9 @@ species="human"
 skip="no"
 Plots="no"
 remove="no"
+min_read_length=15
 version="tsRNAsearch version 0.2"
-while getopts ":hs:A:t:d:f:S:R:e:o:" o; do
+while getopts ":hs:A:t:l:d:f:S:R:e:o:" o; do
     case "${o}" in
 		h)
 			asciiArt
@@ -69,6 +71,9 @@ while getopts ":hs:A:t:d:f:S:R:e:o:" o; do
 			;;
 		t)
 			threads="$OPTARG"
+			;;
+		l)
+			min_read_length="$OPTARG"
 			;;
 		A)
 			Plots="$OPTARG"
@@ -208,6 +213,7 @@ if [[ $inFile != "NA" ]]; then
 		-f "$inFile" \
 		-o "$myPath/$outDir/$filename" \
 		-t "$threads" \
+		-l "$min_read_length" \
 		-A "yes" \
 		-R "$remove" \
 		-S "$skip"
@@ -242,6 +248,7 @@ for f in $inDir/*; do
 		-f "$f" \
 		-o "$myPath/$outDir/$filename" \
 		-t "$threads" \
+		-l "$min_read_length" \
 		-A "$Plots" \
 		-R "$remove" \
 		-S "$skip"
