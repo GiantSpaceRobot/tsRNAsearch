@@ -21,22 +21,26 @@ if (length(args)==0) {
 
 myPath <- args[1]
 file.names <- dir(myPath, pattern =".txt")
-cDataAll <- data.frame(my.rownames=(0))
+cDataAll <- data.frame(my.rownames=(0)) # Create empty dataframe
+options(warn = -1) # Suppress warnings (to silence merge name warnings in loop)
 for (i in 1:length(file.names)){
   full.path <- paste0(myPath, file.names[i])
   my.file <- read.table(full.path, header = TRUE)
   my.file$my.rownames <- rownames(my.file)
   cDataAll <- merge(cDataAll, my.file, by="my.rownames", all = TRUE)
 }
+warn = 0 # Turn warnings back on
 rownames(cDataAll) <- cDataAll$my.rownames
-intermediate.df1 <- cDataAll %>%
-  select(-my.rownames) # Remove rownames column
-intermediate.df1 <- intermediate.df1[-1,] %>%
+intermediate.df1 <- cDataAll
+
+### Clean up DF and transpose
+# Remove row and column 1 (row 1 is leftover from creating empty DF, col 1 is my.rownames and we don't need it anymore)
+intermediate.df1 <- intermediate.df1[-1,-1] %>% 
   t() %>%
   data.frame()
-intermediate.df1[is.na(intermediate.df1)] <- 0
-intermediate.df1$tRNAs <- gsub("\\..*", "", rownames(intermediate.df1))
-intermediate.df2 <- ddply(intermediate.df1, "tRNAs", numcolwise(sum))
+intermediate.df1[is.na(intermediate.df1)] <- 0 #Replace NAs with zeros
+intermediate.df1$tRNAs <- gsub("\\..*", "", rownames(intermediate.df1)) #Make a new column with rownames called tRNAs
+intermediate.df2 <- ddply(intermediate.df1, "tRNAs", numcolwise(sum)) # Sums all columns that have the same string in column 'tRNAs'. e.g. sums all AlaAGC columns into one row
 rownames(intermediate.df2) <- intermediate.df2$tRNAs
 length.summary.DF <- intermediate.df2 %>%
   select(-tRNAs) %>%
@@ -46,7 +50,7 @@ rownames(length.summary.DF) <- as.numeric(gsub(".*X", "", rownames(length.summar
 length.summary.DF <- as.matrix(length.summary.DF)
 
 ### Write table
-write.table(paste0(args[1], args[2], "_tRNA-read-alignment-lengths.txt"), x = length.summary.DF, quote = F) # Write length summary as output
+write.table(paste0(args[1], args[2], "_tRNA-read-alignment-lengths.txt"), x = length.summary.DF, quote = F, sep = "\t") # Write length summary as output
 ### Convert counts to proportions
 proportion.DF <- prop.table(length.summary.DF, margin=2)*100 # Get table of proportions
 ### Generate empty table with complete rownames

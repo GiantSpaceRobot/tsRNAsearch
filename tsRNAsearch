@@ -44,7 +44,7 @@ skip="no"
 Plots="no"
 remove="no"
 min_read_length=15
-version="tsRNAsearch version 0.2"
+version="tsRNAsearch version 0.21"
 while getopts ":hs:A:t:l:d:f:S:R:e:o:" o; do
     case "${o}" in
 		h)
@@ -188,6 +188,7 @@ Input fast/fastq.gz file (-f): $inFile
 Experiment layout file (-e): $expFile
 Output directory (-o): $outDir
 Number of threads used (-t): $threads
+Minumum read length (-l): $min_read_length
 Plot all features (-A): $Plots
 Skip pre-processing (-S): $skip
 Remove intermediate files (-R): $remove
@@ -199,6 +200,7 @@ parametersHTML="$(echo -n -e "Parameters:
 <br />    Experiment layout file (-e): $expFile
 <br />    Output directory (-o): $outDir
 <br />    Number of threads used (-t): $threads
+<br />    Minumum read length (-l): $min_read_length
 <br />    Plot all features (-A): $Plots
 <br />    Skip pre-processing (-S): $skip
 <br />    Remove intermediate files (-R): $remove")"
