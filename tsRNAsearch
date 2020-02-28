@@ -15,10 +15,10 @@ asciiArt() { echo '
    ' 1>&1; }
 usage() { echo "
 Comparison of two conditions:
-	Usage: $0 -s human/mouse/rat -d Path/To/Input/Files -o OutputDirectory/ -e ExperimentLayout.csv -t num-of-threads
+	Usage: $0 -s human|mouse|rat -d Path/To/Input/Files -o OutputDirectory/ -e ExperimentLayout.csv -t num-of-threads
 
 Analysis of a single RNA-seq file:
-	Usage: $0 -s human/mouse/rat -f Path/To/InputFile.fastq -o OutputDirectory/ -t num-of-threads
+	Usage: $0 -s human|mouse|rat -f Path/To/InputFile.fastq -o OutputDirectory/ -t num-of-threads
 	" 1>&2; }
 info() { echo "
 Options
@@ -30,7 +30,7 @@ Options
 	-o	Output directory for the results and log files
 	-e	CSV file containing file names and file groups (see examples in additional-files/)
 	-t	Number of threads to use {default is to calculate the number of processors and use 75%}
-	-l	Minumum read length (default: 15 bp)
+	-l	Minumum read length (default: 16 bp)
 	-A	Plot all features? yes/no {default: no (only plot differentially expressed features)}
 	-S	Skip pre-processing of data (i.e. skip trim_galore) {default: no}
 	-R	Remove all unnecessary/intermediate files (clean results only) {default: no}
@@ -43,8 +43,8 @@ species="human"
 skip="no"
 Plots="no"
 remove="no"
-min_read_length=15
-version="tsRNAsearch version 0.21"
+min_read_length=16
+version="tsRNAsearch version 0.22"
 while getopts ":hs:A:t:l:d:f:S:R:e:o:" o; do
     case "${o}" in
 		h)
@@ -86,6 +86,7 @@ while getopts ":hs:A:t:l:d:f:S:R:e:o:" o; do
 			;;
 		*)
             echo "Error: incorrect input parameters!"
+			asciiArt
 			usage
 			info
 			echo $version
@@ -726,22 +727,22 @@ echo "
 <body><h3>Quantities of ncRNA features identified</h3>
 <br />Proportions of ncRNA groups identified (normalised by reads per million)
 <br />
-<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_RPM-normalised.pdf" width="800px" height="800px" />
+<embed src="Plots/${condition1}_vs_${condition2}_BarPlot_RPM-normalised.pdf" width="800px" height="800px" />
 <br />
 <br />Number of raw reads identified for each ncRNA group  
 <br />
-<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_Raw-readcounts.pdf" width="800px" height="800px" />
+<embed src="Plots/${condition1}_vs_${condition2}_BarPlot_Raw-readcounts.pdf" width="800px" height="800px" />
 <br />
 <body><h3>Venn diagram comparing the three methods used (DESeq2, distribution algorithm, cleavage algorithm)</h3>
-<img src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_VennDiagram.png" alt="Method comparison venn diagram" width="500" height="500">
+<img src="Plots/${condition1}_vs_${condition2}_VennDiagram.png" alt="Method comparison venn diagram" width="500" height="500">
 <br />
 <body><h4>Details of the intersections can be found here</h4>
 <ul>
-  <li>$myPath/$outDir/Data/VennDiagramGeneration/${condition1}_vs_${condition2}.intersect...</li>
+  <li>Data/VennDiagramGeneration/${condition1}_vs_${condition2}.intersect...</li>
 </ul>
 <body><h4>Files used to generate the Venn Diagram can be found here</h4>
 <ul>
-  <li>$myPath/$outDir/Data/VennDiagramGeneration</li>
+  <li>Data/VennDiagramGeneration</li>
 </ul>
 <br />
 <body><h4>Summary Report Table</h4>
@@ -750,107 +751,107 @@ $summary_results_html
 <br />
 <body><h4>tRNA Read Alignment Lengths
 <br />
-<embed src="$myPath/$outDir/Plots/${condition1}_tRNA-read-alignment-lengths.pdf" width="800px" height="800px" />
+<embed src="Plots/${condition1}_tRNA-read-alignment-lengths.pdf" width="800px" height="800px" />
 <br />
-<embed src="$myPath/$outDir/Plots/${condition2}_tRNA-read-alignment-lengths.pdf" width="800px" height="800px" />
+<embed src="Plots/${condition2}_tRNA-read-alignment-lengths.pdf" width="800px" height="800px" />
 <br />
 <body><h2>Differential Expression Results (DESeq2)</h2>
 <br />Principal Component Analysis (PCA) of all samples
 <br />
-<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_tpm-PCA.pdf" width="800px" height="800px" />
+<embed src="Plots/${condition1}_vs_${condition2}_tpm-PCA.pdf" width="800px" height="800px" />
 <br />
 <br />Sample distance matrix
 <br />
-<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Distance-Matrix.pdf" width="800px" height="800px" />
+<embed src="Plots/${condition1}_vs_${condition2}_Distance-Matrix.pdf" width="800px" height="800px" />
 <br />
 <br />Volcano plot showing differentially expressed genes
 <br />
-<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_VolcanoPlot.pdf" width="800px" height="800px" />
+<embed src="Plots/${condition1}_vs_${condition2}_VolcanoPlot.pdf" width="800px" height="800px" />
 <br />
 <br />Differentially expressed tRNAs
 <br />
-<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-DE-negLog10_padj.pdf" width="800px" height="800px" />
+<embed src="Plots/${condition1}_vs_${condition2}_tsRNAs.high-DE-negLog10_padj.pdf" width="800px" height="800px" />
 <br />
 <body><h4>Coverage plots for all differentially expressed tRNAs</h4>
 <br />
-<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-tsRNAs.pdf" width="800px" height="800px" />
+<embed src="Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-tsRNAs.pdf" width="800px" height="800px" />
 <br />
 <br />Differentially expressed ncRNAs (other than tRNAs)
 <br />
-<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_ncRNAs.high-DE-negLog10_padj.pdf" width="800px" height="800px" />
+<embed src="Plots/${condition1}_vs_${condition2}_ncRNAs.high-DE-negLog10_padj.pdf" width="800px" height="800px" />
 <br />
 <body><h4>Coverage plots for all differentially expressed ncRNAs</h4>
 <br />
-<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-ncRNAs.pdf" width="800px" height="800px" />
+<embed src="Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-ncRNAs.pdf" width="800px" height="800px" />
 <br />
 <br />Full results for features differentially regulated in ${condition1} versus ${condition2} here:
 <ul>
-  <li>$myPath/$outDir/Data/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output.csv</li>
-  <li>$myPath/$outDir/Data/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output-upregulated.csv</li>
-  <li>$myPath/$outDir/Data/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output-downregulated.csv</li>
+  <li>Data/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output.csv</li>
+  <li>Data/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output-upregulated.csv</li>
+  <li>Data/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output-downregulated.csv</li>
 </ul>
 <br />
 <body><h2>Distribution Algorithm Results</h2>
 <br />Highest scoring tRNA fragments identified using the distribution algorithm
 <br />
-<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-distribution-score.pdf" width="800px" height="800px" />
-<br />Full results here: $myPath/$outDir/Data/Distribution_results/${condition1}_vs_${condition2}_High-distribution-tsRNAs.txt
+<embed src="Plots/${condition1}_vs_${condition2}_tsRNAs.high-distribution-score.pdf" width="800px" height="800px" />
+<br />Full results here: Data/Distribution_results/${condition1}_vs_${condition2}_High-distribution-tsRNAs.txt
 <br />
 <body><h4>Coverage plots for all tRNAs with irregular distribution identified by the distribution algorithm</h4>
-<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-tsRNAs.pdf" width="800px" height="800px" />
+<embed src="Plots/${condition1}_vs_${condition2}_Features_High-distribution-tsRNAs.pdf" width="800px" height="800px" />
 <br />
 <br />Highest scoring ncRNA fragments identified using the distribution algorithm
 <br />
-<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_ncRNAs.high-distribution-score.pdf" width="800px" height="800px" />
+<embed src="Plots/${condition1}_vs_${condition2}_ncRNAs.high-distribution-score.pdf" width="800px" height="800px" />
 <br />
-<br />Full results here: $myPath/$outDir/Data/Distribution_results/${condition1}_vs_${condition2}_High-distribution-ncRNAs.txt
+<br />Full results here: Data/Distribution_results/${condition1}_vs_${condition2}_High-distribution-ncRNAs.txt
 <br />
 <body><h4>Coverage plots for all ncRNAs with irregular distribution identified by the distribution algorithm</h4>
-<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-ncRNAs.pdf" width="800px" height="800px" />
+<embed src="Plots/${condition1}_vs_${condition2}_Features_High-distribution-ncRNAs.pdf" width="800px" height="800px" />
 <br />
 <body><h2>Cleavage Algorithm Results</h2>
 <br />Highest scoring tRNA fragments identified using the cleavage algorithm
 <br />
-<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-cleavage-score.pdf" width="800px" height="800px" />
-<br />Full results here: $myPath/$outDir/Data/Cleavage_results/${condition1}_vs_${condition2}_High-cleavage-tsRNAs.txt
+<embed src="Plots/${condition1}_vs_${condition2}_tsRNAs.high-cleavage-score.pdf" width="800px" height="800px" />
+<br />Full results here: Data/Cleavage_results/${condition1}_vs_${condition2}_High-cleavage-tsRNAs.txt
 <br />
 <body><h4>Coverage plots for all tRNAs with irregular 5' vs 3' coverage identified by the cleavage algorithm</h4>
-<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-tsRNAs.pdf" width="800px" height="800px" />
+<embed src="Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-tsRNAs.pdf" width="800px" height="800px" />
 <br />
 <br />Highest scoring ncRNA fragments identified using the cleavage algorithm
 <br />
-<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_ncRNAs.high-cleavage-score.pdf" width="800px" height="800px" />
-<br />Full results here: $myPath/$outDir/Data/Cleavage_results/${condition1}_vs_${condition2}_High-cleavage-ncRNAs.txt
+<embed src="Plots/${condition1}_vs_${condition2}_ncRNAs.high-cleavage-score.pdf" width="800px" height="800px" />
+<br />Full results here: Data/Cleavage_results/${condition1}_vs_${condition2}_High-cleavage-ncRNAs.txt
 <br />
 <body><h4>Coverage plots for all ncRNAs with irregular 5' vs 3' coverage identified by the cleavage algorithm</h4>
-<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-ncRNAs.pdf" width="800px" height="800px" />
+<embed src="Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-ncRNAs.pdf" width="800px" height="800px" />
 <br />
 <body><h2>Fisher's Method Results</h2>
 <br />Highest scoring tRNA fragments identified using Fisher's method
 <br />
-<embed src="$myPath/$outDir/Plots/Feature-P-values_tsRNAs.low.p.values.pdf" width="800px" height="800px" />
-<br />Full results here: $myPath/$outDir/Data/FishersMethod_results/${condition1}_vs_${condition2}_Fishers-method-tsRNAs.txt
+<embed src="Plots/Feature-P-values_tsRNAs.low.p.values.pdf" width="800px" height="800px" />
+<br />Full results here: Data/FishersMethod_results/${condition1}_vs_${condition2}_Fishers-method-tsRNAs.txt
 <br />
 <body><h4>Coverage plots for all tRNAs with irregular distribution identified by Fisher's method</h4>
-<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Fishers-method-tsRNAs.pdf" width="800px" height="800px" />
+<embed src="Plots/${condition1}_vs_${condition2}_Features_Fishers-method-tsRNAs.pdf" width="800px" height="800px" />
 <br />
 <br />Highest scoring ncRNA fragments identified using Fisher's method
 <br />
-<embed src="$myPath/$outDir/Plots/Feature-P-values_ncRNAs.low.p.values.pdf" width="800px" height="800px" />
+<embed src="Plots/Feature-P-values_ncRNAs.low.p.values.pdf" width="800px" height="800px" />
 <br />
-<br />Full results here: $myPath/$outDir/Data/FishersMethod_results/${condition1}_vs_${condition2}_Fishers-method-ncRNAs.txt
+<br />Full results here: Data/FishersMethod_results/${condition1}_vs_${condition2}_Fishers-method-ncRNAs.txt
 <br />
 <body><h4>Coverage plots for all ncRNAs with irregular distribution identified by Fisher's method</h4>
-<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Fishers-method-ncRNAs.pdf" width="800px" height="800px" />
+<embed src="Plots/${condition1}_vs_${condition2}_Features_Fishers-method-ncRNAs.pdf" width="800px" height="800px" />
 <br />
 <body><h2>More results:</h2>
 <br />tRNA fragments identified where read origin accurate only to isoacceptor level 
 <br />
-<embed src="$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_tsRNAs-with-multimapping-reads.pdf" width="800px" height="800px" />
+<embed src="Plots/${condition1}_vs_${condition2}_Features_tsRNAs-with-multimapping-reads.pdf" width="800px" height="800px" />
 <br />
 <body><h4>All tRNA plots can be found here</h4> 
 <ul>
-  <li>$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_All-tsRNAs.pdf</li>
+  <li>Plots/${condition1}_vs_${condition2}_Features_All-tsRNAs.pdf</li>
 </ul>
 <br />
 <body><h3>Predicted tsRNA type</h3>
@@ -1090,22 +1091,13 @@ pdfunite \
 	$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Distance-Matrix.pdf \
 	$myPath/$outDir/Plots/${condition1}_vs_${condition2}_VolcanoPlot.pdf \
 	$myPath/$outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-DE-negLog10_padj.pdf \
-	$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-tsRNAs.pdf \
 	$myPath/$outDir/Plots/${condition1}_vs_${condition2}_ncRNAs.high-DE-negLog10_padj.pdf \
-	$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-ncRNAs.pdf \
 	$myPath/$outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-distribution-score.pdf \
-	$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-tsRNAs.pdf \
 	$myPath/$outDir/Plots/${condition1}_vs_${condition2}_ncRNAs.high-distribution-score.pdf \
-	$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-ncRNAs.pdf \
 	$myPath/$outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-cleavage-score.pdf \
-	$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-tsRNAs.pdf \
 	$myPath/$outDir/Plots/${condition1}_vs_${condition2}_ncRNAs.high-cleavage-score.pdf \
-	$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-ncRNAs.pdf \
 	$myPath/$outDir/Plots/Feature-P-values_tsRNAs.low.p.values.pdf \
-	$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Fishers-method-tsRNAs.pdf \
 	$myPath/$outDir/Plots/Feature-P-values_ncRNAs.low.p.values.pdf \
-	$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_Fishers-method-ncRNAs.pdf \
-	$myPath/$outDir/Plots/${condition1}_vs_${condition2}_Features_tsRNAs-with-multimapping-reads.pdf \
 	$myPath/$outDir/${condition1}_vs_${condition2}.Results-summary.simple.pdf # This is the output file 
 
 string_padder "$FinishTime"

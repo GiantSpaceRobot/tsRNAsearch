@@ -35,7 +35,6 @@ Options:
 
 if [ $# -eq 0 ]; then
     echo "No arguments provided"
-    asciiArt
 	usage
 	info
 	exit 1
@@ -48,7 +47,6 @@ Plots="yes"
 while getopts ":hs:t:l:f:o:A:S:R:" o; do
     case "${o}" in
 		h)
-			asciiArt
 			usage
 			info
 			exit
