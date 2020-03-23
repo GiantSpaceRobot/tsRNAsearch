@@ -632,6 +632,10 @@ echo "
 <br />
 <embed src="$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_Results.high-cleavage-score.pdf" width="800px" height="800px" />
 <br />
+<body><h3>Slope score</h3>
+<br />
+<embed src="$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_Results.high-slope-score.pdf" width="800px" height="800px" />
+<br />
 <body><h3>tsRNA Coverage Plots</h3>
 <br />
 <embed src="$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_Coverage-plots.pdf" width="800px" height="800px" />
@@ -648,6 +652,10 @@ $tsRNAtype
 <body><h3>Cleavage score</h3>
 <br />
 <embed src="$outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Results.high-cleavage-score.pdf" width="800px" height="800px" />
+<br />
+<body><h3>Slope score</h3>
+<br />
+<embed src="$outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Results.high-slope-score.pdf" width="800px" height="800px" />
 <br />
 <body><h3>ncRNA Coverage Plots</h3>
 <br />
@@ -684,6 +692,10 @@ $(cat $outDir/Data_and_Plots/Encoded/${singleFile_basename}_tsRNA_Results.high-d
 
 $(cat $outDir/Data_and_Plots/Encoded/${singleFile_basename}_tsRNA_Results.high-cleavage-score.pdf.txt)
 
+## Slope score
+
+$(cat $outDir/Data_and_Plots/Encoded/${singleFile_basename}_tsRNA_Results.high-slope-score.pdf.txt)
+
 ## tsRNA Coverage Plots
 
 $(cat $outDir/Data_and_Plots/Encoded/${singleFile_basename}_tsRNA_Coverage-plots.pdf.txt)
@@ -706,6 +718,10 @@ $(cat $outDir/Data_and_Plots/Encoded/${singleFile_basename}_ncRNA_Results.high-d
 
 $(cat $outDir/Data_and_Plots/Encoded/${singleFile_basename}_ncRNA_Results.high-cleavage-score.pdf.txt)
 
+## Slope score
+
+$(cat $outDir/Data_and_Plots/Encoded/${singleFile_basename}_ncRNA_Results.high-slope-score.pdf.txt)
+
 ## ncRNA Coverage Plots
 
 All ncRNA coverage plots can be found here: 
@@ -721,9 +737,11 @@ pdfunite \
 	$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_tRNA-alignment-length.pdf \
 	$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_Results.high-distribution-score.pdf \
 	$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_Results.high-cleavage-score.pdf \
+	$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_Results.high-slope-score.pdf \
 	$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_Coverage-plots.pdf \
 	$outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Results.high-distribution-score.pdf \
 	$outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Results.high-cleavage-score.pdf \
+	$outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Results.high-slope-score.pdf \
 	$outDir/${singleFile_basename}.Results-summary.simple.pdf # This is the output file 
 
 echo "Finished analysing "$singleFile" on $(date)" # Print pipeline end-time

@@ -377,6 +377,21 @@ Rscript bin/CleavageScore.R \
 	$myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_ncRNAs \
 	$ncRNA_GTF &
 wait
+
+string_padder "Generating Slope Scores..." 
+### Test difference in slope in one condition vs the other
+Rscript bin/SlopeScore.R \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_tsRNA.${condition1}_concatenated.depth.mean \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_tsRNA.${condition2}_concatenated.depth.mean \
+	$myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_tsRNAs \
+	$ncRNA_GTF &
+Rscript bin/SlopeScore.R \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_ncRNA.${condition1}_concatenated.depth.mean \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_ncRNA.${condition2}_concatenated.depth.mean \
+	$myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_ncRNAs \
+	$ncRNA_GTF &
+wait
+
 ### Sort the output but not the header
 cat $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_tsRNAs.high-cleavage-score.txt | awk 'NR<2{print $0;next}{print $0| "sort -k11,11nr"}' \
 	> $myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_High-cleavage-tsRNAs.txt
@@ -464,6 +479,30 @@ cat \
 	$myPath/$outDir/Data/Intermediate-files/Everything.cond2_concatenated_mean_stdev.tsRNA.depth \
 	$myPath/$outDir/Data/Intermediate-files/cond2_concatenated_mean_stdev.ncRNA.depth \
 	> $myPath/$outDir/Data/Intermediate-files/Everything.cond2.depth 
+
+### Calculate mean for files containing everything
+python2 bin/MeanCalculator.py \
+	$myPath/$outDir/Data/Intermediate-files/Everything.cond1.depth \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/Everything.cond1.depth.mean &
+python2 bin/MeanCalculator.py \
+	$myPath/$outDir/Data/Intermediate-files/Everything.cond2.depth \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/Everything.cond2.depth.mean &
+wait
+### Sort output
+sort -k1,1 -k2,2n \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/Everything.cond1.depth.mean > $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_Everything.cond1.depth.mean &
+sort -k1,1 -k2,2n \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/Everything.cond2.depth.mean > $myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_Everything.cond2.depth.mean &
+wait
+
+string_padder "Generating Slope Scores for all features..." 
+### Test difference in slope in one condition vs the other
+Rscript bin/SlopeScore.R \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_Everything.cond1.depth.mean \
+	$myPath/$outDir/Data/Intermediate-files/DataTransformations/sorted_Everything.cond2.depth.mean \
+	$myPath/$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_Everything \
+	$ncRNA_GTF &
+wait
 
 ### Generating p-values for all features based on combination of t.tests using Fisher's method
 string_padder "Generating p-values for all features based on combination of t.tests using Fisher's method..."

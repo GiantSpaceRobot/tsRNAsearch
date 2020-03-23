@@ -10,3 +10,8 @@ Update now:
 * Add error catching/empty file catching in python and R scripts
 * Correct for multiple testing for Fisher's combined p-value?
 * Use FASTA as input?
+* Output or convert venn diagram to PDF and add to summary PDF
+* DE tRNAs are in slightly wrong order in Test 4
+* Integrate slope method into single sample analysis
+* Make tsRNAsearch standalone/Not require downloading stuff in the setup script
+* Run Cleavage, Distribution, Slope methods on multi-mappers too

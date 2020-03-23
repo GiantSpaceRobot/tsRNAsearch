@@ -25,7 +25,7 @@ if (length(args)==3) {
 
 df <- split( input , f = input$V1 )  # Split dataframe based on column 1 elements
 
-results.df <- setNames(data.frame(matrix(ncol = 9, nrow = 0)), c("feature",
+results.df <- setNames(data.frame(matrix(ncol = 10, nrow = 0)), c("feature",
                                                                  "mean.coverage",
                                                                  "standard.dev",
                                                                  "mean.fiveprime",
@@ -33,11 +33,23 @@ results.df <- setNames(data.frame(matrix(ncol = 9, nrow = 0)), c("feature",
                                                                  "5vs3.ratio.percent",
                                                                  "cleavage.score",
                                                                  "distribution.score",
+                                                                 "slope.score",
                                                                  "note"))  # Initialise empty dataframe with column headers
 
 for(subset in df) {
   feature <- as.character(subset[1,1])
   subset.length <- nrow(subset)
+  ### Slope score calculation
+  tRNA.slope.score <- 0
+  my.slope.list <- c()
+  for(my.row in 1:(nrow(subset) -1)){
+    nucleotide1 <- subset[my.row, 3] # Get no. of reads mapped to nucleotide
+    nucleotide2 <- subset[my.row +1, 3] # Get no. of reads mapped to next nucleotide
+    my.slope <- nucleotide1 - nucleotide2
+    my.slope.list <- c(my.slope.list, my.slope)
+  }
+  tRNA.slope.score <- abs(sum(my.slope.list))
+  ### End of slope score calculation
   mean.coverage <- mean(subset$V3)
   subset.std <- sd(subset$V3)
   distribution.score <- mean.coverage*subset.std
@@ -102,6 +114,7 @@ for(subset in df) {
                                            ratio5vs3,
                                            cleavage.score,
                                            distribution.score,
+                                           tRNA.slope.score,
                                            note)
 
 }
@@ -195,3 +208,40 @@ ggplot(data = newdata.subset, mapping = aes(feature, `distribution.score`, color
        subtitle = "Distribution score = Mean coverage x Standard Deviation\nMax number of features shown is 20")
 dev.off()
 
+
+### Slope score
+results.df <- results.df[order(-results.df$slope.score),]
+newdata <- results.df[complete.cases(results.df), ]  # Remove NAs
+newdata <- newdata[!grepl("Inf", newdata$slope.score),] # Remove Inf
+newdata <- newdata[newdata$mean.coverage > 10, ] # Get high 5' / 3' ratios
+newdata$feature <- factor(newdata$feature, levels = newdata$feature[order(newdata$slope.score)])
+
+# If there are more than 50 features, show top 50
+if(nrow(newdata) > 20){
+  newdata.subset <- head(newdata, n = 20)
+} else {
+  newdata.subset <- newdata
+}
+
+write.table(newdata, 
+            file = paste0(args[2], ".high-slope-score.txt"),
+            quote = FALSE, 
+            sep = "\t",
+            row.names = FALSE,
+            col.names = TRUE)
+
+
+pdf.width <- 7
+pdf(file = paste0(args[2], ".high-slope-score.pdf"), width = pdf.width, height = 5)
+ggplot(data = newdata.subset, mapping = aes(feature, `slope.score`, color=`slope.score`)) +
+  geom_point() +
+  scale_y_continuous(trans='log2') +
+  ggtitle("Feature Slope Score") +
+  coord_flip() +
+  #theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
+  scale_color_gradient(low="blue", high="red") +
+  labs(colour = "Slope\nscore", 
+       x = "ncRNA/gene", 
+       y = "Slope score", 
+       subtitle = "Slope score = Sum of slopes between nucleotides\nMax number of features shown is 20")
+dev.off()
