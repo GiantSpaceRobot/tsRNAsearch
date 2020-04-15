@@ -89,10 +89,10 @@ if (length(args)==0) {
 }
 
 ### Make sure path name starts and ends in slash (need full path name)
-if (startsWith(myPath, "/") == TRUE) {
-} else {
-  stop("Directory path must be full path and must begin with '/'")
-}
+#if (startsWith(myPath, "/") == TRUE) {
+#} else {
+#  stop("Directory path must be full path and must begin with '/'")
+#}
 ### Must end in slash
 if (substring(myPath, nchar(myPath)) == "/") {
 } else {

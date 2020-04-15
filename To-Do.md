@@ -9,10 +9,11 @@ Update now:
 * Fishers test causes problems when only 1 replicate each compared. GBM_DMSO-vs-ITE
 * Correct for multiple testing for Fisher's combined p-value?  No
 * Use FASTA as input?  Not right now
-* DE tRNAs are in slightly wrong order in Test 4
 * Make tsRNAsearch standalone/Not require downloading stuff in the setup script
 * Differentially expressed tRNAs feature plot is not ordered by top ones (or maybe it is be log2FC)
 * Include txt and HTML table in output directory
 * Fix output directory paths. Pipeline currently doesn't really accept absolute outdir paths
 * Write tRNAs in descending score order for single file analysis
 * Write pipeline stats at end of single file analysis
+* Edit pipeline so it cannot remove all FASTQs on system, i.e. make rm specific
+* Output simple PDF just showing QC and slope results

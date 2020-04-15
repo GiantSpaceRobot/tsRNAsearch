@@ -2,5 +2,6 @@ DBs/Homo*
 DBs/Mus*
 DBs/species_index/*
 samtool*
-RunOvernight*
+Run*
+nohup*
 test*
