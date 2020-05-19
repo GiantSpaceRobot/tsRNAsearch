@@ -44,7 +44,7 @@ skip="no"
 Plots="no"
 remove="no"
 min_read_length=16
-version="tsRNAsearch version 0.24"
+version="tsRNAsearch version 0.25"
 while getopts ":hs:A:t:l:d:f:S:R:e:o:" o; do
     case "${o}" in
 		h)
@@ -239,11 +239,11 @@ condition2=$( awk -F ',' '{print $2}' "$expFile" | uniq | tail -n 1 ) # Get the 
 
 ### Create dir substructure
 mkdir -p $outDir/Data
+mkdir -p $outDir/Data/Intermediate-files
 mkdir -p $outDir/Data/Distribution_results
 mkdir -p $outDir/Data/Cleavage_results
 mkdir -p $outDir/Data/Slope_results
 mkdir -p $outDir/Data/FishersMethod_results
-mkdir -p $outDir/Data/Intermediate-files
 mkdir -p $outDir/Data/Intermediate-files/DataTransformations
 mkdir -p $outDir/Plots
 mkdir -p $outDir/Plots/Encoded
@@ -301,6 +301,7 @@ for f in $inDir/*; do
 	cp $outDir/$filename/FCount-count-output/$filename.collapsed.all-features.count $outDir/Data/Intermediate-files/ 
 	cp $outDir/$filename/Data_and_Plots/$filename.collapsed.all-features.rpm.count $outDir/Data/Intermediate-files/$filename.collapsed.all-features.RPM.Count
 	cp $outDir/$filename/tRNA-alignment/*tsRNA_tRNA-alignment-length.txt $outDir/Data/Intermediate-files/LengthPlotData/$filename
+	cp $outDir/$filename/FCount-count-output/tRNA-mapping-information.tsv $outDir/Data/tRNA-mapping-info_${filename}.tsv
 done
 
 ### Gather raw count files
@@ -314,8 +315,8 @@ mv $outDir/Data/Intermediate-files/FCount.all-features $outDir/Data/Intermediate
 ### Carry out DESeq2 analysis
 string_padder "Carrying out DESeq2 analysis..."
 Rscript --vanilla bin/DESeq2_tsRNAsearch.R "$outDir/Data/Intermediate-files/" "${condition1}_vs_${condition2}" "$ncRNA_GTF" "$expFile"
-grep $condition1 "$expFile" > $outDir/Data/Intermediate-files/predicted_exp_layout_cond1.csv
-grep $condition2 "$expFile" > $outDir/Data/Intermediate-files/predicted_exp_layout_cond2.csv
+grep -w $condition1 "$expFile" > $outDir/Data/Intermediate-files/predicted_exp_layout_cond1.csv
+grep -w $condition2 "$expFile" > $outDir/Data/Intermediate-files/predicted_exp_layout_cond2.csv
 
 ### Transform data 
 DataTransformations $outDir/Data/Intermediate-files/predicted_exp_layout_cond1.csv ${condition1} 
@@ -726,7 +727,8 @@ done
 mv $outDir/Data/Intermediate-files/FCount.rpm.all-features \
 	$outDir/Data/FCount.all-features.RPM.Count
 
-### Move results to Data and Plots directorys
+### Move results to Data and Plots directories
+string_padder "Moving files to the results directories..."
 mv $outDir/Data/Intermediate-files/DE_Results/ \
 	$outDir/Data/
 cp $outDir/Data/DE_Results/*pdf \
@@ -762,6 +764,9 @@ cp $outDir/Data/Intermediate-files/DataTransformations/${condition1}_vs_${condit
 	$outDir/Data/Distribution_results/${condition1}_vs_${condition2}_High-Distribution-ncRNAs.pdf
 wait 
 
+cp $outDir/Data/Intermediate-files/Everything.cond1_concatenated_mean_stdev.tsRNA.depth $outDir/Data/${condition1}.tsRNA.depth
+cp $outDir/Data/Intermediate-files/Everything.cond2_concatenated_mean_stdev.tsRNA.depth $outDir/Data/${condition2}.tsRNA.depth
+
 ### Renaming files from pseudo-names to condition names
 find . -iname "*cond1*" -exec rename "s/cond1/${condition1}/g" {} \; # Replace 'cond1' in every filename with condition1 variable
 find . -iname "*cond2*" -exec rename "s/cond2/${condition2}/g" {} \;
@@ -774,6 +779,7 @@ if [[ $Plots == "yes" ]]; then
 fi
 
 ### Predict tsRNA type
+string_padder "Predicting tsRNA types..."
 # Condition 1
 cat $outDir/Data/Intermediate-files/DataTransformations/Combined.${condition1}.tRNAs-almost-mapped_RPM.depth.mean \
 	$outDir/Data/Intermediate-files/DataTransformations/tsRNA.${condition1}_concatenated.depth.mean \
@@ -797,26 +803,34 @@ paste $outDir/Data/Intermediate-files/${condition1}_predicted-tsRNA-types_clean.
 	$outDir/Data/Intermediate-files/${condition2}_predicted-tsRNA-types_clean.txt \
 	| grep -v ^feature \
 	> $outDir/Data/Intermediate-files/Predicted-tsRNA-types.txt
-echo -e "feature\t${condition1}\t${condition2}" \
-	> $outDir/Data/Predicted-tsRNA-types_header-top.txt
+echo -e "feature\t${condition1}\t${condition2}" > $outDir/Data/Predicted-tsRNA-types.tsv
 awk -F '\t' '{print $1"\t"$2"\t"$4}' $outDir/Data/Intermediate-files/Predicted-tsRNA-types.txt \
-	> $outDir/Data/Predicted-tsRNA-types.txt
-cat $outDir/Data/Predicted-tsRNA-types_header-top.txt \
-	$outDir/Data/Predicted-tsRNA-types.txt \
-	> $outDir/Data/Predicted-tsRNA-types_header.txt
-sed -e 's/^/<br \/>/' $outDir/Data/Predicted-tsRNA-types.txt \
+	>> $outDir/Data/Predicted-tsRNA-types.tsv
+#cat $outDir/Data/Predicted-tsRNA-types.tsv \
+#	$outDir/Data/Predicted-tsRNA-types.txt \
+#	> $outDir/Data/Predicted-tsRNA-types_header.txt
+sed -e 's/^/<br \/>/' $outDir/Data/Predicted-tsRNA-types.tsv \
 	> $outDir/Data/Predicted-tsRNA-types_HTML.txt
+#echo -e "feature\t${condition1}\t${condition2}" > $outDir/Data/Predicted-tsRNA-types_header-top.txt
+#awk -F '\t' '{print $1"\t"$2"\t"$4}' $outDir/Data/Intermediate-files/Predicted-tsRNA-types.txt \
+#	> $outDir/Data/Predicted-tsRNA-types.txt
+#cat $outDir/Data/Predicted-tsRNA-types_header-top.txt \
+#	$outDir/Data/Predicted-tsRNA-types.txt \
+#	> $outDir/Data/Predicted-tsRNA-types_header.txt
+#sed -e 's/^/<br \/>/' $outDir/Data/Predicted-tsRNA-types.txt \
+#	> $outDir/Data/Predicted-tsRNA-types_HTML.txt
 tsRNAtype=$(cat $outDir/Data/Predicted-tsRNA-types_HTML.txt)
 
 ### If -R == yes, remove intermediate files
 if [[ $remove == "yes" ]]; then 
+	string_padder "Removing unnecessary files..."
 	rm -rf $outDir/Data/Intermediate-files/ # Remove all intermediate files
 	find $outDir/ -name '*bam' -delete   # Remove BAMs
 	find $outDir/ -name '*sam' -delete   # SAMs
 	find $outDir/ -name '*tempFile' -delete   # tempFiles
-	find $outDir/ -name '*.gz' -delete   # .gz files
-	find $outDir/ -name '*fastq' -delete # .fastq files
-	find $outDir/ -name '*fq' -delete    # .fq files
+	#find $outDir/ -name '*.gz' -delete   # .gz files
+	#find $outDir/ -name '*fastq' -delete # .fastq files
+	#find $outDir/ -name '*fq' -delete    # .fq files
 	find $outDir/ -name '*accepted_hits*depth' -delete    # .depth files
 fi
 
@@ -994,7 +1008,6 @@ $summary_results_html
 </ul>
 <br />
 <body><h3>Predicted tsRNA type</h3>
-<br /><b>feature  ${condition1}  ${condition2}</b>
 $tsRNAtype
 <br />
 <body><h3>More Information</h3>
@@ -1225,7 +1238,7 @@ $(cat $outDir/Plots/Encoded/${condition1}_vs_${condition2}_Features_tsRNAs-with-
 
 \x60\x60\x60{r Predicted tsRNA types, echo=FALSE, error=TRUE}
 library(knitr)
-my.table <- read.csv(\"$outDir/Data/Predicted-tsRNA-types_header.txt\", sep = '\t')
+my.table <- read.csv(\"$outDir/Data/Predicted-tsRNA-types.tsv\", sep = '\t')
 kable(my.table, caption = 'Predicted tsRNA type')
 \x60\x60\x60
 
@@ -1247,7 +1260,7 @@ $version
 Rscript bin/Rmarkdown-to-HTML.R \
 	$outDir/Data/Run-Summary.Rmd \
 	$outDir/${condition1}_vs_${condition2}.Results-summary.html
-rm $outDir/Data/Predicted-tsRNA-types_*.txt # Remove unnecessary files
+#rm $outDir/Data/Predicted-tsRNA-types_*.txt # Remove unnecessary files
 
 pdfunite \
 	additional-files/tsRNAsearch_page.pdf \

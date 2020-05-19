@@ -232,6 +232,11 @@ function bam_to_plots () {  ### Steps for plotting regions with high variation i
 		-d 100000000 \
 		-aa $1/accepted_hits.bam \
 		> $1/accepted_hits.depth   # A lot faster than bedtools genomecov
+	### If depth file empty, create it again using bedtools genomecov 
+	### (samtools depth doesn't report depth if there are no alignments)
+	if [ ! -s $1/accepted_hits.depth ]; then
+		bedtools genomecov -d -ibam $1/accepted_hits.bam > $1/accepted_hits.depth
+	fi
 	cp $1/accepted_hits.depth $1/accepted_hits_raw.depth
 	### Normalise by reads per million (RPM)
 	python2 bin/Depth-to-Depth_RPM.py \
@@ -417,6 +422,11 @@ echo " reads; of these:" >> $outDir/Stats.log
 SAMcollapse $outDir/tRNA-alignment/Aligned.out.sam #Collapse reads aligned to the same tRNA species 
 mv $outDir/Collapsed.sam $outDir/tRNA-alignment/aligned_tRNAdb.sam # match hisat2 naming convention
 mv $outDir/tRNA-alignment/Unmapped.out.mate1 $outDir/tRNA-alignment/unmapped.fastq
+grep -v "tRNA.group" $outDir/tRNA-alignment/tRNAs-almost-mapped.txt \
+	| awk '{print $1}' \
+	| uniq -c \
+	| awk '{print $2"\t"$1}' \
+	> $outDir/tRNA-alignment/tRNAs-almost-mapped.count
 ## Or don't collapse SAM files (comment out three lines above and uncomment line below)
 #mv $outDir/tRNA-alignment/Aligned.out.sam $outDir/tRNA-alignment/aligned_tRNAdb.sam
 #### STAR ###
@@ -504,10 +514,27 @@ string_padder "Get total number of reads mapped"
 cat $outDir/FCount-count-output/*.count | grep -v ^__ | sort -k1,1 \
 	> $outDir/FCount-count-output/$singleFile_basename.all-features.count 
 sed -i '1s/^/Features\t'"$singleFile_basename"'\n/' $outDir/FCount-count-output/$singleFile_basename.all-features.count # Add column headers
-mapped=$(awk '{sum+=$2} END{print sum;}' $outDir/FCount-count-output/$singleFile_basename.all-features.count)
+direct_mapped=$(awk '{sum+=$2} END{print sum;}' $outDir/FCount-count-output/$singleFile_basename.all-features.count)
+my_var=$(wc -l $outDir/tRNA-alignment/tRNAs-almost-mapped.txt | cut -f1 -d' ') # Count number of multimapping reads salvaged 
+multimapped_and_reclaimed=$(( my_var - 1 )) # Reduce by 1 to remove header
+mapped=$(( direct_mapped + multimapped_and_reclaimed ))
 echo "Reads mapped: $mapped" >> $outDir/Stats.log
 echo "Reads mapped: $mapped"
 wait
+
+### Generate total percetages for reads mapped for tRNAs
+grep -v "tRNA.group" $outDir/tRNA-alignment/tRNAs-almost-mapped.txt \
+	| awk '{print $1}' \
+	| uniq -c \
+	| awk '{print $2"\t"$1}' \
+	> $outDir/FCount-count-output/tRNA-species.txt
+cat $outDir/FCount-count-output/tRNA-alignment.count \
+	$outDir/FCount-count-output/tRNA-species.txt \
+	> $outDir/FCount-count-output/tRNA-alignment_all-tRNAs.txt
+python2 bin/CountCollapse.py \
+	$outDir/FCount-count-output/tRNA-alignment_all-tRNAs.txt \
+	$outDir/FCount-count-output/tRNA-mapping-information.tsv \
+	$mapped
 
 ### Plot everything
 string_padder "Generate depth files and plot features"
