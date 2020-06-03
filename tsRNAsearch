@@ -44,7 +44,7 @@ skip="no"
 Plots="no"
 remove="no"
 min_read_length=16
-version="tsRNAsearch version 0.25"
+version="tsRNAsearch version 0.26"
 while getopts ":hs:A:t:l:d:f:S:R:e:o:" o; do
     case "${o}" in
 		h)
@@ -107,7 +107,7 @@ if [ -z "$*" ] ; then
 fi
 
 ### Get working dir to recreate full path for R script execution
-#myPath=$(pwd) 
+my_dir=$(pwd) 
 
 #if [[ "$outDir" == */ ]]; then # If outDir has a trailing slash, remove
 #	outDir=$(echo "${outDir::-1}")
@@ -233,6 +233,12 @@ if [[ $inFile != "NA" ]]; then
 	exit 0 # Exit successfully
 fi
 
+### Check whether provided layout file exists, quit if empty or it does not exist.
+if [ ! -s "$expFile" ]; then
+	echo "Error: The experimental layout file provided is empty or does not exist: $expFile"
+	exit 1
+fi
+
 ### Define conditions
 condition1=$( awk -F ',' '{print $2}' "$expFile" | uniq | head -n 1 ) # Get the first condition name
 condition2=$( awk -F ',' '{print $2}' "$expFile" | uniq | tail -n 1 ) # Get the second condition name
@@ -323,7 +329,7 @@ DataTransformations $outDir/Data/Intermediate-files/predicted_exp_layout_cond1.c
 DataTransformations $outDir/Data/Intermediate-files/predicted_exp_layout_cond2.csv ${condition2}
 
 ### Get names of differentially expressed features
-cat $outDir/Data/Intermediate-files/DE_Results/DESeq2/*regulated.csv | grep -v ^, | awk -F ',' '{print $1}' | awk -F ' ' '{print $1}' \
+cat $outDir/Data/Intermediate-files/DE_Results/DESeq2/*regulated.csv | grep -v ^, | sort -t',' -k7,7g | awk -F ',' '{print $1}' | awk -F ' ' '{print $1}' \
 	> $outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt
 cp $outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only.txt \
 	$outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_short-names.txt
@@ -714,18 +720,35 @@ else
 fi
 wait
 
-string_padder "Gathering RPM count files and cleaning up..."
+string_padder "Gathering raw and RPM-normalised count files and cleaning up..."
 ### Gather RPM count files
 awk '{print $1}' $outDir/Data/Intermediate-files/$filename.collapsed.all-features.RPM.Count \
 	> $outDir/Data/Intermediate-files/FCount.rpm.all-features # Get feature names
+echo "Feature" > $outDir/Data/Intermediate-files/Count_Header_File.txt
 for f in $outDir/Data/Intermediate-files/*RPM.Count; do
+	file_base=$(basename $f)
+	filename="$( cut -d '.' -f 1 <<< "$file_base" )"
+	my_header=$(cat $outDir/Data/Intermediate-files/Count_Header_File.txt)
+	new_header=$(echo -e $my_header"\t"$filename)
+	echo $new_header > $outDir/Data/Intermediate-files/Count_Header_File.temp.txt
+	mv $outDir/Data/Intermediate-files/Count_Header_File.temp.txt $outDir/Data/Intermediate-files/Count_Header_File.txt
 	awk '{print $2}' $f | paste $outDir/Data/Intermediate-files/FCount.rpm.all-features - \
 		>> $outDir/Data/Intermediate-files/FCount.rpm.temp
 	mv $outDir/Data/Intermediate-files/FCount.rpm.temp \
 		$outDir/Data/Intermediate-files/FCount.rpm.all-features
 done
-mv $outDir/Data/Intermediate-files/FCount.rpm.all-features \
-	$outDir/Data/FCount.all-features.RPM.Count
+cat $outDir/Data/Intermediate-files/Count_Header_File.txt $outDir/Data/Intermediate-files/FCount.rpm.all-features \
+	> $outDir/Data/All-Features.RPM-normalised-count.tsv
+cat $outDir/Data/Intermediate-files/Count_Header_File.txt $outDir/Data/Intermediate-files/FCount.all-features.raw.Count \
+	> $outDir/Data/All-Features.Raw-count.tsv
+
+### Create barplot for each sample and carry out t-test of ncRNA feature numbers
+Rscript bin/Barplots.R \
+	$outDir/Data/ \
+	$outDir/Data/All-Features.Raw-count.tsv \
+	$ncRNA_GTF \
+	$expFile 
+mv $outDir/Data/Barplot_All-Samples.pdf $outDir/Plots/ 
 
 ### Move results to Data and Plots directories
 string_padder "Moving files to the results directories..."
@@ -861,13 +884,17 @@ echo "
 <body><h1>tsRNAsearch Report</h1>
 <body><h2>${condition1} versus ${condition2}</h2>
 <body><h3>Quantities of ncRNA features identified</h3>
+<br />Number of raw reads identified for each ncRNA group  
+<br />
+<embed src="Plots/${condition1}_vs_${condition2}_BarPlot_Raw-readcounts.pdf" width="800px" height="800px" />
+<br />
 <br />Proportions of ncRNA groups identified (normalised by reads per million)
 <br />
 <embed src="Plots/${condition1}_vs_${condition2}_BarPlot_RPM-normalised.pdf" width="800px" height="800px" />
 <br />
-<br />Number of raw reads identified for each ncRNA group  
+<br />Proporations of ncRNA groups identified (all samples, normalised by reads per million)
 <br />
-<embed src="Plots/${condition1}_vs_${condition2}_BarPlot_Raw-readcounts.pdf" width="800px" height="800px" />
+<embed src="Plots/Barplot_All-Samples.pdf" width="800px" height="800px" />
 <br />
 <body><h3>Venn diagram comparing the three methods used (DESeq2, distribution algorithm, cleavage algorithm)</h3>
 <img src="Plots/${condition1}_vs_${condition2}_VennDiagram.png" alt="Method comparison venn diagram" width="500" height="500">
@@ -895,8 +922,7 @@ $summary_results_html
 <br />Principal Component Analysis (PCA) of all samples
 <br />
 <embed src="Plots/${condition1}_vs_${condition2}_tpm-PCA.pdf" width="800px" height="800px" />
-<br />
-<br />Sample distance matrix
+<br /> <br />Sample distance matrix
 <br />
 <embed src="Plots/${condition1}_vs_${condition2}_Distance-Matrix.pdf" width="800px" height="800px" />
 <br />
@@ -1036,13 +1062,17 @@ output:
 
 ## Quantities of ncRNA features identified
 
+### Number of raw reads identified for each ncRNA group
+
+$(cat $outDir/Plots/Encoded/${condition1}_vs_${condition2}_BarPlot_Raw-readcounts.pdf.txt)
+
 ### Proportions of ncRNA groups identified (normalised by reads per million)
 
 $(cat $outDir/Plots/Encoded/${condition1}_vs_${condition2}_BarPlot_RPM-normalised.pdf.txt)
 
-### Number of raw reads identified for each ncRNA group
+### Proportions of ncRNA groups identified (all samples, normalised by reads per million)
 
-$(cat $outDir/Plots/Encoded/${condition1}_vs_${condition2}_BarPlot_Raw-readcounts.pdf.txt)
+$(cat $outDir/Plots/Encoded/Barplot_All-Samples.pdf.txt)
 
 ## Venn diagram comparing the three methods used (DESeq2, distribution algorithm, cleavage algorithm)
 
@@ -1060,7 +1090,7 @@ $(cat $outDir/Plots/Encoded/${condition1}_vs_${condition2}_VennDiagram.png.txt)
 
 \x60\x60\x60{r Summary report, echo=FALSE, error=TRUE}
 library(knitr)
-my.table <- read.csv(\"$outDir/Data/${condition1}_vs_${condition2}.summarised.top-results.txt\", sep = '\t')
+my.table <- read.csv(\"$my_dir/$outDir/Data/${condition1}_vs_${condition2}.summarised.top-results.txt\", sep = '\t')
 kable(my.table[1:20, ], caption = 'Top 20 results shown (sorted by distribution score)')
 \x60\x60\x60
 
@@ -1257,15 +1287,19 @@ $parametersHTML
 
 $version
 " > $outDir/Data/Run-Summary.Rmd
-Rscript bin/Rmarkdown-to-HTML.R \
-	$outDir/Data/Run-Summary.Rmd \
-	$outDir/${condition1}_vs_${condition2}.Results-summary.html
+echo "Running Markdown to HTML conversion..."
+cd $outDir/Data
+Rscript $my_dir/bin/Rmarkdown-to-HTML.R \
+	Run-Summary.Rmd \
+	$my_dir/$outDir/${condition1}_vs_${condition2}.Results-summary.html
+cd $my_dir
 #rm $outDir/Data/Predicted-tsRNA-types_*.txt # Remove unnecessary files
 
 pdfunite \
 	additional-files/tsRNAsearch_page.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_RPM-normalised.pdf \
 	$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_Raw-readcounts.pdf \
+	$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_RPM-normalised.pdf \
+	$outDir/Plots/BarPlot_All-Samples.pdf \
 	$outDir/Plots/${condition1}_tRNA-read-alignment-lengths.pdf \
 	$outDir/Plots/${condition2}_tRNA-read-alignment-lengths.pdf \
 	$outDir/Plots/${condition1}_vs_${condition2}_tpm-PCA.pdf \
@@ -1301,8 +1335,9 @@ pdfunite \
 
 pdfunite \
 	additional-files/tsRNAsearch_page.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_RPM-normalised.pdf \
 	$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_Raw-readcounts.pdf \
+	$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_RPM-normalised.pdf \
+	$outDir/Plots/BarPlot_All-Samples.pdf \
 	$outDir/Plots/${condition1}_vs_${condition2}_tpm-PCA.pdf \
 	$outDir/Plots/${condition1}_vs_${condition2}_Distance-Matrix.pdf \
 	$outDir/Plots/${condition1}_vs_${condition2}_VennDiagram.pdf \

@@ -25,7 +25,9 @@ mean.cutoff <- as.integer(args[3])
 fileData <- read.table(args[1], 
                        col.names = c("chrom", "coordinate", "dataValue"))
 
-df1 <- split( fileData , f = fileData$chrom )  # Split dataframe based on column 1 elements
+#df1 <- split( fileData , f = fileData$chrom )  # Split dataframe based on column 1 elements
+fileData$chrom <- factor(fileData$chrom, levels=unique(fileData$chrom))
+df1 <- split(fileData, fileData$chrom)
 
 pdf(args[2])
 for(subset in df1) {

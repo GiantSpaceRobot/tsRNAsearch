@@ -92,6 +92,18 @@ ncRNA_GTF="DBs/${species}_ncRNAs_relative_cdhit.gtf"
 tRNA_introns="additional-files/${species}_tRNA-introns-for-removal.tsv"
 empty_tRNAs="additional-files/${species}_empty_tRNA.count"
 empty_ncRNAs="additional-files/${species}_empty_ncRNA.count"
+my_dir=$(pwd)
+
+### Create parameter variable
+parametersHTML="$(echo -n -e "Parameters:
+<br />    Species (-s): $species
+<br />    Input fastq/fastq.gz file (-f): $singleFile
+<br />    Output directory (-o): $outDir
+<br />    Number of threads used (-t): $threads
+<br />    Minumum read length (-l): $min_read_length
+<br />    Plot all features (-A): $Plots
+<br />    Skip pre-processing (-S): $skip
+<br />    Remove intermediate files (-R): $remove")"
 
 ### Define functions
 # Function to pad text with characters to make sentences stand out more
@@ -572,6 +584,18 @@ python2 bin/FCount-to-RPM.py \
 wait
 sleep 5  # Make sure everything is finished running
 
+### Create depth file with top tsRNAs based on slope. Create coverage plots for these
+string_padder "Generate PDF of top tsRNAs (based on slope algorithm)"
+head -n 21 $outDir/tRNA-alignment/${singleFile_basename}_tsRNA_Results.high-slope-score.txt | tail -n 20 | while read line
+do
+	top_tRNA=$(echo $line | awk '{print $1}')
+	grep -w "$top_tRNA" $outDir/tRNA-alignment/accepted_hits_sorted.depth >> $outDir/Data_and_Plots/high-slope-score.tsRNA.depth
+done
+Rscript bin/Bedgraph_plotter.R \
+	$outDir/Data_and_Plots/high-slope-score.tsRNA.depth \
+	$outDir/Data_and_Plots/Slope_top-tsRNA_Coverage-plots.pdf \
+	0
+
 ### Collapse count file
 string_padder "Collapsing count files..."
 python2 bin/CollapseCountfile.py \
@@ -620,8 +644,8 @@ if [[ $remove == "yes" ]]; then
 	find $outDir/ -name '*sam' -delete   # SAMs
 	find $outDir/ -name '*tempFile' -delete   # tempFiles
 	find $outDir/ -name '*.gz' -delete   # .gz files
-	find $outDir/ -name '*fastq' -delete # .fastq files
-	find $outDir/ -name '*fq' -delete    # .fq files
+	#find $outDir/ -name '*fastq' -delete # .fastq files
+	#find $outDir/ -name '*fq' -delete    # .fq files
 	find $outDir/ -name '*accepted_hits*depth' -delete    # .depth files
 fi
 
@@ -640,6 +664,7 @@ for i in $outDir/Data_and_Plots/*; do # Encode using base64
 done
 
 ### Generate HTML file:
+string_padder "Assembling results HTML..."
 echo "
 <!DOCTYPE html>
 <html>
@@ -647,25 +672,25 @@ echo "
 <body><h2>${singleFile_basename}</h2>
 <body><h3>tRNA Read Alignment Lengths</h3>
 <br />
-<embed src="$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_tRNA-alignment-length.pdf" width="800px" height="800px" />
+<embed src="$my_dir/$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_tRNA-alignment-length.pdf" width="800px" height="800px" />
 <br />
 <body><h2>tRNA fragments (tsRNAs)</h2>
 <br />
 <body><h3>Distribution score</h3>
 <br />
-<embed src="$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_Results.high-distribution-score.pdf" width="800px" height="800px" />
+<embed src="$my_dir/$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_Results.high-distribution-score.pdf" width="800px" height="800px" />
 <br />
 <body><h3>Cleavage score</h3>
 <br />
-<embed src="$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_Results.high-cleavage-score.pdf" width="800px" height="800px" />
+<embed src="$my_dir/$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_Results.high-cleavage-score.pdf" width="800px" height="800px" />
 <br />
 <body><h3>Slope score</h3>
 <br />
-<embed src="$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_Results.high-slope-score.pdf" width="800px" height="800px" />
+<embed src="$my_dir/$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_Results.high-slope-score.pdf" width="800px" height="800px" />
 <br />
 <body><h3>tsRNA Coverage Plots</h3>
 <br />
-<embed src="$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_Coverage-plots.pdf" width="800px" height="800px" />
+<embed src="$my_dir/$outDir/Data_and_Plots/Slope_top-tsRNA_Coverage-plots.pdf" width="800px" height="800px" />
 <br />
 <body><h3>Predicted tsRNA type</h3>
 $tsRNAtype
@@ -674,24 +699,26 @@ $tsRNAtype
 <br />
 <body><h3>Distribution score</h3>
 <br />
-<embed src="$outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Results.high-distribution-score.pdf" width="800px" height="800px" />
+<embed src="$my_dir/$outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Results.high-distribution-score.pdf" width="800px" height="800px" />
 <br />
 <body><h3>Cleavage score</h3>
 <br />
-<embed src="$outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Results.high-cleavage-score.pdf" width="800px" height="800px" />
+<embed src="$my_dir/$outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Results.high-cleavage-score.pdf" width="800px" height="800px" />
 <br />
 <body><h3>Slope score</h3>
 <br />
-<embed src="$outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Results.high-slope-score.pdf" width="800px" height="800px" />
+<embed src="$my_dir/$outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Results.high-slope-score.pdf" width="800px" height="800px" />
 <br />
 <body><h3>ncRNA Coverage Plots</h3>
 <br />
 <br />Large file: $outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Coverage-plots.pdf
 <br />
+<br />$parametersHTML
 </body>
 </html>
 " > $outDir/${singleFile_basename}.Results-summary.simple.html
 
+string_padder "Assembling portable results HTML..."
 echo -e "
 ---
 title: 'tsRNAsearch Report'
@@ -725,13 +752,13 @@ $(cat $outDir/Data_and_Plots/Encoded/${singleFile_basename}_tsRNA_Results.high-s
 
 ## tsRNA Coverage Plots
 
-$(cat $outDir/Data_and_Plots/Encoded/${singleFile_basename}_tsRNA_Coverage-plots.pdf.txt)
+$(cat $outDir/Data_and_Plots/Encoded/Slope_top-tsRNA_Coverage-plots.pdf.txt)
 
 ## Predicted tsRNA Type
 
 \x60\x60\x60{r Summary report, echo=FALSE, error=TRUE}
 library(knitr)
-my.table <- read.csv(\"$outDir/tRNA-alignment/tsRNAs-classified-by-type_clean.txt\", sep = '\t')
+my.table <- read.csv(\"$my_dir/$outDir/tRNA-alignment/tsRNAs-classified-by-type_clean.txt\", sep = '\t')
 kable(my.table, caption = 'Predicted tsRNA type')
 \x60\x60\x60
 
@@ -755,17 +782,24 @@ All ncRNA coverage plots can be found here:
 
 * $outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Coverage-plots.pdf
 
-" > $outDir/Data_and_Plots/Run-Summary.Rmd
-Rscript bin/Rmarkdown-to-HTML.R \
-	$outDir/Data_and_Plots/Run-Summary.Rmd \
-	$outDir/${singleFile_basename}.Results-summary.html
+#### Parameters used
+$parametersHTML
 
+" > $outDir/Data_and_Plots/Run-Summary.Rmd
+echo "Running Markdown to HTML conversion..."
+cd $outDir/Data_and_Plots/
+Rscript $my_dir/bin/Rmarkdown-to-HTML.R \
+	Run-Summary.Rmd \
+	$my_dir/$outDir/${singleFile_basename}.Results-summary.html
+cd $my_dir
+
+string_padder "Assembling results PDF..."
 pdfunite \
 	$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_tRNA-alignment-length.pdf \
 	$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_Results.high-distribution-score.pdf \
 	$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_Results.high-cleavage-score.pdf \
 	$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_Results.high-slope-score.pdf \
-	$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_Coverage-plots.pdf \
+	$outDir/Data_and_Plots/Slope_top-tsRNA_Coverage-plots.pdf \
 	$outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Results.high-distribution-score.pdf \
 	$outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Results.high-cleavage-score.pdf \
 	$outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Results.high-slope-score.pdf \

@@ -23,7 +23,7 @@ while getopts ":hs:p:" o; do
 				species="all"
 			else
 				usage
-				echo "Error: the acceptable arguments for the -s parameter are 'human', 'mouse', 'both'"
+				echo "Error: the acceptable arguments for the -s parameter are 'human', 'mouse', 'rat', 'all'"
 				exit
 			fi
 			;;
