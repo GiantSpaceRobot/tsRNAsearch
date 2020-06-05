@@ -1299,7 +1299,7 @@ pdfunite \
 	additional-files/tsRNAsearch_page.pdf \
 	$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_Raw-readcounts.pdf \
 	$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_RPM-normalised.pdf \
-	$outDir/Plots/BarPlot_All-Samples.pdf \
+	$outDir/Plots/Barplot_All-Samples.pdf \
 	$outDir/Plots/${condition1}_tRNA-read-alignment-lengths.pdf \
 	$outDir/Plots/${condition2}_tRNA-read-alignment-lengths.pdf \
 	$outDir/Plots/${condition1}_vs_${condition2}_tpm-PCA.pdf \
@@ -1337,7 +1337,7 @@ pdfunite \
 	additional-files/tsRNAsearch_page.pdf \
 	$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_Raw-readcounts.pdf \
 	$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_RPM-normalised.pdf \
-	$outDir/Plots/BarPlot_All-Samples.pdf \
+	$outDir/Plots/Barplot_All-Samples.pdf \
 	$outDir/Plots/${condition1}_vs_${condition2}_tpm-PCA.pdf \
 	$outDir/Plots/${condition1}_vs_${condition2}_Distance-Matrix.pdf \
 	$outDir/Plots/${condition1}_vs_${condition2}_VennDiagram.pdf \

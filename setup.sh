@@ -142,6 +142,12 @@ if ! [ -x "$(command -v fastqc)" ]; then
 	sudo apt install fastqc
 fi
 
+# pdfunite
+echo "Looking for pdfunite..."
+if ! [ -x "$(command -v pdfunite)" ]; then
+	sudo apt install poppler-utils
+fi
+
 # Create absolute path for bin files
 echo "Creating absolute path for tsRNAsearch 'bin' and 'DBs'..."
 myPath=$(pwd)
