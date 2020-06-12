@@ -12,5 +12,4 @@ Update now:
 * Shorten file names, they are too long
 * Add multimapper counts to main count file so DESeq2 will use it. I'll need to add all tRNA species, even if they have 0 reads mapping as the number of features and order are vitally important. 
 * Make script to analyse tsRNA-aligned.sam and output percentage of reads that are 5'-tiRNA, 5'-tRF, etc. Generate standard deviation for this and compare both conditions using t-test. Show this in boxplot 
-* Add generation of empty Barplot_All-Samples.pdf file
-* Fix PDF generation
+* Insert t-test table into HTML and PDF (if possible)

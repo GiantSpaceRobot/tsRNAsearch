@@ -20,7 +20,6 @@ args = commandArgs(trailingOnly=TRUE)
 # args 4 = Experiment layout file
 
 path.to.files = args[1]
-#path.to.files = "/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/dbGaP_Serum_PD-vs-Control_29-5-20/Data/"
 
 ### Make sure path ends in slash
 if (substring(path.to.files, nchar(path.to.files)) == "/") {
@@ -29,11 +28,7 @@ if (substring(path.to.files, nchar(path.to.files)) == "/") {
 }
 
   file.CSV <- read.csv(args[4], header=FALSE)
-  #file.CSV <- read.csv("/encrypt/Data/Serum_PD-vs-Control_Layout.csv", header = FALSE)
   lvls.df <- as.data.frame(table(file.CSV$V2))
-  #my.conditions <- unlist(strsplit(args[2], "_vs_"))
-  #Condition1 <- my.conditions[1]
-  #Condition2 <- my.conditions[2]
   Condition1 <- as.character(lvls.df[,1][1])
   Condition2 <- as.character(lvls.df[,1][2])
   ReplicateNumber1 <- lvls.df[grep(Condition1, lvls.df$Var1),][1,2]
@@ -51,14 +46,12 @@ suppressMessages(library(reshape2))
 
 ### Reading in gene mapping file
 GTF <- read.table(args[3], sep = "\t") # Read in GTF for name conversion
-#GTF <- read.table("/home/paul/Documents/Pipelines/tsRNAsearch/DBs/human_ncRNAs_relative_cdhit.gtf", sep = "\t")
 GTF$NewNames <- paste0(GTF$V1, " (", as.character(sub(".*gene_name *(.*?) *; .*", "\\1", GTF$V9)), ")") # Add new column with gene names
 GTF <- GTF[!duplicated(GTF$NewNames),]  # Remove duplicates based on NewNames
 
 ### Read in unnormalised count data
 cDataAll <- read.table(args[2], 
                         header = TRUE, row.names = 1)
-#cDataAll <- read.table("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/dbGaP_Serum_PD-vs-Control_29-5-20/Data/All-Features.Raw-count.tsv", header = TRUE, row.names = 1)
 
 condition1reps <- paste0(Condition1, 1:ReplicateNumber1)
 condition2reps <- paste0(Condition2, 1:ReplicateNumber2)

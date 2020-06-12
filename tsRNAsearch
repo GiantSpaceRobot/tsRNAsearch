@@ -260,6 +260,7 @@ mkdir -p $outDir/Data/Intermediate-files/LengthPlotData/$condition2
 ### Create empty plot files just in case there are no results
 echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Plots/${condition1}_vs_${condition2}_BarPlot_RPM-normalised.pdf
 echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Plots/${condition1}_vs_${condition2}_BarPlot_Raw-readcounts.pdf
+echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Plots/Barplot_All-Samples.pdf
 echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Plots/${condition1}_tRNA-read-alignment-lengths.pdf
 echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Plots/${condition2}_tRNA-read-alignment-lengths.pdf
 echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Plots/${condition1}_vs_${condition2}_tpm-PCA.pdf
@@ -789,6 +790,8 @@ wait
 
 cp $outDir/Data/Intermediate-files/Everything.cond1_concatenated_mean_stdev.tsRNA.depth $outDir/Data/${condition1}.tsRNA.depth
 cp $outDir/Data/Intermediate-files/Everything.cond2_concatenated_mean_stdev.tsRNA.depth $outDir/Data/${condition2}.tsRNA.depth
+cp $outDir/Data/Intermediate-files/cond1_concatenated_mean_stdev.ncRNA.depth $outDir/Data/${condition1}.ncRNA.depth
+cp $outDir/Data/Intermediate-files/cond2_concatenated_mean_stdev.ncRNA.depth $outDir/Data/${condition2}.ncRNA.depth
 
 ### Renaming files from pseudo-names to condition names
 find . -iname "*cond1*" -exec rename "s/cond1/${condition1}/g" {} \; # Replace 'cond1' in every filename with condition1 variable
