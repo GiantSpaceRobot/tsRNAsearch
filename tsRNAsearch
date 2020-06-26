@@ -1351,4 +1351,20 @@ pdfunite \
 	$outDir/Plots/${condition1}_vs_${condition2}_Features_High-slope-score-ncRNAs.pdf \
 	$outDir/${condition1}_vs_${condition2}.Results-summary.short.pdf # This is the output file
 
+### Alternative PDF assembly using in-built GhostScript
+gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dAutoRotatePages=/None \
+	-sOutputFile=$outDir/${condition1}_vs_${condition2}.Results-summary.short.2.pdf \
+	additional-files/tsRNAsearch_page.pdf \
+	$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_Raw-readcounts.pdf \
+	$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_RPM-normalised.pdf \
+	$outDir/Plots/Barplot_All-Samples.pdf \
+	$outDir/Plots/${condition1}_vs_${condition2}_tpm-PCA.pdf \
+	$outDir/Plots/${condition1}_vs_${condition2}_Distance-Matrix.pdf \
+	$outDir/Plots/${condition1}_vs_${condition2}_VennDiagram.pdf \
+	additional-files/tsRNAsearch_Slope_page.pdf \
+	$outDir/Plots/${condition1}_vs_${condition2}_All-tsRNA-Features_Slope.high-slope-score.pdf \
+	$outDir/Plots/${condition1}_vs_${condition2}_Features_High-slope-score-tsRNAs.pdf \
+	$outDir/Plots/${condition1}_vs_${condition2}_All-ncRNA-Features_Slope.high-slope-score.pdf \
+	$outDir/Plots/${condition1}_vs_${condition2}_Features_High-slope-score-ncRNAs.pdf
+
 string_padder "$FinishTime"
