@@ -78,18 +78,31 @@ source ~/miniconda2/etc/profile.d/conda.sh
 conda activate tsrnasearch_env
 
 ### install all required tools and packages
+echo "Installing STAR"
 conda install -y -c bioconda star=2.7
+echo "Installing trim_galore"
 conda install -y -c bioconda trim-galore=0.6.5
+echo "Installing numpy"
 conda install -y numpy
+echo "R"
 conda install -y -c r r=3.6.1 # Install R
+echo "Installing R essentials"
 conda install -y -c r r-essentials=3.5
+echo "Installing R metap"
 conda install -y -c conda-forge r-metap=1
-conda install -y -c bioconda bioconductor-deseq2=1.28
-conda install -y -c conda-forge r-ggrepel=0.8.2
-conda install -y -c conda-forge r-gplots=3
-conda install -y -c conda-forge r-venndiagram=1.6
+echo "Installing R GenomeInfoDB"
 conda install -y -c bioconda bioconductor-genomeinfodb
+echo "Installing R DESeq2"
+conda install -y -c bioconda bioconductor-deseq2=1.28
+echo "Instaling R ggrepel"
+conda install -y -c conda-forge r-ggrepel=0.8.2
+echo "Installing R gplots"
+conda install -y -c conda-forge r-gplots=3
+echo "Installing R VennDiagram"
+conda install -y -c conda-forge r-venndiagram=1.6
+echo "Installing R EnhancedVolcano"
 conda install -y -c bioconda bioconductor-enhancedvolcano=1.6
+echo "Insatlling samtools"
 conda install -y -c bioconda samtools=1.7
 
 ### Download species data
