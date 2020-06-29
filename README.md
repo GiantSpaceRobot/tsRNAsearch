@@ -5,12 +5,26 @@ A pipeline for the identification, quantification and analysis of ncRNAs (especi
 Many ncRNA identification pipelines are based on differential gene expression. This is a useful method but can fall short if portions of the differentially expressed ncRNAs are degraded/not present, thus reducing the differential expression identification power. tsRNAsearch addresses this issue by applying a standard differential expression analysis and two additional methods to identify fragmented ncRNAs, especially tRNA fragments.
 
 ## Quickstart
-### Installation
-Run the setup.sh script to install required software:
+### Installation (via new conda environment)
+Run the setup_conda.sh script shown below. This will create a conda environment and install the required tools inside the environment.
 
 ```
 #Please indicate the species you wish to analyse using the -s parameter. Options are human/mouse/rat/all.
-sudo ./setup.sh -s all
+bash setup_conda.sh -s all
+```
+
+Activate the conda environment:
+
+```
+source activate tsrnasearch_env
+```
+
+### Installation (root/sudo)
+Alternatively, run the setup.sh script to install required software systemwide:
+
+```
+#Please indicate the species you wish to analyse using the -s parameter. Options are human/mouse/rat/all.
+sudo ./setup_global.sh -s all
 ```
 
 This script will install the following pieces of software at root level:

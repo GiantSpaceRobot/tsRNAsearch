@@ -1298,7 +1298,8 @@ Rscript $my_dir/bin/Rmarkdown-to-HTML.R \
 cd $my_dir
 #rm $outDir/Data/Predicted-tsRNA-types_*.txt # Remove unnecessary files
 
-pdfunite \
+gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dAutoRotatePages=/None \
+	-sOutputFile=$outDir/${condition1}_vs_${condition2}.Results-summary.long.pdf \
 	additional-files/tsRNAsearch_page.pdf \
 	$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_Raw-readcounts.pdf \
 	$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_RPM-normalised.pdf \
@@ -1333,27 +1334,11 @@ pdfunite \
 	$outDir/Plots/Feature-P-values_tsRNAs.low.p.values.pdf \
 	$outDir/Plots/${condition1}_vs_${condition2}_Features_Fishers-method-tsRNAs.pdf \
 	$outDir/Plots/Feature-P-values_ncRNAs.low.p.values.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_Features_Fishers-method-ncRNAs.pdf \
-	$outDir/${condition1}_vs_${condition2}.Results-summary.long.pdf # This is the output file
+	$outDir/Plots/${condition1}_vs_${condition2}_Features_Fishers-method-ncRNAs.pdf
 
-pdfunite \
-	additional-files/tsRNAsearch_page.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_Raw-readcounts.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_RPM-normalised.pdf \
-	$outDir/Plots/Barplot_All-Samples.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_tpm-PCA.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_Distance-Matrix.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_VennDiagram.pdf \
-	additional-files/tsRNAsearch_Slope_page.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_All-tsRNA-Features_Slope.high-slope-score.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_Features_High-slope-score-tsRNAs.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_All-ncRNA-Features_Slope.high-slope-score.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_Features_High-slope-score-ncRNAs.pdf \
-	$outDir/${condition1}_vs_${condition2}.Results-summary.short.pdf # This is the output file
-
-### Alternative PDF assembly using in-built GhostScript
+### PDF assembly using in-built GhostScript
 gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dAutoRotatePages=/None \
-	-sOutputFile=$outDir/${condition1}_vs_${condition2}.Results-summary.short.2.pdf \
+	-sOutputFile=$outDir/${condition1}_vs_${condition2}.Results-summary.short.pdf \
 	additional-files/tsRNAsearch_page.pdf \
 	$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_Raw-readcounts.pdf \
 	$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_RPM-normalised.pdf \
