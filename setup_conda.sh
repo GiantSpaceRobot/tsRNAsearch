@@ -76,6 +76,7 @@ conda install -y -c conda-forge r-ggrepel
 conda install -y -c conda-forge r-gplots
 conda install -y -c conda-forge r-venndiagram
 conda install -y -c bioconda bioconductor-genomeinfodb
+conda install -y -c bioconda bioconductor-enhancedvolcano
 conda install -y -c bioconda samtools
 
 ### Download species data
