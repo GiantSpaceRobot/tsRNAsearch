@@ -69,24 +69,28 @@ else
 	exit 1
 fi
 
-### Create conda environment
+### Downgrade conda (problems with package conflicts using 4.8)
+conda install conda=4.6.14
+### Create conda environment and activate it
 conda create -y --name tsrnasearch_env python=2.7 # Create new environment with python 2.7
-source activate tsrnasearch_env # Activate new environment
+#source activate tsrnasearch_env # Activate new environment
+source ~/miniconda2/etc/profile.d/conda.sh
+conda activate tsrnasearch_env
 
 ### install all required tools and packages
-conda install -y -c bioconda star
-conda install -y -c bioconda trim-galore
+conda install -y -c bioconda star=2.7
+conda install -y -c bioconda trim-galore=0.6.5
 conda install -y numpy
-conda install -y -c r r # Install R
-conda install -y -c r r-essentials
-conda install -y -c conda-forge r-metap
-conda install -y -c bioconda bioconductor-deseq2
-conda install -y -c conda-forge r-ggrepel
-conda install -y -c conda-forge r-gplots
-conda install -y -c conda-forge r-venndiagram
+conda install -y -c r r=3.6.1 # Install R
+conda install -y -c r r-essentials=3.5
+conda install -y -c conda-forge r-metap=1
+conda install -y -c bioconda bioconductor-deseq2=1.28
+conda install -y -c conda-forge r-ggrepel=0.8.2
+conda install -y -c conda-forge r-gplots=3
+conda install -y -c conda-forge r-venndiagram=1.6
 conda install -y -c bioconda bioconductor-genomeinfodb
-conda install -y -c bioconda bioconductor-enhancedvolcano
-conda install -y -c bioconda samtools
+conda install -y -c bioconda bioconductor-enhancedvolcano=1.6
+conda install -y -c bioconda samtools=1.7
 
 ### Download species data
 mkdir -p DBs/species_index
