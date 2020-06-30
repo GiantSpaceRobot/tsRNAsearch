@@ -102,7 +102,7 @@ echo "Installing R VennDiagram"
 conda install -y -c conda-forge r-venndiagram=1.6
 echo "Installing R EnhancedVolcano"
 conda install -y -c bioconda bioconductor-enhancedvolcano=1.6
-echo "Insatlling samtools"
+echo "Installing samtools"
 conda install -y -c bioconda samtools=1.7
 
 ### Download species data

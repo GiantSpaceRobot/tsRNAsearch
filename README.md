@@ -6,10 +6,11 @@ Many ncRNA identification pipelines are based on differential gene expression. T
 
 ## Quickstart
 ### Installation (via new conda environment)
-Run the setup_conda.sh script shown below. This will create a conda environment and install the required tools inside the environment.
+Run the setup_conda.sh script shown below. This will create a conda environment and install the required tools inside the environment. This takes a long time as conda has to figure out what to install. 
 
 ```
-#Please indicate the species you wish to analyse using the -s parameter. Options are human/mouse/rat/all.
+#Please indicate the species you wish to analyse using the -s parameter.
+#Options are human/mouse/rat/all.
 bash setup_conda.sh -s all
 ```
 
@@ -19,11 +20,12 @@ Activate the conda environment:
 source activate tsrnasearch_env
 ```
 
-### Installation (root/sudo)
+### Installation (via root/sudo)
 Alternatively, run the setup.sh script to install required software systemwide:
 
 ```
-#Please indicate the species you wish to analyse using the -s parameter. Options are human/mouse/rat/all.
+#Please indicate the species you wish to analyse using the -s parameter.
+#Options are human/mouse/rat/all.
 sudo ./setup_global.sh -s all
 ```
 
