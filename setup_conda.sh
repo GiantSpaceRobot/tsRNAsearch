@@ -69,42 +69,42 @@ else
 	exit 1
 fi
 
-### Downgrade conda (problems with package conflicts using 4.8)
-conda install conda=4.6.14
 ### Create conda environment and activate it
 conda create -y --name tsrnasearch_env python=2.7 # Create new environment with python 2.7
 #source activate tsrnasearch_env # Activate new environment
 source ~/miniconda2/etc/profile.d/conda.sh
 conda activate tsrnasearch_env
+### Ensure conda=4.6.14 (problems with package conflicts using 4.8)
+conda install conda=4.6.14
 
 ### install all required tools and packages
 echo "Installing STAR"
-conda install -y --override-channels -c bioconda star=2.7
+conda install -y -c bioconda star=2.5.2b
 echo "Installing trim_galore"
-conda install -y --override-channels -c bioconda trim-galore=0.6.5
+conda install -y -c bioconda trim-galore=0.4.1
 echo "Installing numpy"
-conda install -y numpy=1.15
+conda install -y numpy=1.15.4
 echo "R"
-conda install -y --override-channels -c r r=3.6.1 # Install R
-echo "Installing R essentials"
-conda install -y --override-channels -c r r-essentials=3.5
-echo "Installing R metap"
-conda install -y --override-channels -c conda-forge r-metap=1
-echo "Installing R GenomeInfoDB"
-conda install -y --override-channels -c bioconda bioconductor-genomeinfodb
-echo "Installing R DESeq2"
-conda install -y --override-channels -c bioconda bioconductor-deseq2=1.28
-echo "Instaling R ggrepel"
-conda install -y --override-channels -c conda-forge r-ggrepel=0.8.2
-echo "Installing R gplots"
-conda install -y --override-channels -c conda-forge r-gplots=3
-echo "Installing R VennDiagram"
-conda install -y --override-channels -c conda-forge r-venndiagram=1.6
-echo "Installing R EnhancedVolcano"
-conda install -y --override-channels -c bioconda bioconductor-enhancedvolcano=1.6
+conda install -y -c r r=3.5 # Install R
+#echo "Installing R essentials"
+#conda install -y --override-channels -c r r-essentials=3.5
+#echo "Installing R metap"
+#conda install -y --override-channels -c conda-forge r-metap=1
+#echo "Installing R GenomeInfoDB"
+#conda install -y --override-channels -c bioconda bioconductor-genomeinfodb
+#echo "Installing R DESeq2"
+#conda install -y --override-channels -c bioconda bioconductor-deseq2=1.28
+#echo "Instaling R ggrepel"
+#conda install -y --override-channels -c conda-forge r-ggrepel=0.8.2
+#echo "Installing R gplots"
+#conda install -y --override-channels -c conda-forge r-gplots=3
+#echo "Installing R VennDiagram"
+#conda install -y --override-channels -c conda-forge r-venndiagram=1.6
+#echo "Installing R EnhancedVolcano"
+#conda install -y --override-channels -c bioconda bioconductor-enhancedvolcano=1.6
 echo "Installing samtools"
-conda install -y --override-channels -c bioconda samtools=1.7
-
+conda install -y -c bioconda samtools=1.7
+Rscript bin/InstallLibs.R
 ### Download species data
 mkdir -p DBs/species_index
 if [ $species = "human" ]; then
