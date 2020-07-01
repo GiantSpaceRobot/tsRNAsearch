@@ -23,12 +23,19 @@ if(R.version.string < 3.5){
 	if(!require(BiocManager)){
 	  install.packages("BiocManager")
 	}
-	BiocManager::install(c("ggplot2", "gplots", "ggrepel", "VennDiagram", "EnhancedVolcano", "metap", "plyr", "dplyr", "stringr", "reshape2", "xtable", "rmarkdown", "knitr", update = FALSE)
+	BiocManager::install(c("ggplot2", "gplots", "ggrepel", "VennDiagram", "EnhancedVolcano", "metap", "plyr", "dplyr", "stringr", "reshape2", "xtable", "rmarkdown", "knitr"), update = FALSE)
 	install.packages("devtools")
+	# For DESeq2
 	devtools::install_version("latticeExtra", version="0.6-28")
 	devtools::install_version("Hmisc", version="4.4-1")
-	BiocInstall::install("DESeq2", update = FALSE)
-#	if(!require(ggplot2)){
+	BiocManager::install("DESeq2", update = FALSE)
+	# For gplots
+	devtools::install_version("caTools", version="1.17.1.1")
+	BiocManager::install("gplots", update = FALSE)
+	# For metap:
+	devtools::install_version("mnormt", version="1.5-5")
+	BiocManager::install("metap", update = FALSE)
+	#	if(!require(ggplot2)){
 #	  install.packages("ggplot2")
 #	  library(ggplot2)
 #	} 

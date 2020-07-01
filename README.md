@@ -43,14 +43,14 @@ Add tsRNAsearch to your path or call the programme using bash/sh.
 We have supplied data to test that the pipeline is functioning correctly:
 
 ```
-tsRNAsearch -s mouse -f ExampleData/CytC_IP1.fastq.gz -o CytC_Results > Run-report.log
+bash tsRNAsearch -s mouse -f ExampleData/CytC_IP1.fastq.gz -o CytC_Results > Run-report.log
 ```
 
 On finishing the run, the pipeline will produce a run report as direct output (Run-report.log). Results files will appear in *CytC\_Results/Data\_and\_Plots/*.
 
 ### Comparing two conditions (e.g. control vs treatment)
 ```
-tsRNAsearch -s mouse -d ExampleData/ -e additional-files/Example_ExperimentLayout.csv -o MyResults > Run-report.log 
+bash tsRNAsearch -s mouse -d ExampleData/ -e additional-files/Example_ExperimentLayout.csv -o MyResults > Run-report.log 
 ```
 
 On finishing the run, a HTML report will appear in the *MyResults* directory. In addition, *MyResults* will contain directories named *Data* and *Plots* containing data and plots. [Example of pipeline results](https://giantspacerobot.github.io/tsRNAsearch_ExampleOutput/CytC_vs_TotalRNA.Results-summary.Base64encoded.html)

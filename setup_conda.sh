@@ -71,11 +71,19 @@ fi
 
 ### Create conda environment and activate it
 conda create -y --name tsrnasearch_env python=2.7 # Create new environment with python 2.7
-#source activate tsrnasearch_env # Activate new environment
-source ~/miniconda2/etc/profile.d/conda.sh
-conda activate tsrnasearch_env
+echo -e "Please activate the environment:
+
+source activate tsrnasearch_env # Activate new environment
+
+Then run the conda environment installer:
+
+bash bin/conda_packages.sh
+
+"
+#source ~/miniconda2/etc/profile.d/conda.sh
+#conda activate tsrnasearch_env
 ### Ensure conda=4.6.14 (problems with package conflicts using 4.8)
-conda install conda=4.6.14
+#conda install conda=4.6.14
 
 ### install all required tools and packages
 echo "Installing STAR"
@@ -86,6 +94,9 @@ echo "Installing numpy"
 conda install -y numpy=1.15.4
 echo "R"
 conda install -y -c r r=3.5 # Install R
+echo "Installing samtools"
+conda install -y -c bioconda samtools=1.7
+Rscript bin/InstallLibs.R
 #echo "Installing R essentials"
 #conda install -y --override-channels -c r r-essentials=3.5
 #echo "Installing R metap"
@@ -102,9 +113,7 @@ conda install -y -c r r=3.5 # Install R
 #conda install -y --override-channels -c conda-forge r-venndiagram=1.6
 #echo "Installing R EnhancedVolcano"
 #conda install -y --override-channels -c bioconda bioconductor-enhancedvolcano=1.6
-echo "Installing samtools"
-conda install -y -c bioconda samtools=1.7
-Rscript bin/InstallLibs.R
+
 ### Download species data
 mkdir -p DBs/species_index
 if [ $species = "human" ]; then

@@ -584,17 +584,19 @@ python2 bin/FCount-to-RPM.py \
 wait
 sleep 5  # Make sure everything is finished running
 
-### Create depth file with top tsRNAs based on slope. Create coverage plots for these
-string_padder "Generate PDF of top tsRNAs (based on slope algorithm)"
-head -n 21 $outDir/tRNA-alignment/${singleFile_basename}_tsRNA_Results.high-slope-score.txt | tail -n 20 | while read line
-do
-	top_tRNA=$(echo $line | awk '{print $1}')
-	grep -w "$top_tRNA" $outDir/tRNA-alignment/accepted_hits_sorted.depth >> $outDir/Data_and_Plots/high-slope-score.tsRNA.depth
-done
-Rscript bin/Bedgraph_plotter.R \
-	$outDir/Data_and_Plots/high-slope-score.tsRNA.depth \
-	$outDir/Data_and_Plots/Slope_top-tsRNA_Coverage-plots.pdf \
-	0
+if [[ $Plots == "yes" ]]; then
+	### Create depth file with top tsRNAs based on slope. Create coverage plots for these
+	string_padder "Generate PDF of top tsRNAs (based on slope algorithm)"
+	head -n 21 $outDir/tRNA-alignment/${singleFile_basename}_tsRNA_Results.high-slope-score.txt | tail -n 20 | while read line
+	do
+		top_tRNA=$(echo $line | awk '{print $1}')
+		grep -w "$top_tRNA" $outDir/tRNA-alignment/accepted_hits_sorted.depth >> $outDir/Data_and_Plots/high-slope-score.tsRNA.depth
+	done
+	Rscript bin/Bedgraph_plotter.R \
+		$outDir/Data_and_Plots/high-slope-score.tsRNA.depth \
+		$outDir/Data_and_Plots/Slope_top-tsRNA_Coverage-plots.pdf \
+		0
+fi
 
 ### Collapse count file
 string_padder "Collapsing count files..."
