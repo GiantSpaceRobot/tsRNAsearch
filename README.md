@@ -8,19 +8,16 @@ Many ncRNA identification pipelines are based on differential gene expression. T
 ### Installation (via new conda environment)
 Run the setup_conda.sh script shown below. This will create a conda environment and install the required tools inside the environment. This takes a long time as conda has to figure out what to install. 
 
+NOTE: please use conda 4.6 or greater
+
 ```
 git clone https://github.com/GiantSpaceRobot/tsrnasearch.git
 cd tsRNAsearch
 bash setup_conda.sh
+conda activate tsrnasearch_env
 #Please indicate the species you wish to analyse using the -s parameter.
 #Options are human/mouse/rat/all.
 bash bin/setup_conda_2.sh -s all
-```
-
-Activate the conda environment:
-
-```
-source activate tsrnasearch_env
 ```
 
 ### Installation (via root/sudo)
@@ -43,6 +40,23 @@ This script will install the following pieces of software at root level:
 * samtools
 
 Add tsRNAsearch to your path or call the programme using bash/sh.
+
+### Running tsRNAsearch
+
+tsRNAsearch can now be executed from the tsRNAsearch directory.
+To run it from anywhere in your system, please run the following to create absolute paths in tsRNAsearch and add the program to your path:
+
+```
+#Create abolsute path names in tsRNAsearch
+bash bin/SetPath.sh
+
+#Add ~/bin to your PATH to allow your system to find tsRNAsearch
+#To do so, add the following line at the end of your .bashrc
+export PATH="$PATH:~/bin"
+#Copy or link tsRNAsearch to ~/bin (we link it here)
+cd ~/bin
+ln -s /path/to/tsRNAsearch/tsRNAsearch ./
+```
 
 ### Analysing a single RNA-seq dataset
 We have supplied data to test that the pipeline is functioning correctly:

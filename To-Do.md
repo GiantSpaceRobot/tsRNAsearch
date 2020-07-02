@@ -14,4 +14,4 @@ Update now:
 * Make script to analyse tsRNA-aligned.sam and output percentage of reads that are 5'-tiRNA, 5'-tRF, etc. Generate standard deviation for this and compare both conditions using t-test. Show this in boxplot 
 * Insert t-test table into HTML and PDF (if possible)
 * Bug in Barplots.R: Wrong label randomly being assigned to individual barplots PDF
-* Fix errors cat in tsRNAsearch-single.sh
+* Add bit of code to add absolute path to a script of its own and allow user to execute or not to create glocal execution of tsRNAsearch
