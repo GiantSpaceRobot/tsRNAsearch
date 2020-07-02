@@ -11,4 +11,4 @@ sed -i -e "s~bin\/trim~${myPath}\/bin\/trim~g" bin/tsRNAsearch_single.sh
 sed -i -e "s~bin\/feat~${myPath}\/bin\/feat~g" bin/tsRNAsearch_single.sh
 sed -i -e "s~additional~${myPath}\/additional~g" bin/tsRNAsearch_single.sh
 sed -i -e "s~additional~${myPath}\/additional~g" tsRNAsearch
-
+sed -i -e "s~bin\/tsRNAsearch~${myPath}\/bin\/tsRNAsearch~g" tsRNAsearch

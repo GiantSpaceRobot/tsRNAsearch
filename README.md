@@ -53,9 +53,10 @@ bash bin/SetPath.sh
 #Add ~/bin to your PATH to allow your system to find tsRNAsearch
 #To do so, add the following line at the end of your .bashrc
 export PATH="$PATH:~/bin"
-#Copy or link tsRNAsearch to ~/bin (we link it here)
+#Copy or link tsRNAsearch to ~/bin
+mkdir -p ~/bin # If ~/bin does not exist, create it
 cd ~/bin
-ln -s /path/to/tsRNAsearch/tsRNAsearch ./
+ln -s /path/to/tsRNAsearch/tsRNAsearch ./ # Create the symbolic link
 ```
 
 ### Analysing a single RNA-seq dataset
