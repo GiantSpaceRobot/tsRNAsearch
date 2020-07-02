@@ -80,6 +80,9 @@ echo "R"
 conda install -y -c r r=3.5 # Install R
 echo "Installing samtools"
 conda install -y -c bioconda samtools=1.7
+echo "Installing Pandoc"
+conda install -y -c conda-forge pandoc
+echo "Installing R packages"
 Rscript bin/InstallLibs.R
 
 ### Download species data
