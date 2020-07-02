@@ -27,7 +27,7 @@ if(R.version.string < 3.5){
 	install.packages("devtools")
 	# For DESeq2
 	devtools::install_version("latticeExtra", version="0.6-28")
-	devtools::install_version("Hmisc", version="4.4-1")
+	devtools::install_version("Hmisc", version="4.1-1")
 	BiocManager::install("DESeq2", update = FALSE)
 	# For gplots
 	devtools::install_version("caTools", version="1.17.1.1")

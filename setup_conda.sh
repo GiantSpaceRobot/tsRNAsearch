@@ -11,13 +11,17 @@ else
 fi
 
 ### Create conda environment
+echo "Creating conda environment for tsRNAearch..."
 conda create -y --name tsrnasearch_env python=2.7 # Create new environment with python 2.7
-echo -e "Please activate the environment:
+echo -e "
 
-source activate tsrnasearch_env # Activate new environment
+Please activate the environment:
+
+conda activate tsrnasearch_env # Activate new environment
 
 Then run the conda environment installer:
 
-bash bin/conda_packages.sh
+# Choose your species of interest using -s parameter
+bash bin/setup_conda_2.sh -s [human/rat/mouse/all]
 
 "
