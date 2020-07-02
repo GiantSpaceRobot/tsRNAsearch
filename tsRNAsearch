@@ -44,7 +44,7 @@ skip="no"
 Plots="no"
 remove="no"
 min_read_length=16
-version="tsRNAsearch version 0.26"
+version="tsRNAsearch version 0.27"
 while getopts ":hs:A:t:l:d:f:S:R:e:o:" o; do
     case "${o}" in
 		h)

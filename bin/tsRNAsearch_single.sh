@@ -805,7 +805,18 @@ Rscript $my_dir/bin/Rmarkdown-to-HTML.R \
 cd $my_dir
 
 string_padder "Assembling results PDF..."
-pdfunite \
+#pdfunite \
+#	$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_tRNA-alignment-length.pdf \
+#	$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_Results.high-distribution-score.pdf \
+#	$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_Results.high-cleavage-score.pdf \
+#	$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_Results.high-slope-score.pdf \
+#	$outDir/Data_and_Plots/Slope_top-tsRNA_Coverage-plots.pdf \
+#	$outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Results.high-distribution-score.pdf \
+#	$outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Results.high-cleavage-score.pdf \
+#	$outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Results.high-slope-score.pdf \
+#	$outDir/${singleFile_basename}.Results-summary.simple.pdf # This is the output file 
+gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dAutoRotatePages=/None \
+	-sOutputFile=$outDir/${singleFile_basename}.Results-summary.simple.pdf \
 	$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_tRNA-alignment-length.pdf \
 	$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_Results.high-distribution-score.pdf \
 	$outDir/Data_and_Plots/${singleFile_basename}_tsRNA_Results.high-cleavage-score.pdf \
@@ -813,8 +824,8 @@ pdfunite \
 	$outDir/Data_and_Plots/Slope_top-tsRNA_Coverage-plots.pdf \
 	$outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Results.high-distribution-score.pdf \
 	$outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Results.high-cleavage-score.pdf \
-	$outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Results.high-slope-score.pdf \
-	$outDir/${singleFile_basename}.Results-summary.simple.pdf # This is the output file 
+	$outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Results.high-slope-score.pdf
+
 
 echo "Finished analysing "$singleFile" on $(date)" # Print pipeline end-time
 echo "_____________________________________________________________________________________________________________________
