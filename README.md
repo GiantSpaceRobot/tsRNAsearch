@@ -5,8 +5,12 @@ A pipeline for the identification, quantification and analysis of ncRNAs (especi
 Many ncRNA identification pipelines are based on differential gene expression. This is a useful method but can fall short if portions of the differentially expressed ncRNAs are degraded/not present, thus reducing the differential expression identification power. tsRNAsearch addresses this issue by applying a standard differential expression analysis and two additional methods to identify fragmented ncRNAs, especially tRNA fragments.
 
 ## Quickstart
+There are two options for installation:
+* Via conda environment
+* Via global system install (requires sudo/root access)
+
 ### Installation (via new conda environment)
-Run the setup_conda.sh script shown below. This will create a conda environment and install the required tools inside the environment. This takes a long time as conda has to figure out what to install. 
+Run the code shown in the window below. This will create a conda environment and install the required tools inside the environment. 
 
 NOTE: please use conda 4.6 or greater
 
@@ -39,20 +43,19 @@ This script will install the following pieces of software at root level:
 * R/Rscript (and R libraries)
 * samtools
 
-Add tsRNAsearch to your path or call the programme using bash/sh.
-
 ### Running tsRNAsearch
 
 tsRNAsearch can now be executed from the tsRNAsearch directory.
 To run it from anywhere in your system, please run the following to create absolute paths in tsRNAsearch and add the program to your path:
 
 ```
-#Create abolsute path names in tsRNAsearch
+#Create absolute path names in tsRNAsearch
 bash bin/SetPath.sh
 
 #Add ~/bin to your PATH to allow your system to find tsRNAsearch
 #To do so, add the following line at the end of your .bashrc
 export PATH="$PATH:~/bin"
+
 #Copy or link tsRNAsearch to ~/bin
 mkdir -p ~/bin # If ~/bin does not exist, create it
 cd ~/bin
