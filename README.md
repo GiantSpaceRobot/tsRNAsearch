@@ -73,7 +73,7 @@ On finishing the run, the pipeline will produce a run report as direct output (R
 bash tsRNAsearch -s mouse -d ExampleData/ -e additional-files/Example_ExperimentLayout.csv -o MyResults > Run-report.log 
 ```
 
-On finishing the run, a HTML report will appear in the *MyResults* directory. In addition, *MyResults* will contain directories named *Data* and *Plots* containing data and plots. [Example of pipeline results](https://giantspacerobot.github.io/tsRNAsearch_ExampleOutput/CytC_vs_TotalRNA.Results-summary.Base64encoded.html)
+On finishing the run, PDF and HTML reports will appear in the *MyResults* directory. In addition, *MyResults* will contain directories named *Data* and *Plots* containing data and plots. [Example of pipeline results](https://giantspacerobot.github.io/tsRNAsearch_ExampleOutput/)
 
 ## More Information
 #### ncRNA identification methods:
@@ -108,7 +108,7 @@ On finishing the run, a HTML report will appear in the *MyResults* directory. In
 * -o *Output directory for the results files*
 * -e *CSV file containing file names and file groups (see example in additional-files/)*
 * -t *Number of threads to use {default is to calculate the number of processors and use 75%}*
-* -l *Minimum read length (default: 16 bp)
+* -l *Minimum read length (default: __16__ bp)*
 * -A *Plot all features? __yes__/__no__ {default: __no__}*
 * -S *Skip pre-processing of data (i.e. skip trim_galore) {default: __no__}*
 * -R *Remove all unnecessary/intermediate files {default: __no__}*
