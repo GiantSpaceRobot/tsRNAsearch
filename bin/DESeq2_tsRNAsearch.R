@@ -440,8 +440,8 @@ DESeq2.function <- function(path.to.files){
                   y = 'padj',
                   xlim = c(-5, 8),  
                   pCutoff = 0.05, 
-                  FCcutoff = 0.5,
-                  labSize = 3.0)
+                  FCcutoff = 0.5#),
+                  #labSize = 3.0)
   volcano + 
     labs(subtitle = "") # Remove automatic subtitle
   ggsave(filename = paste0(path.to.files, args[2], "_VolcanoPlot.pdf"), plot = volcano) # Save plot using ggplot2 ggsave (error occured using normal R PDF save)

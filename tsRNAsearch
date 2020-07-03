@@ -44,7 +44,7 @@ skip="no"
 Plots="no"
 remove="no"
 min_read_length=16
-version="tsRNAsearch version 0.27"
+version="tsRNAsearch version 0.28"
 while getopts ":hs:A:t:l:d:f:S:R:e:o:" o; do
     case "${o}" in
 		h)
@@ -794,8 +794,9 @@ cp $outDir/Data/Intermediate-files/cond1_concatenated_mean_stdev.ncRNA.depth $ou
 cp $outDir/Data/Intermediate-files/cond2_concatenated_mean_stdev.ncRNA.depth $outDir/Data/${condition2}.ncRNA.depth
 
 ### Renaming files from pseudo-names to condition names
-find . -iname "*cond1*" -exec rename "s/cond1/${condition1}/g" {} \; # Replace 'cond1' in every filename with condition1 variable
-find . -iname "*cond2*" -exec rename "s/cond2/${condition2}/g" {} \;
+### NOTE: This works only if perl rename is installed. It fails otherwise. It is not critical
+#find . -iname "*cond1*" -exec rename "s/cond1/${condition1}/g" {} \; # Replace 'cond1' in every filename with condition1 variable
+#find . -iname "*cond2*" -exec rename "s/cond2/${condition2}/g" {} \;
 
 ### If -A parameter was provided, copy all plots to Plots dir
 if [[ $Plots == "yes" ]]; then 
@@ -1292,7 +1293,7 @@ $version
 " > $outDir/Data/Run-Summary.Rmd
 echo "Running Markdown to HTML conversion..."
 cd $outDir/Data
-Rscript $my_dir/bin/Rmarkdown-to-HTML.R \
+Rscript bin/Rmarkdown-to-HTML.R \
 	Run-Summary.Rmd \
 	$my_dir/$outDir/${condition1}_vs_${condition2}.Results-summary.html
 cd $my_dir
