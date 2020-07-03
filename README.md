@@ -77,9 +77,11 @@ On finishing the run, a HTML report will appear in the *MyResults* directory. In
 
 ## More Information
 #### ncRNA identification methods:
-* DESeq2
+* Slope algorithm
+* Fisher's combined p-value method
 * Distribution algorithm
 * Cleavage algotithm
+* DESeq2
 
 ### tsRNAsearch Steps and Parameters 
 #### Steps:
@@ -92,9 +94,11 @@ On finishing the run, a HTML report will appear in the *MyResults* directory. In
     * Count raw reads
   4. Data processing
 * Data transformations/reformatting
-* Run DESeq2
+* Run SlopeScore.R
+* Run Pvalue_generator.R
 * Run DistributionScore.R
 * Run CleavageScore.R
+* Run DESeq2
 * Generate reports (HTML, PDFs, CSVs, and text reports)
 #### Parameters:
 * -h *Print the usage and options information*
@@ -104,6 +108,7 @@ On finishing the run, a HTML report will appear in the *MyResults* directory. In
 * -o *Output directory for the results files*
 * -e *CSV file containing file names and file groups (see example in additional-files/)*
 * -t *Number of threads to use {default is to calculate the number of processors and use 75%}*
+* -l *Minimum read length (default: 16 bp)
 * -A *Plot all features? __yes__/__no__ {default: __no__}*
 * -S *Skip pre-processing of data (i.e. skip trim_galore) {default: __no__}*
 * -R *Remove all unnecessary/intermediate files {default: __no__}*
@@ -118,6 +123,7 @@ You can add any species you want with relatively little effort. Click [here](htt
 
 ## Contributors
 * Paul Donovan, PhD
+* Natalie McHale
 
 ## License
 This project is licensed under the MIT License.
