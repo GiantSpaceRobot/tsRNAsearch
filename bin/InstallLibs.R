@@ -57,7 +57,7 @@ if(R.version.string < 3.5){
 	echo "Installing DESeq2 and dependencies (latticeExtra and Hmisc)..."
 	devtools::install_version("latticeExtra", version="0.6-28")
 	devtools::install_version("Hmisc", version="4.1-1")
-	BiocManager::install("DESeq2", update = FALSE)
+	BiocManager::install("DESeq2", update=FALSE, dependencies=TRUE)
 
 #	if(!require(gplots)){
 #	  install.packages("gplots")
