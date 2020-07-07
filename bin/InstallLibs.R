@@ -117,16 +117,17 @@ if(R.version.string < 3.5){
 	#	devtools::install_version("annotate", version=)
 	#	library(annotate)
 	#}
-	if(!require(genefilter)){
-		install.packages("genefilter")
-		library(genefilter)
-	}
-	if(!require(geneplotter)){
-		install.packages("geneplotter")
-		library(geneplotter)
-	}
+	#if(!require(genefilter)){
+	#	install.packages("genefilter")
+	#	library(genefilter)
+	#}
+	#if(!require(geneplotter)){
+	#	install.packages("geneplotter")
+	#	library(geneplotter)
+	#}
 	# For DESeq2
 	print("Installing DESeq2 and dependencies (latticeExtra and Hmisc)...")
+	devtools::install_version("XML", version="3.98-1.12")
 	devtools::install_version("latticeExtra", version="0.6-28")
 	devtools::install_version("Hmisc", version="4.1-1")
 	BiocManager::install("DESeq2", update=FALSE, dependencies=TRUE)
