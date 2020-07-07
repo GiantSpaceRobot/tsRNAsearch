@@ -27,24 +27,38 @@ if(R.version.string < 3.5){
 	BiocManager::install(c("ggplot2", "gplots", "ggrepel", "VennDiagram", "EnhancedVolcano", "metap", "plyr", "dplyr", "stringr", "reshape2", "xtable", "rmarkdown", "knitr"), update = FALSE)
 	echo "Installing devtools..."
 	install.packages("devtools")
+	# For gplots
+	if(!require(caTools)){
+		echo "Installing gplots and dependency caTools..."
+		devtools::install_version("caTools", version="1.17.1.1")
+		BiocManager::install("gplots", update = FALSE)
+		library(gplots)
+	}
+	# For metap:
+	if(!require(metap)){
+		echo "Installing metap and dependency mnormt..."
+		devtools::install_version("mnormt", version="1.5-5")
+		BiocManager::install("metap", update = FALSE)
+		library(metap)
+	}
+	if(!require(annotate)){
+		install.packages("annotate")
+		library(annotate)
+	}
+	if(!require(genefilter)){
+		install.packages("genefilter")
+		library(genefilter)
+	}
+	if(!require(geneplotter)){
+		install.packages("geneplotter")
+		library(geneplotter)
+	}
 	# For DESeq2
 	echo "Installing DESeq2 and dependencies (latticeExtra and Hmisc)..."
 	devtools::install_version("latticeExtra", version="0.6-28")
 	devtools::install_version("Hmisc", version="4.1-1")
 	BiocManager::install("DESeq2", update = FALSE)
-	# For gplots
-	echo "Installing gplots and dependency caTools..."
-	devtools::install_version("caTools", version="1.17.1.1")
-	BiocManager::install("gplots", update = FALSE)
-	# For metap:
-	echo "Installing metap and dependency mnormt..."
-	devtools::install_version("mnormt", version="1.5-5")
-	BiocManager::install("metap", update = FALSE)
-	#	if(!require(ggplot2)){
-#	  install.packages("ggplot2")
-#	  library(ggplot2)
-#	} 
-#
+
 #	if(!require(gplots)){
 #	  install.packages("gplots")
 #	  library(gplots)
