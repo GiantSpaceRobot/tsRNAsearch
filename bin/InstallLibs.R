@@ -23,10 +23,82 @@ if(R.version.string < 3.5){
 	if(!require(BiocManager)){
 	  install.packages("BiocManager")
 	}
-	print("Attempting bulk installation of R packages...")
-	BiocManager::install(c("ggplot2", "gplots", "ggrepel", "VennDiagram", "EnhancedVolcano", "metap", "plyr", "dplyr", "stringr", "reshape2", "xtable", "rmarkdown", "knitr"), update = FALSE)
-	print("Installing devtools...")
-	install.packages("devtools")
+	#print("Attempting bulk installation of R packages...")
+	#BiocManager::install(c("ggplot2", "gplots", "ggrepel", "VennDiagram", "EnhancedVolcano", "metap", "plyr", "dplyr", "stringr", "reshape2", "xtable", "rmarkdown", "knitr"), update = FALSE)
+	# For ggplot2
+	if(!require(ggplot2)){
+		print("Installing ggplot2...")
+		BiocManager::install("ggplot2", update = FALSE)
+		library(ggplot2)
+	}
+	# For ggrepel
+	if(!require(ggrepel)){
+		print("Installing ggrepel...")
+		BiocManager::install("ggrepel", update = FALSE)
+		library(ggrepel)
+	}
+	# For VennDiagram
+	if(!require(VennDiagram)){
+		print("Installing VennDiagram...")
+		BiocManager::install("VennDiagram", update = FALSE)
+		library(VennDiagram)
+	}
+	# For EnhancedVolcano
+	if(!require(EnhancedVolcano)){
+		print("Installing EnhancedVolcano...")
+		BiocManager::install("EnhancedVolcano", update = FALSE)
+		library(EnhancedVolcano)
+	}
+	# For plyr
+	if(!require(plyr)){
+		print("Installing plyr...")
+		BiocManager::install("plyr", update = FALSE)
+		library(plyr)
+	}
+	# For dplyr
+	if(!require(dplyr)){
+		print("Installing dplyr...")
+		BiocManager::install("dplyr", update = FALSE)
+		library(dplyr)
+	}
+	# For stringr
+	if(!require(stringr)){
+		print("Installing stringr...")
+		BiocManager::install("stringr", update = FALSE)
+		library(stringr)
+	}
+	# For reshape2
+	if(!require(reshape2)){
+		print("Installing reshape2...")
+		BiocManager::install("reshape2", update = FALSE)
+		library(reshape2)
+	}
+	# For xtable
+	if(!require(xtable)){
+		print("Installing xtable...")
+		BiocManager::install("xtable", update = FALSE)
+		library(xtable)
+	}
+	# For rmarkdown
+	if(!require(rmarkdown)){
+		print("Installing rmarkdown...")
+		BiocManager::install("rmarkdown", update = FALSE)
+		library(rmarkdown)
+	}
+	# For knitr
+	if(!require(knitr)){
+		print("Installing knitr...")
+		BiocManager::install("knitr", update = FALSE)
+		library(knitr)
+	}
+	# For devtools
+	if(!require(devtools)){
+		print("Installing devtools...")
+		BiocManager::install("devtools", update = FALSE)
+		library(devtools)
+	}
+	#print("Installing devtools...")
+	#install.packages("devtools")
 	# For gplots
 	if(!require(caTools)){
 		print("Installing gplots and dependency caTools...")
