@@ -41,10 +41,10 @@ if(R.version.string < 3.5){
 		BiocManager::install("metap", update = FALSE)
 		library(metap)
 	}
-	if(!require(annotate)){
-		install.packages("annotate")
-		library(annotate)
-	}
+	#if(!require(annotate)){
+	#	devtools::install_version("annotate", version=)
+	#	library(annotate)
+	#}
 	if(!require(genefilter)){
 		install.packages("genefilter")
 		library(genefilter)
