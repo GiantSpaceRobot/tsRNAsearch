@@ -142,6 +142,16 @@ if ! [ -x "$(command -v fastqc)" ]; then
 	sudo apt install fastqc
 fi
 
+# STAR
+echo "Looking for STAR..."
+if ! [ -x "$(command -v STAR)" ]; then
+	echo "
+	
+	Error: Please install STAR
+	
+	"
+fi
+
 # Create absolute path for bin files
 #echo "Creating absolute path for tsRNAsearch 'bin' and 'DBs'..."
 #myPath=$(pwd)
@@ -156,4 +166,3 @@ fi
 
 wait # Wait for things to finish running
 
-echo "Done"

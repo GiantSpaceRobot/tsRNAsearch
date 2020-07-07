@@ -23,16 +23,21 @@ if(R.version.string < 3.5){
 	if(!require(BiocManager)){
 	  install.packages("BiocManager")
 	}
+	echo "Attempting bulk installation of R packages..."
 	BiocManager::install(c("ggplot2", "gplots", "ggrepel", "VennDiagram", "EnhancedVolcano", "metap", "plyr", "dplyr", "stringr", "reshape2", "xtable", "rmarkdown", "knitr"), update = FALSE)
+	echo "Installing devtools..."
 	install.packages("devtools")
 	# For DESeq2
+	echo "Installing DESeq2 and dependencies (latticeExtra and Hmisc)..."
 	devtools::install_version("latticeExtra", version="0.6-28")
 	devtools::install_version("Hmisc", version="4.1-1")
 	BiocManager::install("DESeq2", update = FALSE)
 	# For gplots
+	echo "Installing gplots and dependency caTools..."
 	devtools::install_version("caTools", version="1.17.1.1")
 	BiocManager::install("gplots", update = FALSE)
 	# For metap:
+	echo "Installing metap and dependency mnormt..."
 	devtools::install_version("mnormt", version="1.5-5")
 	BiocManager::install("metap", update = FALSE)
 	#	if(!require(ggplot2)){
