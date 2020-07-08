@@ -440,7 +440,7 @@ DESeq2.function <- function(path.to.files){
                   y = 'padj',
                   xlim = c(-5, 8),  
                   pCutoff = 0.05, 
-                  FCcutoff = 0.5#),
+                  FCcutoff = 0.5),
                   #labSize = 3.0)
   volcano + 
     labs(subtitle = "") # Remove automatic subtitle
