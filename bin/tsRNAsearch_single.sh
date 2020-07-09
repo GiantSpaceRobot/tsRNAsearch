@@ -246,9 +246,9 @@ function bam_to_plots () {  ### Steps for plotting regions with high variation i
 		> $1/accepted_hits.depth   # A lot faster than bedtools genomecov
 	### If depth file empty, create it again using bedtools genomecov 
 	### (samtools depth doesn't report depth if there are no alignments)
-	if [ ! -s $1/accepted_hits.depth ]; then
-		bedtools genomecov -d -ibam $1/accepted_hits.bam > $1/accepted_hits.depth
-	fi
+	#if [ ! -s $1/accepted_hits.depth ]; then
+	#	bedtools genomecov -d -ibam $1/accepted_hits.bam > $1/accepted_hits.depth
+	#fi
 	cp $1/accepted_hits.depth $1/accepted_hits_raw.depth
 	### Normalise by reads per million (RPM)
 	python2 bin/Depth-to-Depth_RPM.py \

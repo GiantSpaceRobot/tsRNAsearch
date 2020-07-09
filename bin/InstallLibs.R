@@ -55,6 +55,12 @@ if(R.version.string < 3.5){
 		BiocManager::install("EnhancedVolcano", update = FALSE)
 		library(EnhancedVolcano)
 	}
+	# For tibble
+	if(!require(tibble)){
+		print("Installing tibble...")
+		BiocManager::install("tibble", update = FALSE)
+		library(tibble)
+	}
 	# For plyr
 	if(!require(plyr)){
 		print("Installing plyr...")

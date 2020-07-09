@@ -44,7 +44,7 @@ skip="no"
 Plots="no"
 remove="no"
 min_read_length=16
-version="tsRNAsearch version 0.28"
+version="tsRNAsearch version 0.29"
 while getopts ":hs:A:t:l:d:f:S:R:e:o:" o; do
     case "${o}" in
 		h)
@@ -250,6 +250,7 @@ mkdir -p $outDir/Data/Distribution_results
 mkdir -p $outDir/Data/Cleavage_results
 mkdir -p $outDir/Data/Slope_results
 mkdir -p $outDir/Data/FishersMethod_results
+mkdir -p $outDir/Data/Combined_results
 mkdir -p $outDir/Data/Intermediate-files/DataTransformations
 mkdir -p $outDir/Plots
 mkdir -p $outDir/Plots/Encoded
@@ -479,6 +480,7 @@ Rscript bin/CleavageScore.R \
 	$outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_All-tsRNA-Features_Cleavage \
 	$ncRNA_GTF &
 wait
+
 ### Copy results to results directories
 # Slope
 cp $outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_All-ncRNA-Features_Slope.high-slope-score.txt \
@@ -516,6 +518,15 @@ sort -t$'\t' -k2,2g \
 grep -v ^ENS $outDir/Data/FishersMethod_results/FisherMethod_Features.txt > $outDir/Data/FishersMethod_results/FisherMethod_tsRNAs.txt
 grep ^ENS $outDir/Data/FishersMethod_results/FisherMethod_Features.txt > $outDir/Data/FishersMethod_results/FisherMethod_ncRNAs.txt
 awk -F' ' '{print $1}' $outDir/Data/FishersMethod_results/FisherMethod_Features.txt > $outDir/Data/Intermediate-files/FishersMethod_FeatureNames.txt
+
+### Generating combined scores
+string_padder "Generating combined scores for top features..." 
+### Test difference in slope in one condition vs the other
+Rscript bin/CombinedScore.R \
+	$outDir/Data/CytC_vs_TotalRNA.summarised.all-results.txt \
+	$outDir/Data/Combined_Score
+cp $outDir/Combined_Score* $outDir/Data/
+mv $outDir/Data/Combined_Score*pdf $outDir/Plots/
 
 string_padder "Moving PDFs to Plots dir..."
 ### Rename PDFs and copy to Plots dir

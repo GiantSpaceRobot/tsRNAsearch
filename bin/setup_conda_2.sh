@@ -79,14 +79,17 @@ conda install -y numpy=1.15.4
 echo "R"
 conda install -y -c r r=3.5 # Install R
 echo "Installing samtools"
-conda install -y -c bioconda samtools=1.7
+#conda install -y -c bioconda samtools=1.7 
+conda install -y -c bioconda samtools openssl=1.0 curl 
 echo "Installing Pandoc"
 conda install -y -c conda-forge pandoc
 echo "Installing libgit2..."
 conda install -y -c conda-forge libgit2
 echo "Installing ghostscript..."
 conda install -y -c conda-forge ghostscript
-echo "Installing R packages"
+#echo "Installing openssl 1.0..."
+#conda install -y openssl=1.0 # samtools shared lib error on CentOS system (libcrypto.so.1.0.0). Downgraded openssl
+echo "Installing R packages..."
 Rscript bin/InstallLibs.R
 
 ### Download species data
