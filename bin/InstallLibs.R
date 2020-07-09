@@ -122,7 +122,8 @@ if(R.version.string < 3.5){
 	if(!require(metap)){
 		print("Installing metap and dependency mnormt...")
 		devtools::install_version("mnormt", version="1.5-5")
-		BiocManager::install("metap", update = FALSE)
+		devtools::install_version("metap", version="0.9")
+		#BiocManager::install("metap", update = FALSE)
 		library(metap)
 	}
 	#if(!require(annotate)){
@@ -133,17 +134,14 @@ if(R.version.string < 3.5){
 	#	install.packages("genefilter")
 	#	library(genefilter)
 	#}
-	#if(!require(geneplotter)){
-	#	install.packages("geneplotter")
-	#	library(geneplotter)
-	#}
 	# For DESeq2
-	print("Installing DESeq2 and dependencies (latticeExtra and Hmisc)...")
-	devtools::install_version("XML", version="3.98-1.12")
-	devtools::install_version("latticeExtra", version="0.6-28")
-	devtools::install_version("Hmisc", version="4.1-1")
-	BiocManager::install("DESeq2", update=FALSE, dependencies=TRUE)
-
+	if(!require(DESeq2)){
+		print("Installing DESeq2 and dependencies (latticeExtra and Hmisc)...")
+		devtools::install_version("XML", version="3.98-1.12")
+		devtools::install_version("latticeExtra", version="0.6-28")
+		devtools::install_version("Hmisc", version="4.1-1")
+		BiocManager::install("DESeq2", update=FALSE, dependencies=TRUE)
+	fi
 #	if(!require(gplots)){
 #	  install.packages("gplots")
 #	  library(gplots)
