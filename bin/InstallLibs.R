@@ -25,6 +25,12 @@ if(R.version.string < 3.5){
 	}
 	#print("Attempting bulk installation of R packages...")
 	#BiocManager::install(c("ggplot2", "gplots", "ggrepel", "VennDiagram", "EnhancedVolcano", "metap", "plyr", "dplyr", "stringr", "reshape2", "xtable", "rmarkdown", "knitr"), update = FALSE)
+	# For git2r
+	if(!require(git2r)){
+		print("Installing git2r...")
+		BiocManager::install("git2r", update = FALSE)
+		library(git2r)
+	}
 	# For ggplot2
 	if(!require(ggplot2)){
 		print("Installing ggplot2...")

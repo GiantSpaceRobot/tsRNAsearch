@@ -395,13 +395,14 @@ printf -v myFile "%s.fq" "$singleFile_basename"
 printf -v fastqcFile "%s_trimmed_fastqc.html" "$singleFile_basename"
 
 # Create empty PDFs in case PDF generation fails later
-echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Data_and_Plots/${singleFile_basename}_tsRNA_Results.high-distribution-score.pdf
-echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Data_and_Plots/${singleFile_basename}_tsRNA_Results.high-cleavage-score.pdf
-echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Data_and_Plots/${singleFile_basename}_tsRNA_Results.high-slope-score.pdf
-echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Data_and_Plots/Slope_top-tsRNA_Coverage-plots.pdf 
-echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Results.high-distribution-score.pdf
-echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Results.high-cleavage-score.pdf
-echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Results.high-slope-score.pdf
+#echo showpage | ps2pdf -sPAPERSIZE=a6 - output.pdf
+gs -sDEVICE=pdfwrite -o $outDir/Data_and_Plots/${singleFile_basename}_tsRNA_Results.high-distribution-score.pdf -q -g2980x4200 -c showpage
+gs -sDEVICE=pdfwrite -o $outDir/Data_and_Plots/${singleFile_basename}_tsRNA_Results.high-cleavage-score.pdf -q -g2980x4200 -c showpage
+gs -sDEVICE=pdfwrite -o $outDir/Data_and_Plots/${singleFile_basename}_tsRNA_Results.high-slope-score.pdf -q -g2980x4200 -c showpage
+gs -sDEVICE=pdfwrite -o $outDir/Data_and_Plots/Slope_top-tsRNA_Coverage-plots.pdf -q -g2980x4200 -c showpage
+gs -sDEVICE=pdfwrite -o $outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Results.high-distribution-score.pdf -q -g2980x4200 -c showpage
+gs -sDEVICE=pdfwrite -o $outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Results.high-cleavage-score.pdf -q -g2980x4200 -c showpage
+gs -sDEVICE=pdfwrite -o $outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Results.high-slope-score.pdf -q -g2980x4200 -c showpage
 
 ### Skip pre-processing or not:
 if [ $skip = "no" ]; then

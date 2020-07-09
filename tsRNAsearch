@@ -258,35 +258,35 @@ mkdir -p $outDir/Data/Intermediate-files/LengthPlotData/$condition1
 mkdir -p $outDir/Data/Intermediate-files/LengthPlotData/$condition2
 
 ### Create empty plot files just in case there are no results
-echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Plots/${condition1}_vs_${condition2}_BarPlot_RPM-normalised.pdf
-echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Plots/${condition1}_vs_${condition2}_BarPlot_Raw-readcounts.pdf
-echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Plots/Barplot_All-Samples.pdf
-echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Plots/${condition1}_tRNA-read-alignment-lengths.pdf
-echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Plots/${condition2}_tRNA-read-alignment-lengths.pdf
-echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Plots/${condition1}_vs_${condition2}_tpm-PCA.pdf
-echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Plots/${condition1}_vs_${condition2}_Distance-Matrix.pdf
-echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Plots/${condition1}_vs_${condition2}_VolcanoPlot.pdf
-echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-DE-negLog10_padj.pdf
-echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-tsRNAs.pdf
-echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Plots/${condition1}_vs_${condition2}_ncRNAs.high-DE-negLog10_padj.pdf
-echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-ncRNAs.pdf
-echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-distribution-score.pdf
-echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-tsRNAs.pdf
-echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Plots/${condition1}_vs_${condition2}_ncRNAs.high-distribution-score.pdf
-echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-ncRNAs.pdf
-echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Plots/${condition1}_vs_${condition2}_All-tsRNA-Features_Slope.high-slope-score.pdf
-echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Plots/${condition1}_vs_${condition2}_Features_High-slope-score-tsRNAs.pdf
-echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Plots/${condition1}_vs_${condition2}_All-ncRNA-Features_Slope.high-slope-score.pdf
-echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Plots/${condition1}_vs_${condition2}_Features_High-slope-score-ncRNAs.pdf
-echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-cleavage-score.pdf
-echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-tsRNAs.pdf
-echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Plots/${condition1}_vs_${condition2}_ncRNAs.high-cleavage-score.pdf
-echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-ncRNAs.pdf
-echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Plots/Feature-P-values_tsRNAs.low.p.values.pdf
-echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Plots/${condition1}_vs_${condition2}_Features_Fishers-method-tsRNAs.pdf
-echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Plots/Feature-P-values_ncRNAs.low.p.values.pdf
-echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Plots/${condition1}_vs_${condition2}_Features_Fishers-method-ncRNAs.pdf 
-echo showpage | ps2pdf -sPAPERSIZE=a6 - $outDir/Plots/${condition1}_vs_${condition2}_Features_tsRNAs-with-multimapping-reads.pdf 
+gs -sDEVICE=pdfwrite -o $outDir/Plots/${condition1}_vs_${condition2}_BarPlot_RPM-normalised.pdf -q -g2980x4200 -c showpage
+gs -sDEVICE=pdfwrite -o $outDir/Plots/${condition1}_vs_${condition2}_BarPlot_Raw-readcounts.pdf -q -g2980x4200 -c showpage
+gs -sDEVICE=pdfwrite -o $outDir/Plots/Barplot_All-Samples.pdf -q -g2980x4200 -c showpage
+gs -sDEVICE=pdfwrite -o $outDir/Plots/${condition1}_tRNA-read-alignment-lengths.pdf -q -g2980x4200 -c showpage
+gs -sDEVICE=pdfwrite -o $outDir/Plots/${condition2}_tRNA-read-alignment-lengths.pdf -q -g2980x4200 -c showpage
+gs -sDEVICE=pdfwrite -o $outDir/Plots/${condition1}_vs_${condition2}_tpm-PCA.pdf -q -g2980x4200 -c showpage
+gs -sDEVICE=pdfwrite -o $outDir/Plots/${condition1}_vs_${condition2}_Distance-Matrix.pdf -q -g2980x4200 -c showpage
+gs -sDEVICE=pdfwrite -o $outDir/Plots/${condition1}_vs_${condition2}_VolcanoPlot.pdf -q -g2980x4200 -c showpage
+gs -sDEVICE=pdfwrite -o $outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-DE-negLog10_padj.pdf -q -g2980x4200 -c showpage
+gs -sDEVICE=pdfwrite -o $outDir/Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-tsRNAs.pdf -q -g2980x4200 -c showpage
+gs -sDEVICE=pdfwrite -o $outDir/Plots/${condition1}_vs_${condition2}_ncRNAs.high-DE-negLog10_padj.pdf -q -g2980x4200 -c showpage
+gs -sDEVICE=pdfwrite -o $outDir/Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-ncRNAs.pdf -q -g2980x4200 -c showpage
+gs -sDEVICE=pdfwrite -o $outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-distribution-score.pdf -q -g2980x4200 -c showpage
+gs -sDEVICE=pdfwrite -o $outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-tsRNAs.pdf -q -g2980x4200 -c showpage
+gs -sDEVICE=pdfwrite -o $outDir/Plots/${condition1}_vs_${condition2}_ncRNAs.high-distribution-score.pdf -q -g2980x4200 -c showpage
+gs -sDEVICE=pdfwrite -o $outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-ncRNAs.pdf -q -g2980x4200 -c showpage
+gs -sDEVICE=pdfwrite -o $outDir/Plots/${condition1}_vs_${condition2}_All-tsRNA-Features_Slope.high-slope-score.pdf -q -g2980x4200 -c showpage
+gs -sDEVICE=pdfwrite -o $outDir/Plots/${condition1}_vs_${condition2}_Features_High-slope-score-tsRNAs.pdf -q -g2980x4200 -c showpage
+gs -sDEVICE=pdfwrite -o $outDir/Plots/${condition1}_vs_${condition2}_All-ncRNA-Features_Slope.high-slope-score.pdf -q -g2980x4200 -c showpage
+gs -sDEVICE=pdfwrite -o $outDir/Plots/${condition1}_vs_${condition2}_Features_High-slope-score-ncRNAs.pdf -q -g2980x4200 -c showpage
+gs -sDEVICE=pdfwrite -o $outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-cleavage-score.pdf -q -g2980x4200 -c showpage
+gs -sDEVICE=pdfwrite -o $outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-tsRNAs.pdf -q -g2980x4200 -c showpage
+gs -sDEVICE=pdfwrite -o $outDir/Plots/${condition1}_vs_${condition2}_ncRNAs.high-cleavage-score.pdf -q -g2980x4200 -c showpage
+gs -sDEVICE=pdfwrite -o $outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-ncRNAs.pdf -q -g2980x4200 -c showpage
+gs -sDEVICE=pdfwrite -o $outDir/Plots/Feature-P-values_tsRNAs.low.p.values.pdf -q -g2980x4200 -c showpage
+gs -sDEVICE=pdfwrite -o $outDir/Plots/${condition1}_vs_${condition2}_Features_Fishers-method-tsRNAs.pdf -q -g2980x4200 -c showpage
+gs -sDEVICE=pdfwrite -o $outDir/Plots/Feature-P-values_ncRNAs.low.p.values.pdf -q -g2980x4200 -c showpage
+gs -sDEVICE=pdfwrite -o $outDir/Plots/${condition1}_vs_${condition2}_Features_Fishers-method-ncRNAs.pdf -q -g2980x4200 -c showpage 
+gs -sDEVICE=pdfwrite -o $outDir/Plots/${condition1}_vs_${condition2}_Features_tsRNAs-with-multimapping-reads.pdf -q -g2980x4200 -c showpage 
 
 ### Run tsRNAsearch on each RNA-seq file
 for f in $inDir/*; do
@@ -1292,11 +1292,11 @@ $parametersHTML
 $version
 " > $outDir/Data/Run-Summary.Rmd
 echo "Running Markdown to HTML conversion..."
-cd $outDir/Data
+#cd $outDir/Data
 Rscript bin/Rmarkdown-to-HTML.R \
 	Run-Summary.Rmd \
-	$my_dir/$outDir/${condition1}_vs_${condition2}.Results-summary.html
-cd $my_dir
+	$outDir/${condition1}_vs_${condition2}.Results-summary.html
+#cd $my_dir
 #rm $outDir/Data/Predicted-tsRNA-types_*.txt # Remove unnecessary files
 
 gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dAutoRotatePages=/None \

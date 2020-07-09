@@ -82,6 +82,10 @@ echo "Installing samtools"
 conda install -y -c bioconda samtools=1.7
 echo "Installing Pandoc"
 conda install -y -c conda-forge pandoc
+echo "Installing libgit2..."
+conda install -y -c conda-forge libgit2
+echo "Installing ghostscript..."
+conda install -y -c conda-forge ghostscript
 echo "Installing R packages"
 Rscript bin/InstallLibs.R
 

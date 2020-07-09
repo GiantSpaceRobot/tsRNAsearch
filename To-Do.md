@@ -13,3 +13,4 @@ Update now:
 * Insert t-test table into HTML and PDF (if possible)
 * Bug in Barplots.R: Wrong label randomly being assigned to individual barplots PDF
 * For CentOS, conda installation of libgit2 possibly required, followed by R install of git2r
+* Make sure that Rmarkdown-to-HTML.R is working properly in the context of the pipeline
