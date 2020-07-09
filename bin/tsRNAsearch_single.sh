@@ -798,11 +798,11 @@ $parametersHTML
 
 " > $outDir/Data_and_Plots/Run-Summary.Rmd
 echo "Running Markdown to HTML conversion..."
-cd $outDir/Data_and_Plots/
-Rscript $my_dir/bin/Rmarkdown-to-HTML.R \
+#cd $outDir/Data_and_Plots/
+Rscript bin/Rmarkdown-to-HTML.R \
 	Run-Summary.Rmd \
-	$my_dir/$outDir/${singleFile_basename}.Results-summary.html
-cd $my_dir
+	$outDir/${singleFile_basename}.Results-summary.html
+#cd $my_dir
 
 string_padder "Assembling results PDF..."
 #pdfunite \
