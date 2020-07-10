@@ -44,7 +44,7 @@ skip="no"
 Plots="no"
 remove="no"
 min_read_length=16
-version="tsRNAsearch version 0.29"
+version="tsRNAsearch version 0.30"
 while getopts ":hs:A:t:l:d:f:S:R:e:o:" o; do
     case "${o}" in
 		h)
@@ -519,15 +519,6 @@ grep -v ^ENS $outDir/Data/FishersMethod_results/FisherMethod_Features.txt > $out
 grep ^ENS $outDir/Data/FishersMethod_results/FisherMethod_Features.txt > $outDir/Data/FishersMethod_results/FisherMethod_ncRNAs.txt
 awk -F' ' '{print $1}' $outDir/Data/FishersMethod_results/FisherMethod_Features.txt > $outDir/Data/Intermediate-files/FishersMethod_FeatureNames.txt
 
-### Generating combined scores
-string_padder "Generating combined scores for top features..." 
-### Test difference in slope in one condition vs the other
-Rscript bin/CombinedScore.R \
-	$outDir/Data/CytC_vs_TotalRNA.summarised.all-results.txt \
-	$outDir/Data/Combined_Score
-cp $outDir/Combined_Score* $outDir/Data/
-mv $outDir/Data/Combined_Score*pdf $outDir/Plots/
-
 string_padder "Moving PDFs to Plots dir..."
 ### Rename PDFs and copy to Plots dir
 mv $outDir/Data/Intermediate-files/DataTransformations/Everything_tRNAs.cond1-vs-cond2.high-distribution-score.pdf \
@@ -565,7 +556,21 @@ Rscript bin/ResultsTable.R \
 	$outDir/Data/Intermediate-files/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output.csv \
 	$outDir/Data/Slope_results/${condition1}_vs_${condition2}_High-Slope-tRNAs.tsv \
 	$outDir/Data/Slope_results/${condition1}_vs_${condition2}_High-Slope-ncRNAs.tsv \
-	$outDir/Data/${condition1}_vs_${condition2} &
+	$outDir/Data/${condition1}_vs_${condition2}
+
+### Generating combined scores
+string_padder "Generating combined scores for top features..." 
+### Test difference in slope in one condition vs the other
+Rscript bin/CombinedScore.R \
+	$outDir/Data/CytC_vs_TotalRNA.summarised.all-results.txt \
+	$outDir/Data/Combined_Score
+cp $outDir/Data/Combined_Score* $outDir/Data/Combined_results/
+mv $outDir/Data/Combined_Score*pdf $outDir/Plots/
+### Get names of features that have high combined scores
+cat $outDir/Data/Combined_results/Combined_Score.relative-score-results.tsv \
+	| grep -v ^feat \
+	| awk '{print $1}' \
+	> $outDir/Data/Intermediate-files/High-combined-score-features_feature-names.txt
 
 string_padder "Plotting any features identified in the analysis..."
 ### If there are differentially expressed/high distribution features, plot these:
@@ -609,6 +614,13 @@ if [[ $(wc -l < $outDir/Data/All-Features-Identified.txt) -ge 2 ]]; then
 	fi
 	string_padder "Plotting feature coverage..." 
 	# tsRNAs
+	Rscript bin/Bedgraph_plotter_DEGs.R \
+		$outDir/Data/Intermediate-files/Everything.cond1_concatenated_mean_stdev.tsRNA.depth \
+		$outDir/Data/Intermediate-files/Everything.cond2_concatenated_mean_stdev.tsRNA.depth \
+		$outDir/Data/Intermediate-files/High-combined-score-features_feature-names.txt \
+		$outDir/Plots/${condition1}_vs_${condition2}_Features_High-combined-score-tsRNAs.pdf \
+		0 \
+		"no" & # Combined score tsRNAs
 	Rscript bin/Bedgraph_plotter_DEGs.R \
 		$outDir/Data/Intermediate-files/cond1_concatenated_mean_stdev.tsRNA.depth \
 		$outDir/Data/Intermediate-files/cond2_concatenated_mean_stdev.tsRNA.depth \
@@ -667,6 +679,14 @@ if [[ $(wc -l < $outDir/Data/All-Features-Identified.txt) -ge 2 ]]; then
 		0 \
 		"yes" 
 	# ncRNAs
+	Rscript bin/Bedgraph_plotter_DEGs.R \
+		$outDir/Data/Intermediate-files/cond1_concatenated_mean_stdev.ncRNA.depth \
+		$outDir/Data/Intermediate-files/cond2_concatenated_mean_stdev.ncRNA.depth \
+		$outDir/Data/Intermediate-files/High-combined-score-features_feature-names.txt \
+		$outDir/Plots/${condition1}_vs_${condition2}_Features_High-combined-score-ncRNAs.pdf \
+		0 \
+		"no" \
+		$ncRNA_GTF & # Combined score ncRNAs
 	Rscript bin/Bedgraph_plotter_DEGs.R \
 		$outDir/Data/Intermediate-files/cond1_concatenated_mean_stdev.ncRNA.depth \
 		$outDir/Data/Intermediate-files/cond2_concatenated_mean_stdev.ncRNA.depth \
@@ -1105,7 +1125,7 @@ $(cat $outDir/Plots/Encoded/${condition1}_vs_${condition2}_VennDiagram.png.txt)
 
 \x60\x60\x60{r Summary report, echo=FALSE, error=TRUE}
 library(knitr)
-my.table <- read.csv(\"$my_dir/$outDir/Data/${condition1}_vs_${condition2}.summarised.top-results.txt\", sep = '\t')
+my.table <- read.csv(\"$my_dir/$outDir/Data/Combined_Score.summarised.absolute-score-results.tsv\", sep = '\t')
 kable(my.table[1:20, ], caption = 'Top 20 results shown (sorted by distribution score)')
 \x60\x60\x60
 
@@ -1114,6 +1134,26 @@ kable(my.table[1:20, ], caption = 'Top 20 results shown (sorted by distribution 
 $(cat $outDir/Plots/Encoded/${condition1}_tRNA-read-alignment-lengths.pdf.txt)
 
 $(cat $outDir/Plots/Encoded/${condition2}_tRNA-read-alignment-lengths.pdf.txt)
+
+# Combined Score Results
+
+## Features identified
+
+### Highest scoring tRNA fragments identified using the combined score method
+
+$(cat $outDir/Plots/Encoded/Combined_Score.tsRNAs.pdf.txt)
+
+### Coverage plots for all tRNAs with significantly different slopes identified by the combined score method
+
+$(cat $outDir/Plots/Encoded/${condition1}_vs_${condition2}_Features_High-combined-score-tsRNAs.pdf.txt)
+
+### Highest scoring ncRNA fragments identified using the combined score method
+
+$(cat $outDir/Plots/Encoded/Combined_Score.ncRNAs.pdf.txt)
+
+### Coverage plots for all ncRNAs with significantly different slopes identified by the combined score method
+
+$(cat $outDir/Plots/Encoded/${condition1}_vs_${condition2}_Features_High-combined-score-ncRNAs.pdf.txt)
 
 # Differential Expression Results (DESeq2)
 
@@ -1304,9 +1344,11 @@ $version
 " > $outDir/Data/Run-Summary.Rmd
 echo "Running Markdown to HTML conversion..."
 #cd $outDir/Data
+cp $outDir/Data/Run-Summary.Rmd ./
 Rscript bin/Rmarkdown-to-HTML.R \
 	Run-Summary.Rmd \
 	$outDir/${condition1}_vs_${condition2}.Results-summary.html
+rm Run-Summary.Rmd
 #cd $my_dir
 #rm $outDir/Data/Predicted-tsRNA-types_*.txt # Remove unnecessary files
 
@@ -1321,6 +1363,11 @@ gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dAutoRotatePages=/None \
 	$outDir/Plots/${condition1}_vs_${condition2}_tpm-PCA.pdf \
 	$outDir/Plots/${condition1}_vs_${condition2}_Distance-Matrix.pdf \
 	$outDir/Plots/${condition1}_vs_${condition2}_VennDiagram.pdf \
+	additional-files/tsRNAsearch_Combined_page.pdf \
+	$outDir/Plots/Combined_Score.tsRNAs.pdf \
+	$outDir/Plots/${condition1}_vs_${condition2}_Features_High-combined-score-tsRNAs.pdf \
+	$outDir/Plots/Combined_Score.ncRNAs.pdf \
+	$outDir/Plots/${condition1}_vs_${condition2}_Features_High-combined-score-ncRNAs.pdf
 	additional-files/tsRNAsearch_DESeq2_page.pdf \
 	$outDir/Plots/${condition1}_vs_${condition2}_VolcanoPlot.pdf \
 	$outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-DE-negLog10_padj.pdf \
@@ -1358,10 +1405,10 @@ gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dAutoRotatePages=/None \
 	$outDir/Plots/${condition1}_vs_${condition2}_tpm-PCA.pdf \
 	$outDir/Plots/${condition1}_vs_${condition2}_Distance-Matrix.pdf \
 	$outDir/Plots/${condition1}_vs_${condition2}_VennDiagram.pdf \
-	additional-files/tsRNAsearch_Slope_page.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_All-tsRNA-Features_Slope.high-slope-score.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_Features_High-slope-score-tsRNAs.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_All-ncRNA-Features_Slope.high-slope-score.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_Features_High-slope-score-ncRNAs.pdf
+	additional-files/tsRNAsearch_Combined_page.pdf \
+	$outDir/Plots/Combined_Score.tsRNAs.pdf \
+	$outDir/Plots/${condition1}_vs_${condition2}_Features_High-combined-score-tsRNAs.pdf \
+	$outDir/Plots/Combined_Score.ncRNAs.pdf \
+	$outDir/Plots/${condition1}_vs_${condition2}_Features_High-combined-score-ncRNAs.pdf
 
 string_padder "$FinishTime"

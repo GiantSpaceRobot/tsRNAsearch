@@ -20,6 +20,7 @@ args = commandArgs(trailingOnly=TRUE)
 library("dplyr")
 library("ggplot2")
 library("tibble")
+library("xtable")
 
 my.input = read.csv(args[1], sep = "\t", row.names = 1) # Read input
 #my.input <- read.csv("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/Test_26-6-20/Data/CytC_vs_TotalRNA.summarised.all-results.txt", 
@@ -43,7 +44,7 @@ final.percentages.df[is.num] <- lapply(final.percentages.df[is.num], round, 2) #
 
 # Write output
 write.table(x = final.percentages.df, 
-            file = paste0(args[2], ".all-results.tsv"),
+            file = paste0(args[2], ".relative-score-results.tsv"),
             quote = FALSE, 
             sep = "\t", 
             col.names=NA)
@@ -124,3 +125,41 @@ ggplot(data = newdata.subset, mapping = aes(feature,
        y = "Combined score", 
        subtitle = "Max number of features shown = 20")
 dev.off()
+
+### Final output DF preparation
+original.scores <- my.input
+original.scores$feature <- rownames(original.scores) # Add rownames as column
+final.percentages.df$feature <- rownames(final.percentages.df) # Add rownames as column
+features.and.combined.scores.df <- final.percentages.df %>% select(c(feature, combined.score)) # Subset DF
+output.df <- merge(features.and.combined.scores.df, original.scores, by="feature", all.x=TRUE) # Merge original input with combined score DF
+rownames(output.df) <- output.df$feature
+output.df <- output.df %>% rownames_to_column('genes') %>% 
+  select(c(combined.score, slope.score, Fishers.method.pvalue, distribution.score, DESeq2.Log2FC, DESeq2.padj, cleavage.score, genes)) %>%
+  arrange(desc(combined.score)) %>%
+  column_to_rownames('genes') # Subset new merged DF
+
+# If there are more than 20 features, show top 20
+if(nrow(output.df) > 20){
+  top.results <- head(output.df, n = 20)
+} else {
+  top.results <- output.df
+}
+
+### Write output
+write.table(x = output.df, file = paste0(args[2], ".summarised.absolute-score-results.tsv"), quote = F, sep = "\t", row.names = T)
+write.table(x = top.results, file = paste0(args[2], ".summarised.absolute-score-results.tsv"), quote = F, sep = "\t", row.names = T)
+
+### Write top results as HTML (s = string, g = number, f = scientific number)
+print(xtable(top.results,              
+             display=c("s",   # Feature names 
+                       "f",   # Combined score
+                       "f",   # Slope score
+                       "g",   # Fisher's method p value
+                       "f",   # Distribution score
+                       "f",   # DESeq2 Log2FC
+                       "g",   # DESeq2 padj
+                       "f")), # Cleavage score
+      math.style.exponents = TRUE, 
+      type="html", 
+      file = paste0(args[2], ".summarised.top-results.html")) # Write top results to HTML for HTML report generation
+

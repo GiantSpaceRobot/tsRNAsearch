@@ -12,4 +12,5 @@ Update now:
 * Make script to analyse tsRNA-aligned.sam and output percentage of reads that are 5'-tiRNA, 5'-tRF, etc. Generate standard deviation for this and compare both conditions using t-test. Show this in boxplot 
 * Insert t-test table into HTML and PDF (if possible)
 * Bug in Barplots.R: Wrong label randomly being assigned to individual barplots PDF
-* Make sure that Rmarkdown-to-HTML.R is working properly in the context of the pipeline
+* Remove markdown Rscript from this dir
+* Only top 4 tsRNAs shown in combined score FeaturePlot
