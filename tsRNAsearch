@@ -562,7 +562,7 @@ Rscript bin/ResultsTable.R \
 string_padder "Generating combined scores for top features..." 
 ### Test difference in slope in one condition vs the other
 Rscript bin/CombinedScore.R \
-	$outDir/Data/CytC_vs_TotalRNA.summarised.all-results.txt \
+	$outDir/Data/${condition1}_vs_${condition2}.summarised.all-results.txt \
 	$outDir/Data/Combined_Score
 cp $outDir/Data/Combined_Score* $outDir/Data/Combined_results/
 mv $outDir/Data/Combined_Score*pdf $outDir/Plots/
