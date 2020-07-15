@@ -1,11 +1,11 @@
 #!/bin/bash
 
-usage() { echo "Usage: $0 -s human/mouse/rat/all -p threads
+usage() { echo "Usage: $0 -s human/mouse/rat/all
 " 1>&2; }
 
-threads=1 # Default CPU number unless overwritten by parameters provided
+#threads=1 # Default CPU number unless overwritten by parameters provided
 
-while getopts ":hs:p:" o; do
+while getopts ":hs:" o; do
     case "${o}" in
 		h)
 			usage
@@ -27,9 +27,6 @@ while getopts ":hs:p:" o; do
 				exit
 			fi
 			;;
-		p)
-			threads="$OPTARG"
-			;;
 		*)
             echo "Error in input parameters!"
 			usage
@@ -48,15 +45,15 @@ fi
 ### Define functions
 function human_setup () {
 	mkdir -p DBs/species_index/human-ncRNAs
-	STAR --runThreadN $threads --runMode genomeGenerate --genomeDir DBs/species_index/human-ncRNAs/ --genomeFastaFiles DBs/human_tRNAs-and-ncRNAs_relative_cdhit.fa --genomeSAindexNbases 8
+	STAR --outTmpDir DBs/species_index/TempHuman/ --runMode genomeGenerate --genomeDir DBs/species_index/human-ncRNAs/ --genomeFastaFiles DBs/human_tRNAs-and-ncRNAs_relative_cdhit.fa --genomeSAindexNbases 8
 }
 function mouse_setup () {
 	mkdir -p DBs/species_index/mouse-ncRNAs
-	STAR --runThreadN $threads --runMode genomeGenerate --genomeDir DBs/species_index/mouse-ncRNAs/ --genomeFastaFiles DBs/mouse_tRNAs-and-ncRNAs_relative_cdhit.fa
+	STAR --outTmpDir DBs/species_index/TempMouse/ --runMode genomeGenerate --genomeDir DBs/species_index/mouse-ncRNAs/ --genomeFastaFiles DBs/mouse_tRNAs-and-ncRNAs_relative_cdhit.fa
 }
 function rat_setup () {
 	mkdir -p DBs/species_index/rat-ncRNAs
-	STAR --runThreadN $threads --runMode genomeGenerate --genomeDir DBs/species_index/rat-ncRNAs/ --genomeFastaFiles DBs/rat_tRNAs-and-ncRNAs_relative_cdhit.fa
+	STAR --outTmpDir DBs/species_index/TempRat/ --runMode genomeGenerate --genomeDir DBs/species_index/rat-ncRNAs/ --genomeFastaFiles DBs/rat_tRNAs-and-ncRNAs_relative_cdhit.fa
 }
 
 ### Set up conda environment
@@ -87,8 +84,6 @@ echo "Installing libgit2..."
 conda install -y -c conda-forge libgit2
 echo "Installing ghostscript..."
 conda install -y -c conda-forge ghostscript
-#echo "Installing openssl 1.0..."
-#conda install -y openssl=1.0 # samtools shared lib error on CentOS system (libcrypto.so.1.0.0). Downgraded openssl
 echo "Installing R packages..."
 Rscript bin/InstallLibs.R
 
@@ -113,5 +108,7 @@ elif [ -z $species ]; then
 	echo "Please use the -s option with 'human', 'mouse', 'rat', or 'all' depending on the type of analyses you intend to run"
 	exit 1
 fi
+
+rm Log.out
 
 echo "Finished"

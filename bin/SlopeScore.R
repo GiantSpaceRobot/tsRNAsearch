@@ -18,8 +18,8 @@ if (length(args)==0) {
 #### Input file
 input1 <- read.table(args[1])
 input2 <- read.table(args[2])
-#input1 <- read.table("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/Test_Slope/Data/Intermediate-files/Everything.cond1.depth")
-#input2 <- read.table("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/Test_Slope/Data/Intermediate-files/Everything.cond2.depth")
+#input1 <- read.table("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/PancreaticCancer_Tumour-vs-Normal_14-7-20/Data/Intermediate-files/DataTransformations/sorted_Everything_ncRNAs.cond1.depth.mean")
+#input2 <- read.table("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/PancreaticCancer_Tumour-vs-Normal_14-7-20/Data/Intermediate-files/DataTransformations/sorted_Everything_ncRNAs.cond2.depth.mean")
 
 if (length(args)==4) {
   GTF <- read.table(args[4], sep = "\t")
@@ -80,6 +80,7 @@ for(subset1 in df1) {
   mean1.sum <- sum(mean(subset1$V3))
   std1.sum <- sum(subset1$V4)
   std1.size <- ifelse(is.na(std1.sum/mean1.sum), 80, std1.sum/mean1.sum) 
+  #std1.size <- ifelse(is.na(std1.sum/mean.coverage), 80, std1.sum/mean.coverage) # Alternative penalty based on mean cov
     # Calculate the relationship between sum of mean and sum of standard deviation
     # If the mean is zero, use standard deviation of 80% as pseudovalue for std1.size
   
@@ -87,15 +88,16 @@ for(subset1 in df1) {
   mean2.sum <- sum(mean(subset2$V3))
   std2.sum <- sum(subset2$V4)
   std2.size <- ifelse(is.na(std2.sum/mean2.sum), 80, std2.sum/mean2.sum) 
+  #std2.size <- ifelse(is.na(std2.sum/mean.coverage), 80, std2.sum/mean.coverage) # Alternative penalty based on mean cov
     # Calculate the relationship between sum of mean and sum of standard deviation
     # If the mean is zero, use standard deviation of 80% as pseudovalue for std1.size
   
   ##### Average both cond1 and cond2 std/mean relationships:
   ### Linear penalty function
   penalty <- mean(c(std1.size, std2.size))/100 # The amount that the distribution score will be penalised 
-  ifelse(std1.size > 80 || std2.size > 80, 
-         penalty <- 1, 
-         penalty <- penalty) # If either condition have a stdev over 80% of mean, increase penalty to max (1)
+  #ifelse(std1.size > 80 || std2.size > 80, 
+  #       penalty <- 1, 
+  #       penalty <- penalty) # If either condition have a stdev over 80% of mean, increase penalty to max (1)
   relative.penalty <- slope.score.raw*penalty
   slope.score <- slope.score.raw - relative.penalty
     results.df[nrow(results.df) + 1,] = list(feature,
@@ -107,7 +109,7 @@ for(subset1 in df1) {
                                            relative.penalty, # Actual penalty 
                                            slope.score)  # Finalised slope score
   
-
+  
 }
 
 results.df <- results.df[order(-as.numeric(results.df$`slope.score`)),]

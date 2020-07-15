@@ -14,3 +14,9 @@ Update now:
 * Bug in Barplots.R: Wrong label randomly being assigned to individual barplots PDF
 * Remove markdown Rscript from this dir
 * Only top 4 tsRNAs shown in combined score FeaturePlot
+* Get rid of long and short PDF. Just the long one is fine.
+* Summary report table in HTML doesn't show slope
+* Remove the 'More Results' section of HTML
+* Combined score not showing in HTML
+* Correct Fisher's combined method for multiple testing?
+* Should SlopeScore.R have penalty function? It currently does not

@@ -7,6 +7,7 @@
 ###-------------------------------------------------------------------------------
 
 library(ggplot2)
+library(dplyr)
 
 args = commandArgs(trailingOnly=TRUE)
 
@@ -55,12 +56,12 @@ for(subset in df) {
   distribution.score <- mean.coverage*subset.std
   half.length <- as.integer(subset.length/2)
   note <- ""
-  if (length(args)==3) {
-    featureRows <- GTF[grep(feature, GTF$V9),]
-    featureRows <- featureRows[1,]
-    geneName <- as.character(sub(".*gene_name *(.*?) *; .*", "\\1", featureRows$V9))
-    feature <- paste0(feature," (",geneName,")")
-  } 
+  #if (length(args)==3) {
+  #  featureRows <- GTF[grep(feature, GTF$V9),]
+  #  featureRows <- featureRows[1,]
+  #  geneName <- as.character(sub(".*gene_name *(.*?) *; .*", "\\1", featureRows$V9))
+  #  feature <- paste0(feature," (",geneName,")")
+  #} 
   ### Count no. of zeros in subset. If over 3/4 values are zero, do not calculate ratios.
   zero.percent <- (sum(subset$V3==0)/subset.length)*100
   if(zero.percent >= 75) {
@@ -118,6 +119,38 @@ for(subset in df) {
                                            note)
 
 }
+
+### Generate combined score
+results.df2 <- results.df %>% select(feature, distribution.score, slope.score, cleavage.score) # Subset
+rownames(results.df2) <- results.df2$feature
+results.df2 <- results.df2 %>% select(-feature)
+results.df2 <- as.data.frame(sapply(results.df2, function(x) (x/max(x))*100)) # Calculate percentages for each column
+results.df2$combined.score <- rowSums(results.df2) # Create combined scores
+rownames(results.df2) <- results.df$feature # Take rownames from old DF
+
+### Create final DF with combined score
+final.percentages.df <- cbind(results.df, "combined.score" = results.df2$combined.score)
+final.percentages.df <- final.percentages.df %>% 
+  rownames_to_column('genes') %>% 
+  arrange(desc(combined.score)) %>%
+  column_to_rownames('genes') # Sort in descending order
+results.df2 <- results.df2 %>% 
+  rownames_to_column('genes') %>% 
+  arrange(desc(combined.score)) %>%
+  column_to_rownames('genes') # Sort in descending order
+is.num <- sapply(results.df2, is.numeric)
+results.df2[is.num] <- lapply(results.df2[is.num], round, 2) # Round all numbers to 2 decimal places
+is.num <- sapply(final.percentages.df, is.numeric)
+final.percentages.df[is.num] <- lapply(final.percentages.df[is.num], round, 2) # Round all numbers to 2 decimal places
+results.df <- final.percentages.df
+
+###
+write.table(results.df2, 
+            file = paste0(args[2], ".relative-score-results.tsv"),
+            quote = FALSE, 
+            sep = "\t",
+            row.names = FALSE,
+            col.names = TRUE)
 
 ###
 write.table(results.df, 
@@ -244,4 +277,41 @@ ggplot(data = newdata.subset, mapping = aes(feature, `slope.score`, color=`slope
        x = "ncRNA/gene", 
        y = "Slope score", 
        subtitle = "Slope score = Sum of slopes between nucleotides\nMax number of features shown is 20")
+dev.off()
+
+
+### Combined score
+results.df <- results.df[order(-results.df$combined.score),]
+newdata <- results.df[complete.cases(results.df), ]  # Remove NAs
+newdata <- newdata[!grepl("Inf", newdata$combined.score),] # Remove Inf
+newdata <- newdata[newdata$mean.coverage > 10, ] # Get high 5' / 3' ratios
+newdata$feature <- factor(newdata$feature, levels = newdata$feature[order(newdata$combined.score)])
+
+# If there are more than 50 features, show top 50
+if(nrow(newdata) > 20){
+  newdata.subset <- head(newdata, n = 20)
+} else {
+  newdata.subset <- newdata
+}
+
+write.table(newdata, 
+            file = paste0(args[2], ".high-combined-score.txt"),
+            quote = FALSE, 
+            sep = "\t",
+            row.names = FALSE,
+            col.names = TRUE)
+
+
+pdf.width <- 7
+pdf(file = paste0(args[2], ".high-combined-score.pdf"), width = pdf.width, height = 5)
+ggplot(data = newdata.subset, mapping = aes(feature, `combined.score`, color=`combined.score`)) +
+  geom_point() +
+  scale_y_continuous(trans='log2') +
+  ggtitle("Feature Combined Score") +
+  coord_flip() +
+  #theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
+  scale_color_gradient(low="blue", high="red") +
+  labs(colour = "Combined\n score", 
+       x = "ncRNA/gene", 
+       y = "Combined score")
 dev.off()

@@ -22,14 +22,14 @@ DEGs <- read.csv(args[6])
 slope.scores.tsRNAs <- read.table(args[7], sep = "\t", header = T)
 slope.scores.ncRNAs <- read.table(args[8], sep = "\t", header = T)
 
-# pvals <- read.table("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/PathTest/Data/FishersMethod_results/Feature-P-values_FisherMethod_pvalues.tsv", sep = "\t", header = T)
-# distribution.scores.tsRNAs <- read.table("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/PathTest/Data/Distribution_results/CytC_vs_TotalRNA_High-distribution-tsRNAsTEST.txt", sep = "\t", header = T)
-# distribution.scores.ncRNAs <- read.table("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/PathTest/Data/Distribution_results/CytC_vs_TotalRNA_High-distribution-ncRNAsTEST.txt", sep = "\t", header = T)
-# cleavage.scores.tsRNAs <- read.table("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/PathTest/Data/Cleavage_results/CytC_vs_TotalRNA_High-Cleavage-tRNAs.tsv", sep = "\t", header = T)
-# cleavage.scores.ncRNAs <- read.table("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/PathTest/Data/Cleavage_results/CytC_vs_TotalRNA_High-Cleavage-ncRNAs.tsv", sep = "\t", header = T)
-# DEGs <- read.csv("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/PathTest/Data/DE_Results/DESeq2/CytC_vs_TotalRNA_DESeq2-output.csv")
-# slope.scores.tsRNAs <- read.table("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/PathTest/Data/Slope_results/CytC_vs_TotalRNA_High-Slope-tRNAs.tsv", sep = "\t", header = T)
-# slope.scores.ncRNAs <- read.table("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/PathTest/Data/Slope_results/CytC_vs_TotalRNA_High-Slope-ncRNAs.tsv", sep = "\t", header = T)
+# pvals <- read.table("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/10-7-20_Test4/Data/FishersMethod_results/Feature-P-values_FisherMethod_pvalues.tsv", sep = "\t", header = T)
+# distribution.scores.tsRNAs <- read.table("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/10-7-20_Test4/Data/Distribution_results/CytC_vs_TotalRNA_High-distribution-tsRNAs.tsv", sep = "\t", header = T)
+# distribution.scores.ncRNAs <- read.table("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/10-7-20_Test4/Data/Distribution_results/CytC_vs_TotalRNA_High-distribution-ncRNAs.tsv", sep = "\t", header = T)
+# cleavage.scores.tsRNAs <- read.table("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/10-7-20_Test4/Data/Cleavage_results/CytC_vs_TotalRNA_High-Cleavage-tRNAs.tsv", sep = "\t", header = T)
+# cleavage.scores.ncRNAs <- read.table("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/10-7-20_Test4/Data/Cleavage_results/CytC_vs_TotalRNA_High-Cleavage-ncRNAs.tsv", sep = "\t", header = T)
+# DEGs <- read.csv("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/10-7-20_Test4/Data/DE_Results/DESeq2/CytC_vs_TotalRNA_DESeq2-output.csv")
+# slope.scores.tsRNAs <- read.table("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/10-7-20_Test4/Data/Slope_results/CytC_vs_TotalRNA_High-Slope-tRNAs.tsv", sep = "\t", header = T)
+# slope.scores.ncRNAs <- read.table("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/10-7-20_Test4/Data/Slope_results/CytC_vs_TotalRNA_High-Slope-ncRNAs.tsv", sep = "\t", header = T)
 
 colnames(DEGs)[1]  <- "feature" # rename column 1 to features for DEG DF
 
@@ -40,13 +40,13 @@ slope.scores <- rbind.data.frame(slope.scores.tsRNAs, slope.scores.ncRNAs)
 #DEGs.cutoff <- DEGs %>% filter(padj < 0.05)
 
 ### Join dataframes
-joined1 <- join(x = pvals, y = distribution.scores, by = "feature")
+joined1 <- join(x = pvals, y = distribution.scores, by = "feature", type = "full")
 joined1.subset <- select(joined1, feature, Fishers.method.pvalue, distribution.score)
-joined2 <- join(x = cleavage.scores, y = DEGs, by = "feature")
+joined2 <- join(x = cleavage.scores, y = DEGs, by = "feature", type = "left")
 joined2.subset <- select(joined2, feature, "DESeq2.Log2FC" = log2FoldChange, "DESeq2.pvalue" = pvalue, "DESeq2.padj" = padj, cleavage.score)
-joined3 <- join(x = slope.scores, y = joined1.subset, by = "feature")
+joined3 <- join(x = slope.scores, y = joined1.subset, by = "feature", type = "full")
 joined3.subset <- select(joined3, feature, Fishers.method.pvalue, distribution.score, slope.score)
-final.df <- join(x = joined3.subset, y = joined2.subset, by = "feature")
+final.df <- join(x = joined3.subset, y = joined2.subset, by = "feature", type = "full")
 final.df$distribution.score <- as.numeric(final.df$distribution.score) # Convert distribution.score column to numeric
 # Add rank columns for each of the metrics:
 #final.df <- final.df %>% mutate(rank.distribution = dense_rank(desc(distribution.score)),

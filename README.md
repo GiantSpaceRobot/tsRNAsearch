@@ -15,7 +15,7 @@ Run the code shown in the window below. This will create a conda environment and
 NOTE: please use conda 4.6 or greater
 
 ```
-git clone https://github.com/GiantSpaceRobot/tsrnasearch.git
+git clone https://github.com/GiantSpaceRobot/tsRNAsearch.git
 cd tsRNAsearch
 bash setup_conda.sh
 conda activate tsrnasearch_env
@@ -28,7 +28,7 @@ bash bin/setup_conda_2.sh -s all
 Alternatively, run the setup.sh script to install required software systemwide:
 
 ```
-git clone https://github.com/GiantSpaceRobot/tsrnasearch.git
+git clone https://github.com/GiantSpaceRobot/tsRNAsearch.git
 cd tsRNAsearch
 #Please indicate the species you wish to analyse using the -s parameter.
 #Options are human/mouse/rat/all.

@@ -23,16 +23,29 @@ library("tibble")
 library("xtable")
 
 my.input = read.csv(args[1], sep = "\t", row.names = 1) # Read input
-#my.input <- read.csv("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/Test_26-6-20/Data/CytC_vs_TotalRNA.summarised.all-results.txt", 
+#my.input <- read.csv("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/PancreaticCancer_Tumour-vs-Normal_14-7-20/Data/Normal_vs_Tumor.summarised.all-results.txt", 
 #                     sep = "\t", row.names = 1)
-my.input[is.na(my.input)] <- 0 # Convert NAs to 0
+
+### Convert NAs into 0 (for scores) and 1 (for p-vals)
+my.input$slope.score[is.na(my.input$slope.score)] <- 0
+my.input$distribution.score[is.na(my.input$distribution.score)] <- 0
+my.input$cleavage.score[is.na(my.input$cleavage.score)] <- 0
+my.input$Fishers.method.pvalue[is.na(my.input$Fishers.method.pvalue)] <- 1
+my.input$DESeq2.padj[is.na(my.input$DESeq2.padj)] <- 1
+
 my.input$Fishers.pval.negLog10 <- -log10(my.input$Fishers.method.pvalue) # Negative log10 of Fisher's method p-values
 my.input$DESeq2.padj.negLog10 <- -log10(my.input$DESeq2.padj) # Negative log10 of DESeq2 p-adj
 my.input$DESeq2.padj.negLog10 <- replace(x = my.input$DESeq2.padj.negLog10, is.infinite(my.input$DESeq2.padj.negLog10), 20) # Replace -log10 of (p-adj = 0) with 20 as it is Inf
 final.df <- my.input %>% select(c(slope.score, distribution.score, cleavage.score, Fishers.pval.negLog10, DESeq2.padj.negLog10)) # Subset DF
 
-final.percentages.df <- as.data.frame(sapply(final.df, function(x) (x/max(x))*100)) # Calculate percentages for each column
-rownames(final.percentages.df) <- rownames(final.df) # Take rownames from old DF
+### Create intermediate DF to Square root transform Slope, Distribution, and Cleavage scores (14-7-20).
+final.df.logs <- final.df
+final.df.logs$slope.score <- sqrt(final.df.logs$slope.score) 
+final.df.logs$distribution.score <- sqrt(final.df$distribution.score)
+final.df.logs$cleavage.score <- sqrt(final.df.logs$cleavage.score)
+
+final.percentages.df <- as.data.frame(sapply(final.df.logs, function(x) (x/max(x))*100)) # Calculate percentages for each column
+rownames(final.percentages.df) <- rownames(final.df.logs) # Take rownames from old DF
 final.percentages.df$combined.score <- rowSums(final.percentages.df) # Create combined scores
 final.percentages.df <- final.percentages.df[,c(6,1:5)]
 final.percentages.df <- final.percentages.df %>% 
