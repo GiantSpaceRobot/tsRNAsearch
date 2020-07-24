@@ -819,6 +819,7 @@ gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dAutoRotatePages=/None \
 	$outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Results.high-cleavage-score.pdf \
 	$outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Results.high-slope-score.pdf
 
+touch $outDir/AnalysisFinished.txt
 
 echo "Finished analysing "$singleFile" on $(date)" # Print pipeline end-time
 echo "_____________________________________________________________________________________________________________________

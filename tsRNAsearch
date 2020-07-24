@@ -292,9 +292,15 @@ gs -sDEVICE=pdfwrite -o $outDir/Plots/${condition1}_vs_${condition2}_Features_ts
 ### Run tsRNAsearch on each RNA-seq file
 for f in $inDir/*; do
 	file_base=$(basename $f)
-	filename="$( cut -d '.' -f 1 <<< "$file_base" )" 
+	#filename="$( cut -d '.' -f 1 <<< "$file_base" )" 
+	# Remove suffix (attempt to remove all possible suffixes)
+	substr=""
+	case $file_base in *.fastq.gz) filename=$(echo "${file_base/.fastq.gz/$substr}");; esac # If fastq.gz suffix in filename, remove
+	case $file_base in *.fq.gz) filename=$(echo "${file_base/.fq.gz/$substr}");; esac # If fq.gz suffix in filename, remove
+	case $file_base in *.fastq) filename=$(echo "${file_base/.fastq/$substr}");; esac # If fastq suffix in filename, remove
+	case $file_base in *.fq) filename=$(echo "${file_base/.fq/$substr}");; esac # If fq suffix in filename, remove
 	analysis="Beginning analysis of $filename using tsRNAsearch"
-	string_padder $analysis
+	string_padder "${analysis}"
 	bin/tsRNAsearch_single.sh \
 		-s "$species" \
 		-f "$f" \

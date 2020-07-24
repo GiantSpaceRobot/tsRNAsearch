@@ -1,10 +1,8 @@
 # tsRNAsearch to-do list
 
-Update after publication:
 * Add batch correction: DESeq2 in-built batch correction for DESeq2 analysis. limma batch correction on RPM-normalised count data for the rest of the pipeline?
 * Add error catching/empty file catching in python and R scripts
 * Use FASTA as input?
-Update now:
 * Fix output directory paths. Pipeline currently doesn't really accept absolute outdir paths
 * Edit pipeline so it cannot remove all FASTQs on system, i.e. make rm specific
 * Shorten file names, they are too long. This causes an error when HTMLs render long PDF paths
@@ -20,3 +18,5 @@ Update now:
 * Combined score not showing in HTML
 * Correct Fisher's combined method for multiple testing?
 * Should SlopeScore.R have penalty function? It currently does not
+* Directory of BAMs as input?
+* Add rough checkpoint prior to running tsRNAsearch-single.sh. If file exists, do not rerun single file analysis
