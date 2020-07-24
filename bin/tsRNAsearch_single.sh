@@ -382,7 +382,12 @@ mkdir -p $outDir/Data_and_Plots
 mkdir -p $outDir/Data_and_Plots/Encoded
 
 singleFile_base=${singleFile##*/}    # Remove pathname
-singleFile_basename="$( cut -d '.' -f 1 <<< "$singleFile_base" )" # Get filename before first occurence of .
+#singleFile_basename="$( cut -d '.' -f 1 <<< "$singleFile_base" )" # Get filename before first occurence of .
+substr=""
+case $singleFile_base in *.fastq.gz) singleFile_basename=$(echo "${singleFile_base/.fastq.gz/$substr}");; esac # If fastq.gz suffix in filename, remove
+case $singleFile_base in *.fq.gz) singleFile_basename=$(echo "${singleFile_base/.fq.gz/$substr}");; esac # If fq.gz suffix in filename, remove
+case $singleFile_base in *.fastq) singleFile_basename=$(echo "${singleFile_base/.fastq/$substr}");; esac # If fastq suffix in filename, remove
+case $singleFile_base in *.fq) singleFile_basename=$(echo "${singleFile_base/.fq/$substr}");; esac # If fq suffix in filename, remove
 if [[ $singleFile == *".gz"* ]]; then
 	suffix="fq.gz"
 	STARparam="--readFilesCommand zcat"
@@ -819,7 +824,6 @@ gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dAutoRotatePages=/None \
 	$outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Results.high-cleavage-score.pdf \
 	$outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Results.high-slope-score.pdf
 
-touch $outDir/AnalysisFinished.txt
 
 echo "Finished analysing "$singleFile" on $(date)" # Print pipeline end-time
 echo "_____________________________________________________________________________________________________________________
