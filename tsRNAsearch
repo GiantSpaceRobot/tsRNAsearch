@@ -44,7 +44,7 @@ skip="no"
 Plots="no"
 remove="no"
 min_read_length=16
-version="tsRNAsearch version 0.31"
+version="tsRNAsearch version 0.30"
 while getopts ":hs:A:t:l:d:f:S:R:e:o:" o; do
     case "${o}" in
 		h)
@@ -141,7 +141,12 @@ count=0
 for fname in $(cat $1); do
 	count=$((count + 1))
 	cond1="$(cut -d ',' -f1 <<< $fname)"
-	cond1base="$(cut -d '.' -f1 <<< $cond1)"
+	substr=""
+	#cond1base="$(cut -d '.' -f1 <<< $cond1)"
+	case $cond1 in *.fastq.gz) cond1base=$(echo "${cond1/.fastq.gz/$substr}");; esac # If fastq.gz suffix in filename, remove
+	case $cond1 in *.fq.gz) cond1base=$(echo "${cond1/.fq.gz/$substr}");; esac # If fq.gz suffix in filename, remove
+	case $cond1 in *.fastq) cond1base=$(echo "${cond1/.fastq/$substr}");; esac # If fastq suffix in filename, remove
+	case $cond1 in *.fq) cond1base=$(echo "${cond1/.fq/$substr}");; esac # If fq suffix in filename, remove
 	echo "Finding file for $fname ($cond1base)..."
 	find $outDir/ -type f -name "$cond1base*tsRNA.depth" -exec cp {} $outDir/Data/Intermediate-files/$2_file$count.tsRNA.depth \; & # Gather tsRNAs
 	find $outDir/ -type f -name "$cond1base*ncRNA.depth" -exec cp {} $outDir/Data/Intermediate-files/$2_file$count.ncRNA.depth \; & # Gather ncRNAs
@@ -292,7 +297,6 @@ gs -sDEVICE=pdfwrite -o $outDir/Plots/${condition1}_vs_${condition2}_Features_ts
 ### Run tsRNAsearch on each RNA-seq file
 for f in $inDir/*; do
 	file_base=$(basename $f)
-	#filename="$( cut -d '.' -f 1 <<< "$file_base" )" 
 	# Remove suffix (attempt to remove all possible suffixes)
 	substr=""
 	case $file_base in *.fastq.gz) filename=$(echo "${file_base/.fastq.gz/$substr}");; esac # If fastq.gz suffix in filename, remove
