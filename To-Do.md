@@ -20,3 +20,4 @@
 * Should SlopeScore.R have penalty function? It currently does not
 * Directory of BAMs as input?
 * Add rough checkpoint prior to running tsRNAsearch-single.sh. If file exists, do not rerun single file analysis
+* samtools temp BAMs being written to execution dir, not specified output dir (likely samtools view)
