@@ -23,8 +23,6 @@ library("tibble")
 library("xtable")
 
 my.input = read.csv(args[1], sep = "\t", row.names = 1) # Read input
-#my.input <- read.csv("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/PancreaticCancer_Tumour-vs-Normal_14-7-20/Data/Normal_vs_Tumor.summarised.all-results.txt", 
-#                     sep = "\t", row.names = 1)
 
 ### Convert NAs into 0 (for scores) and 1 (for p-vals)
 my.input$slope.score[is.na(my.input$slope.score)] <- 0

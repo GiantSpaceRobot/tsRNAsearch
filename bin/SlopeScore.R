@@ -18,8 +18,6 @@ if (length(args)==0) {
 #### Input file
 input1 <- read.table(args[1])
 input2 <- read.table(args[2])
-#input1 <- read.table("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/PancreaticCancer_Tumour-vs-Normal_14-7-20/Data/Intermediate-files/DataTransformations/sorted_Everything_ncRNAs.cond1.depth.mean")
-#input2 <- read.table("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/PancreaticCancer_Tumour-vs-Normal_14-7-20/Data/Intermediate-files/DataTransformations/sorted_Everything_ncRNAs.cond2.depth.mean")
 
 if (length(args)==4) {
   GTF <- read.table(args[4], sep = "\t")

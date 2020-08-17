@@ -28,9 +28,9 @@ if (substring(path.to.files, nchar(path.to.files)) == "/") {
 }
 
   file.CSV <- read.csv(args[4], header=FALSE)
+  Condition1 <- as.character(unique(file.CSV$V2)[1])
+  Condition2 <- as.character(unique(file.CSV$V2)[2])
   lvls.df <- as.data.frame(table(file.CSV$V2))
-  Condition1 <- as.character(lvls.df[,1][1])
-  Condition2 <- as.character(lvls.df[,1][2])
   ReplicateNumber1 <- lvls.df[grep(Condition1, lvls.df$Var1),][1,2]
   ReplicateNumber2 <- lvls.df[grep(Condition2, lvls.df$Var1),][1,2]
 
@@ -137,7 +137,8 @@ groups <- factor(x=c(rep(Condition1, ReplicateNumber1), rep(Condition2, Replicat
   ### Prepare for plot
   df.cols <- length(unique(melted.df$mapped)) # Expand color palette
   mycolors <- colorRampPalette(brewer.pal(11, "RdYlBu"))(df.cols) # Expand RdYlBu to # of colours needed based on DF
-  myplot <- ggplot(melted.df, aes(variable, value, fill = mapped)) +
+  new.melted.df <- melted.df %>% group_by(mapped, variable, Group) %>% summarise(value=sum(value)) # Sum values based on groups (make DF simpler)
+  myplot <- ggplot(new.melted.df, aes(variable, value, fill = mapped)) +
     geom_col() +
     scale_fill_manual(values = mycolors) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +

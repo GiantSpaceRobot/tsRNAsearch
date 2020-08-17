@@ -34,15 +34,6 @@ if (inherits(input5, 'try-error')){
   input5 <- data.frame(feature=character())
 } 
 
-# input1 <- read.table("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/PathTest/Data/DE_Results/DESeq2/DEGs_names-only.txt")
-# input2 <- read.table("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/PathTest/Data/Intermediate-files/DataTransformations/High-distribution-scores_feature-names.txt")
-# input3 <- read.table("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/PathTest/Data/Intermediate-files/Potentially-cleaved-features_feature-names.txt")
-# input4 <- read.table("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/PathTest/Data/FishersMethod_results/FisherMethod_Features.txt", sep = "\t")
-# input4 <- data.frame(gsub(' .*', '' , input4$V1))
-# colnames(input4) <- c("V1")
-# input5 <- read.table("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/PathTest/Data/Intermediate-files/High-slope-score-features_feature-names.txt")
-
-
 geneLists <- c("DE" = input1, #DESeq2 
                "DS" = input2, #Distribution score
                "CS" = input3, #Cleavage score

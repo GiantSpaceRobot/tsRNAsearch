@@ -22,15 +22,6 @@ DEGs <- read.csv(args[6])
 slope.scores.tsRNAs <- read.table(args[7], sep = "\t", header = T)
 slope.scores.ncRNAs <- read.table(args[8], sep = "\t", header = T)
 
-# pvals <- read.table("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/10-7-20_Test4/Data/FishersMethod_results/Feature-P-values_FisherMethod_pvalues.tsv", sep = "\t", header = T)
-# distribution.scores.tsRNAs <- read.table("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/10-7-20_Test4/Data/Distribution_results/CytC_vs_TotalRNA_High-distribution-tsRNAs.tsv", sep = "\t", header = T)
-# distribution.scores.ncRNAs <- read.table("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/10-7-20_Test4/Data/Distribution_results/CytC_vs_TotalRNA_High-distribution-ncRNAs.tsv", sep = "\t", header = T)
-# cleavage.scores.tsRNAs <- read.table("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/10-7-20_Test4/Data/Cleavage_results/CytC_vs_TotalRNA_High-Cleavage-tRNAs.tsv", sep = "\t", header = T)
-# cleavage.scores.ncRNAs <- read.table("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/10-7-20_Test4/Data/Cleavage_results/CytC_vs_TotalRNA_High-Cleavage-ncRNAs.tsv", sep = "\t", header = T)
-# DEGs <- read.csv("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/10-7-20_Test4/Data/DE_Results/DESeq2/CytC_vs_TotalRNA_DESeq2-output.csv")
-# slope.scores.tsRNAs <- read.table("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/10-7-20_Test4/Data/Slope_results/CytC_vs_TotalRNA_High-Slope-tRNAs.tsv", sep = "\t", header = T)
-# slope.scores.ncRNAs <- read.table("/home/paul/Documents/Pipelines/Analyses_tsRNAsearch/10-7-20_Test4/Data/Slope_results/CytC_vs_TotalRNA_High-Slope-ncRNAs.tsv", sep = "\t", header = T)
-
 colnames(DEGs)[1]  <- "feature" # rename column 1 to features for DEG DF
 
 ### Combine tsRNA and ncRNA dataframes
