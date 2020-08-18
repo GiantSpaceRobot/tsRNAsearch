@@ -243,6 +243,10 @@ if [ ! -s "$expFile" ]; then
 	echo "Error: The experimental layout file provided is empty or does not exist: $expFile"
 	exit 1
 fi
+if [ $(perl -lne 'print $. if(/^$/)' $expFile) ]; then
+	echo "Error: Empty lines in the experimental layout file ($expFile). Please remove these and retry"
+	exit 1
+fi
 
 ### Define conditions
 condition1=$( awk -F ',' '{print $2}' "$expFile" | uniq | head -n 1 ) # Get the first condition name
