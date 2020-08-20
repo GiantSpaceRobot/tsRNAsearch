@@ -390,7 +390,7 @@ DESeq2.function <- function(path.to.files){
   #}
   pdf.width <- 7
   pdf(file = paste0(path.to.files, args[2], "_tsRNAs.high-DE-negLog10_padj.pdf"), width = pdf.width, height = 5)
-  print(ggplot(data = tsRNAs.df.subset, mapping = aes(features, 
+  try(print(ggplot(data = tsRNAs.df.subset, mapping = aes(features, 
                                               tsRNAs.df.subset$negLog10, 
                                               color=tsRNAs.df.subset$negLog10)) +
     geom_point() +
@@ -403,7 +403,7 @@ DESeq2.function <- function(path.to.files){
     labs(colour = "-Log10\n   of \n  padj", 
          x = "tRNAs", 
          y = "-Log10 of padj", 
-         subtitle = "Max number of features shown is 20"))
+         subtitle = "Max number of features shown is 20")))
   dev.off()
   
   ### Plot ncRNAs:
@@ -414,7 +414,7 @@ DESeq2.function <- function(path.to.files){
   #}
   pdf.width <- 7
   pdf(file = paste0(path.to.files, args[2], "_ncRNAs.high-DE-negLog10_padj.pdf"), width = pdf.width, height = 5)
-  print(ggplot(data = ncRNAs.df.subset, mapping = aes(features, 
+  try(print(ggplot(data = ncRNAs.df.subset, mapping = aes(features, 
                                                 ncRNAs.df.subset$negLog10, 
                                                 color=ncRNAs.df.subset$negLog10)) +
     geom_point() +
@@ -427,7 +427,7 @@ DESeq2.function <- function(path.to.files){
     labs(colour = "-Log10\n   of \n  padj", 
          x = "ncRNAs", 
          y = "-Log10 of padj", 
-         subtitle = "Max number of features shown is 20"))
+         subtitle = "Max number of features shown is 20")))
   dev.off()
   
   ### checkpoint

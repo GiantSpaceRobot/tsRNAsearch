@@ -20,3 +20,5 @@
 * Directory of BAMs as input?
 * Add rough checkpoint prior to running tsRNAsearch-single.sh. If file exists, do not rerun single file analysis
 * samtools temp BAMs being written to execution dir, not specified output dir (likely samtools view)
+* DESeq2 tRNA plots not sorted correctly (mouse mito tRNA pipeline version)
+* Add mito tRNAs to human and rat DBs
