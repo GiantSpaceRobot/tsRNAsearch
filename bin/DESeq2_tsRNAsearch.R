@@ -140,7 +140,7 @@ DESeq2.function <- function(path.to.files){
 
   ### Read files
   path.to.files <- myPath
-  file.names <- dir(path.to.files, pattern =".count")
+  file.names <- dir(path.to.files, pattern ="\\.count")
   cDataAll <- NULL
   for (i in 1:length(file.names)){
     full.path <- paste0(path.to.files, file.names[i])
@@ -158,8 +158,8 @@ DESeq2.function <- function(path.to.files){
   
   ###
   groups <- factor(x=c(rep(Condition1, ReplicateNumber1), rep(Condition2, ReplicateNumber2)), levels=c(Condition1, Condition2))
-  tpm <- t(t(cDataAll)/colSums(cDataAll))*1e6
-  inlog <- log(tpm)
+  RPM <- t(t(cDataAll)/colSums(cDataAll))*1e6
+  inlog <- log(RPM)
   colLabel <- c(rep("#E41A1C", ReplicateNumber1), rep("#377EB8", ReplicateNumber2))
   colTy <- c(rep(1:ReplicateNumber1, ReplicateNumber1), rep(1:ReplicateNumber2, ReplicateNumber2))
   
@@ -168,7 +168,7 @@ DESeq2.function <- function(path.to.files){
   if((ReplicateNumber1==1) & (ReplicateNumber2==1)) {    # If replicate number = 1, stop analysis
     print("    Single replicate analysis, skipping formal DESeq2 analysis and carrying out single Log2 fold comparison instead...")
     log2FC.cutoff <- 1.5  # Log2FC cut-off can be changed here
-    log2.df <- log2(tpm)  # Log2 transformation
+    log2.df <- log2(RPM)  # Log2 transformation
     log2.df[which(!is.finite(log2.df))] <- 0 # Convert all Inf/-Inf/NA to 0
     log2FC <- (log2.df[,1] - log2.df[,2]) # Get Log2 fold change
     log2FC.df <- data.frame(log2.df[,1], log2.df[,2], log2FC)
@@ -193,26 +193,37 @@ DESeq2.function <- function(path.to.files){
       
   } else {   # If replicate numbers are greater than 1:
   ### Create a density plot
-  pdf(paste0(path.to.files, "DE_Results/", ResultsFile, "_Density-Plot.pdf"),
-      width=12,height=12)
-  plot(density(inlog[,1]), 
-       ylim=c(0,0.4), 
+  pdf(paste0(path.to.files, "DE_Results/", ResultsFile, "_Density-Plot.pdf"))
+    max.density <- 0
+    for(i in 1:ncol(RPM)){
+      my.density <- density(inlog[,i])
+      if(max(my.density$y) > max.density){
+        max.density <- max(my.density$y)
+      }
+    }
+    inlog.density.ymax <- max.density*1.2 # Get y max and add 20% 
+    plot(density(inlog[,1]), 
+       #ylim=c(0,0.2), 
+       ylim=c(0,inlog.density.ymax),
        main="Density plot of counts per gene", 
        lty=colTy[1], 
-       xlab="Log of TPM per gene", 
+       xlab="Log of RPM per gene", 
        ylab="Density", 
        col=colLabel[1])
-  for(i in 2:ncol(tpm)){
-   lines(density(inlog[,i]), lty=colTy[i], col=colLabel[i])
+  for(i in 2:ncol(RPM)){
+    lines(density(inlog[,i]), lty=colTy[i], col=colLabel[i])
   }
-  legend("topright", legend=colnames(tpm), lty=colTy, col=colLabel)
+  legend("topright", legend=colnames(RPM), lty=colTy, col=colLabel)
   garbage <- dev.off()
   
   ### checkpoint
   print("Checkpoint 4")
 
   ### Differential Expression Analysis
-  colData <- DataFrame(condition=groups) 
+  colData <- data.frame(condition=groups)
+  rownames(colData) <- c(condition1reps, condition2reps)
+  #new.names <- (gsub(pattern = ".collapsed.all-features.count", replacement = "", x = file.names))
+  #rownames(colData) <- new.names
   dds <- DESeqDataSetFromMatrix(cDataAll, colData, formula(~condition))
   dds <- DESeq(dds)
   res <- results(dds, cooksCutoff=FALSE)
@@ -264,16 +275,17 @@ DESeq2.function <- function(path.to.files){
   sampleDists <- data.frame(sampleDists)
   colnames(sampleDists) <- gsub(x = colnames(sampleDists), pattern = ".collapsed.all.features.count", replacement = "") # Remove string from colnames
   rownames(sampleDists) <- gsub(x = rownames(sampleDists), pattern = ".collapsed.all.features.count", replacement = "") # Remove string from rownames 
-  pdf(paste0(path.to.files, "DE_Results/", ResultsFile, "_Distance-Matrix.pdf"),
-      width=12,height=12)
-  par(mar=c(6,4,4,5)+0.1) 
+  #pdf(paste0(path.to.files, "DE_Results/", ResultsFile, "_Distance-Matrix.pdf"),
+  #    width=12,height=12)
+  #par(mar=c(6,4,4,5)+0.1) 
+  pdf(paste0(path.to.files, "DE_Results/", ResultsFile, "_Distance-Matrix.pdf"))
   heatmap.2(as.matrix(sampleDists), key=F, trace="none",
             col=colorpanel(100, "black", "white"),
             #ColSideColors=mycols[file.names], 
             #RowSideColors=mycols[file.names],
             #cexRow = 0.8,
             #cexCol = 0.8,
-            margins=c(12,10),
+            #margins=c(12,10),
             srtCol=45,
             main="Sample Distance Matrix")
   garbage <- dev.off()
@@ -283,30 +295,42 @@ DESeq2.function <- function(path.to.files){
   
   ### Principal component analysis
   #Tpm PCA plot (not DESeq2)
-  d <- dist(t(tpm))
+  d <- dist(t(RPM))
   fit=cmdscale(d, eig=TRUE, k=2)
   x=fit$points[,1]
   y=fit$points[,2]
-  names(x) <- gsub(x = names(x), pattern = ".collapsed.all.features.count", replacement = "") # Remove string from names
-  pdf(paste0(path.to.files, "DE_Results/", ResultsFile, "_tpm-PCA.pdf"),
-      width=8,height=8)
-  par(xpd = T, mar = par()$mar + c(5,4,4,8))
-  plot(x, y, 
-       type="p", 
-       pch=20, 
-       col=colLabel,
-       bty="L")
-  box()
-  legend("right", 
-         inset=c(-0.2,0), # -0.5,0 to push labels to the right 
-         pch=20,
-         col=colLabel,
-         cex = 0.7, 
-         legend=names(x),
-         xpd = TRUE,
-         bty = "n",
-         lty=NULL)
-  garbage <- dev.off()
+  #print(length(x))
+  #print(length(y))
+  ### ggplot2 scatterplot
+  gg.df <- data.frame(cbind("PC1" = x, "PC2" = y))
+  gg.df$Group <- colData$condition
+  my.pca <- ggplot(gg.df, aes(PC1, PC2, color = Group, shape = Group)) +
+    geom_point() +
+    geom_text_repel(label=rownames(gg.df), show.legend = F) +
+    ggtitle("Principal Component Analysis")
+  ggsave(width = 7, height = 5, 
+         filename = paste0(path.to.files, "DE_Results/", ResultsFile, "_RPM-PCA.pdf"), 
+         plot = my.pca) # Save plot using ggplot2 ggsave (error occured using normal R PDF save)
+  ### Old PCA
+  #names(x) <- gsub(x = names(x), pattern = ".collapsed.all.features.count", replacement = "") # Remove string from names
+  # pdf(paste0(path.to.files, "DE_Results/", ResultsFile, "_RPM-PCA_old.pdf"))
+  # #par(xpd = T, mar = par()$mar + c(5,4,4,8))
+  # plot(x, y, 
+  #      type="p", 
+  #      pch=20, 
+  #      col=colLabel,
+  #      bty="L")
+  # box()
+  # legend("right", 
+  #        inset=c(-0.2,0), # -0.5,0 to push labels to the right 
+  #        pch=20,
+  #        col=colLabel,
+  #        cex = 0.7, 
+  #        legend=names(x),
+  #        xpd = TRUE,
+  #        bty = "n",
+  #        lty=NULL)
+  # garbage <- dev.off()
 
   ### checkpoint
   print("Checkpoint 8")
@@ -390,9 +414,7 @@ DESeq2.function <- function(path.to.files){
   #}
   pdf.width <- 7
   pdf(file = paste0(path.to.files, args[2], "_tsRNAs.high-DE-negLog10_padj.pdf"), width = pdf.width, height = 5)
-  try(print(ggplot(data = tsRNAs.df.subset, mapping = aes(features, 
-                                              tsRNAs.df.subset$negLog10, 
-                                              color=tsRNAs.df.subset$negLog10)) +
+  try(print(ggplot(data = tsRNAs.df.subset, mapping = aes(features, negLog10, color=negLog10)) +
     geom_point() +
     ggtitle("DE Analysis - tRNAs") +
     theme(axis.text.x = element_text(size=7)) + # Move x axis label down
@@ -414,9 +436,7 @@ DESeq2.function <- function(path.to.files){
   #}
   pdf.width <- 7
   pdf(file = paste0(path.to.files, args[2], "_ncRNAs.high-DE-negLog10_padj.pdf"), width = pdf.width, height = 5)
-  try(print(ggplot(data = ncRNAs.df.subset, mapping = aes(features, 
-                                                ncRNAs.df.subset$negLog10, 
-                                                color=ncRNAs.df.subset$negLog10)) +
+  try(print(ggplot(data = ncRNAs.df.subset, mapping = aes(features, negLog10, color=negLog10)) +
     geom_point() +
     ggtitle("DE Analysis - ncRNAs") +
     theme(axis.text.x = element_text(size=7)) +
@@ -438,7 +458,9 @@ DESeq2.function <- function(path.to.files){
                   lab = rownames(res),
                   x = 'log2FoldChange',
                   y = 'padj',
-                  xlim = c(-5, 8),  
+                  xlim = c(min(res$log2FoldChange, na.rm=TRUE),
+                           max(res$log2FoldChange, na.rm=TRUE)),
+                  ylim = c(0, max(-log10(res$padj), na.rm=TRUE) + 1),
                   pCutoff = 0.05, 
                   FCcutoff = 0.5)#,
                   #labSize = 3.0)

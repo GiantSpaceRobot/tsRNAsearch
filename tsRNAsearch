@@ -273,7 +273,7 @@ gs -sDEVICE=pdfwrite -o $outDir/Plots/${condition1}_vs_${condition2}_BarPlot_Raw
 gs -sDEVICE=pdfwrite -o $outDir/Plots/Barplot_All-Samples.pdf -q -g2980x4200 -c showpage
 gs -sDEVICE=pdfwrite -o $outDir/Plots/${condition1}_tRNA-read-alignment-lengths.pdf -q -g2980x4200 -c showpage
 gs -sDEVICE=pdfwrite -o $outDir/Plots/${condition2}_tRNA-read-alignment-lengths.pdf -q -g2980x4200 -c showpage
-gs -sDEVICE=pdfwrite -o $outDir/Plots/${condition1}_vs_${condition2}_tpm-PCA.pdf -q -g2980x4200 -c showpage
+gs -sDEVICE=pdfwrite -o $outDir/Plots/${condition1}_vs_${condition2}_RPM-PCA.pdf -q -g2980x4200 -c showpage
 gs -sDEVICE=pdfwrite -o $outDir/Plots/${condition1}_vs_${condition2}_Distance-Matrix.pdf -q -g2980x4200 -c showpage
 gs -sDEVICE=pdfwrite -o $outDir/Plots/${condition1}_vs_${condition2}_VolcanoPlot.pdf -q -g2980x4200 -c showpage
 gs -sDEVICE=pdfwrite -o $outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-DE-negLog10_padj.pdf -q -g2980x4200 -c showpage
@@ -788,6 +788,12 @@ cat $outDir/Data/Intermediate-files/Count_Header_File.txt $outDir/Data/Intermedi
 cat $outDir/Data/Intermediate-files/Count_Header_File.txt $outDir/Data/Intermediate-files/FCount.all-features.raw.Count \
 	> $outDir/Data/All-Features.Raw-count.tsv
 
+string_padder "Created barplots..."
+### Create stacked barplots for each tRNA species per sample and vice versa
+Rscript bin/StackedBarplots.R \
+	$outDir/Data/ \
+	$outDir/Plots/Stacked-Barplot &
+
 ### Create barplot for each sample and carry out t-test of ncRNA feature numbers
 Rscript bin/Barplots.R \
 	$outDir/Data/ \
@@ -945,6 +951,10 @@ echo "
 <br />
 <embed src="Plots/Barplot_All-Samples.pdf" width="800px" height="800px" />
 <br />
+<br />Proporation of each tRNA species by sample 
+<br />
+<embed src="Plots/Stacked-Barplot_tRNA-species-per-sample.pdf" width="800px" height="800px" />
+<br />
 <body><h3>Venn diagram comparing the three methods used (DESeq2, distribution algorithm, cleavage algorithm)</h3>
 <img src="Plots/${condition1}_vs_${condition2}_VennDiagram.png" alt="Method comparison venn diagram" width="500" height="500">
 <br />
@@ -970,7 +980,7 @@ $summary_results_html
 <body><h2>Differential Expression Results (DESeq2)</h2>
 <br />Principal Component Analysis (PCA) of all samples
 <br />
-<embed src="Plots/${condition1}_vs_${condition2}_tpm-PCA.pdf" width="800px" height="800px" />
+<embed src="Plots/${condition1}_vs_${condition2}_RPM-PCA.pdf" width="800px" height="800px" />
 <br /> <br />Sample distance matrix
 <br />
 <embed src="Plots/${condition1}_vs_${condition2}_Distance-Matrix.pdf" width="800px" height="800px" />
@@ -1123,6 +1133,10 @@ $(cat $outDir/Plots/Encoded/${condition1}_vs_${condition2}_BarPlot_RPM-normalise
 
 $(cat $outDir/Plots/Encoded/Barplot_All-Samples.pdf.txt)
 
+### Proportion of each tRNA species by sample
+
+$(cat $outDir/Plots/Encoded/Stacked-Barplot_tRNA-species-per-sample.pdf.txt)
+
 ## Venn diagram comparing the three methods used (DESeq2, distribution algorithm, cleavage algorithm)
 
 $(cat $outDir/Plots/Encoded/${condition1}_vs_${condition2}_VennDiagram.png.txt)
@@ -1175,7 +1189,7 @@ $(cat $outDir/Plots/Encoded/${condition1}_vs_${condition2}_Features_High-combine
 
 ### Principal Component Analysis (PCA) of all samples
 
-$(cat $outDir/Plots/Encoded/${condition1}_vs_${condition2}_tpm-PCA.pdf.txt)
+$(cat $outDir/Plots/Encoded/${condition1}_vs_${condition2}_RPM-PCA.pdf.txt)
 
 ### Sample distance matrix
 
@@ -1366,58 +1380,59 @@ rm Run-Summary.Rmd
 #cd $my_dir
 #rm $outDir/Data/Predicted-tsRNA-types_*.txt # Remove unnecessary files
 
-gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dAutoRotatePages=/None \
-	-sOutputFile=$outDir/${condition1}_vs_${condition2}.Results-summary.long.pdf \
-	additional-files/tsRNAsearch_page.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_Raw-readcounts.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_RPM-normalised.pdf \
-	$outDir/Plots/Barplot_All-Samples.pdf \
-	$outDir/Plots/${condition1}_tRNA-read-alignment-lengths.pdf \
-	$outDir/Plots/${condition2}_tRNA-read-alignment-lengths.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_tpm-PCA.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_Distance-Matrix.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_VennDiagram.pdf \
-	additional-files/tsRNAsearch_Combined_page.pdf \
-	$outDir/Plots/Combined_Score.tsRNAs.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_Features_High-combined-score-tsRNAs.pdf \
-	$outDir/Plots/Combined_Score.ncRNAs.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_Features_High-combined-score-ncRNAs.pdf
-	additional-files/tsRNAsearch_DESeq2_page.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_VolcanoPlot.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-DE-negLog10_padj.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-tsRNAs.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_ncRNAs.high-DE-negLog10_padj.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-ncRNAs.pdf \
-	additional-files/tsRNAsearch_Distribution_page.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-distribution-score.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-tsRNAs.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_ncRNAs.high-distribution-score.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-ncRNAs.pdf \
-	additional-files/tsRNAsearch_Slope_page.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_All-tsRNA-Features_Slope.high-slope-score.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_Features_High-slope-score-tsRNAs.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_All-ncRNA-Features_Slope.high-slope-score.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_Features_High-slope-score-ncRNAs.pdf \
-	additional-files/tsRNAsearch_Cleavage_page.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-cleavage-score.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-tsRNAs.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_ncRNAs.high-cleavage-score.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-ncRNAs.pdf \
-	additional-files/tsRNAsearch_Fishers_page.pdf \
-	$outDir/Plots/Feature-P-values_tsRNAs.low.p.values.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_Features_Fishers-method-tsRNAs.pdf \
-	$outDir/Plots/Feature-P-values_ncRNAs.low.p.values.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_Features_Fishers-method-ncRNAs.pdf
+#gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dAutoRotatePages=/None \
+#	-sOutputFile=$outDir/${condition1}_vs_${condition2}.Results-summary.long.pdf \
+#	additional-files/tsRNAsearch_page.pdf \
+#	$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_Raw-readcounts.pdf \
+#	$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_RPM-normalised.pdf \
+#	$outDir/Plots/Barplot_All-Samples.pdf \
+#	$outDir/Plots/${condition1}_tRNA-read-alignment-lengths.pdf \
+#	$outDir/Plots/${condition2}_tRNA-read-alignment-lengths.pdf \
+#	$outDir/Plots/${condition1}_vs_${condition2}_RPM-PCA.pdf \
+#	$outDir/Plots/${condition1}_vs_${condition2}_Distance-Matrix.pdf \
+#	$outDir/Plots/${condition1}_vs_${condition2}_VennDiagram.pdf \
+#	additional-files/tsRNAsearch_Combined_page.pdf \
+#	$outDir/Plots/Combined_Score.tsRNAs.pdf \
+#	$outDir/Plots/${condition1}_vs_${condition2}_Features_High-combined-score-tsRNAs.pdf \
+#	$outDir/Plots/Combined_Score.ncRNAs.pdf \
+#	$outDir/Plots/${condition1}_vs_${condition2}_Features_High-combined-score-ncRNAs.pdf
+#	additional-files/tsRNAsearch_DESeq2_page.pdf \
+#	$outDir/Plots/${condition1}_vs_${condition2}_VolcanoPlot.pdf \
+#	$outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-DE-negLog10_padj.pdf \
+#	$outDir/Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-tsRNAs.pdf \
+#	$outDir/Plots/${condition1}_vs_${condition2}_ncRNAs.high-DE-negLog10_padj.pdf \
+#	$outDir/Plots/${condition1}_vs_${condition2}_Features_Differentially-expressed-ncRNAs.pdf \
+#	additional-files/tsRNAsearch_Distribution_page.pdf \
+#	$outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-distribution-score.pdf \
+#	$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-tsRNAs.pdf \
+#	$outDir/Plots/${condition1}_vs_${condition2}_ncRNAs.high-distribution-score.pdf \
+#	$outDir/Plots/${condition1}_vs_${condition2}_Features_High-distribution-ncRNAs.pdf \
+#	additional-files/tsRNAsearch_Slope_page.pdf \
+#	$outDir/Plots/${condition1}_vs_${condition2}_All-tsRNA-Features_Slope.high-slope-score.pdf \
+#	$outDir/Plots/${condition1}_vs_${condition2}_Features_High-slope-score-tsRNAs.pdf \
+#	$outDir/Plots/${condition1}_vs_${condition2}_All-ncRNA-Features_Slope.high-slope-score.pdf \
+#	$outDir/Plots/${condition1}_vs_${condition2}_Features_High-slope-score-ncRNAs.pdf \
+#	additional-files/tsRNAsearch_Cleavage_page.pdf \
+#	$outDir/Plots/${condition1}_vs_${condition2}_tsRNAs.high-cleavage-score.pdf \
+#	$outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-tsRNAs.pdf \
+#	$outDir/Plots/${condition1}_vs_${condition2}_ncRNAs.high-cleavage-score.pdf \
+#	$outDir/Plots/${condition1}_vs_${condition2}_Features_Potentially-cleaved-ncRNAs.pdf \
+#	additional-files/tsRNAsearch_Fishers_page.pdf \
+#	$outDir/Plots/Feature-P-values_tsRNAs.low.p.values.pdf \
+#	$outDir/Plots/${condition1}_vs_${condition2}_Features_Fishers-method-tsRNAs.pdf \
+#	$outDir/Plots/Feature-P-values_ncRNAs.low.p.values.pdf \
+#	$outDir/Plots/${condition1}_vs_${condition2}_Features_Fishers-method-ncRNAs.pdf
 
 ### PDF assembly using in-built GhostScript
 gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dAutoRotatePages=/None \
-	-sOutputFile=$outDir/${condition1}_vs_${condition2}.Results-summary.short.pdf \
+	-sOutputFile=$outDir/${condition1}_vs_${condition2}.Results-summary.pdf \
 	additional-files/tsRNAsearch_page.pdf \
+	$outDir/Plots/${condition1}_vs_${condition2}_RPM-PCA.pdf \
+	$outDir/Plots/${condition1}_vs_${condition2}_Distance-Matrix.pdf \
 	$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_Raw-readcounts.pdf \
 	$outDir/Plots/${condition1}_vs_${condition2}_BarPlot_RPM-normalised.pdf \
 	$outDir/Plots/Barplot_All-Samples.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_tpm-PCA.pdf \
-	$outDir/Plots/${condition1}_vs_${condition2}_Distance-Matrix.pdf \
+	$outDir/Plots/Stacked-Barplot_tRNA-species-per-sample.pdf \
 	$outDir/Plots/${condition1}_vs_${condition2}_VennDiagram.pdf \
 	additional-files/tsRNAsearch_Combined_page.pdf \
 	$outDir/Plots/Combined_Score.tsRNAs.pdf \

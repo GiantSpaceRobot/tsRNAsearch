@@ -14,11 +14,13 @@
 * Get rid of long and short PDF. Just the long one is fine.
 * Summary report table in HTML doesn't show slope
 * Remove the 'More Results' section of HTML
-* Combined score not showing in HTML
+* Combined score not showing in HTML: update ResultsTable.R to include Combined scores
 * Correct Fisher's combined method for multiple testing?
-* Should SlopeScore.R have penalty function? It currently does not
 * Directory of BAMs as input?
 * Add rough checkpoint prior to running tsRNAsearch-single.sh. If file exists, do not rerun single file analysis
 * samtools temp BAMs being written to execution dir, not specified output dir (likely samtools view)
-* DESeq2 tRNA plots not sorted correctly (mouse mito tRNA pipeline version)
+* DESeq2 tRNA plots not sorted correctly (mouse mito tRNA pipeline version) (quick)
 * Add mito tRNAs to human and rat DBs
+* Add MultiQC (quick)
+* Combined score plots fail to generate when n=1
+* Is SupCTA in results? Not in JCI epilepsy results, possibly removed due to low coverage?
