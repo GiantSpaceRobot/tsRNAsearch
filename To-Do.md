@@ -2,7 +2,6 @@
 
 * Add batch correction: DESeq2 in-built batch correction for DESeq2 analysis. limma batch correction on RPM-normalised count data for the rest of the pipeline?
 * Add error catching/empty file catching in python and R scripts
-* Use FASTA as input?
 * Fix output directory paths. Pipeline currently doesn't really accept absolute outdir paths
 * Edit pipeline so it cannot remove all FASTQs on system, i.e. make rm specific
 * Shorten file names, they are too long. This causes an error when HTMLs render long PDF paths
@@ -26,3 +25,4 @@
 * Is SupCTA in results? Not in JCI epilepsy results, possibly removed due to low coverage?
 * Combined-score score plot isn't generated!
 * DESeq2 padj score defaults to 100 when there are no DE features?
+* Add try catch or error check for wrong file suffixes

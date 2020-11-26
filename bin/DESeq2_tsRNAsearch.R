@@ -257,39 +257,46 @@ DESeq2.function <- function(path.to.files){
     #stop("Error: Could not apply transformation to data. Aborted DESeq2 analysis.")
   }
   
-  ### Create a histogram
-  pdf(paste0(path.to.files, "DE_Results/", ResultsFile, "_Histogram.pdf"),
+  tryCatch({
+    #I hit an error with small amounts of data and Histogram generation
+    ### Create a histogram
+    pdf(paste0(path.to.files, "DE_Results/", ResultsFile, "_Histogram.pdf"),
       width=12,height=12)
-  hist(assay(rld))
-  garbage <- dev.off()
-  
-  ### checkpoint
-  print("Checkpoint 6")
+    hist(assay(rld))
+    garbage <- dev.off() 
 
-  ### Convert the rld transformation into a matrix
-  rld.matrx <- assay(rld)   
-  rld.df <- data.frame(rld.matrx)
-  
-  ### Sample distance heatmap
-  sampleDists <- as.matrix(dist(t(assay(rld))))
-  sampleDists <- data.frame(sampleDists)
-  colnames(sampleDists) <- gsub(x = colnames(sampleDists), pattern = ".collapsed.all.features.count", replacement = "") # Remove string from colnames
-  rownames(sampleDists) <- gsub(x = rownames(sampleDists), pattern = ".collapsed.all.features.count", replacement = "") # Remove string from rownames 
-  #pdf(paste0(path.to.files, "DE_Results/", ResultsFile, "_Distance-Matrix.pdf"),
-  #    width=12,height=12)
-  #par(mar=c(6,4,4,5)+0.1) 
-  pdf(paste0(path.to.files, "DE_Results/", ResultsFile, "_Distance-Matrix.pdf"))
-  heatmap.2(as.matrix(sampleDists), key=F, trace="none",
-            col=colorpanel(100, "black", "white"),
-            #ColSideColors=mycols[file.names], 
-            #RowSideColors=mycols[file.names],
-            #cexRow = 0.8,
-            #cexCol = 0.8,
-            #margins=c(12,10),
-            srtCol=45,
-            main="Sample Distance Matrix")
-  garbage <- dev.off()
-  
+    ### checkpoint
+    print("Checkpoint 6")
+
+    ### Convert the rld transformation into a matrix
+    rld.matrx <- assay(rld)   
+    rld.df <- data.frame(rld.matrx)
+    
+    ### Sample distance heatmap
+    sampleDists <- as.matrix(dist(t(assay(rld))))
+    sampleDists <- data.frame(sampleDists)
+    colnames(sampleDists) <- gsub(x = colnames(sampleDists), pattern = ".collapsed.all.features.count", replacement = "") # Remove string from colnames
+    rownames(sampleDists) <- gsub(x = rownames(sampleDists), pattern = ".collapsed.all.features.count", replacement = "") # Remove string from rownames 
+    pdf(paste0(path.to.files, "DE_Results/", ResultsFile, "_Distance-Matrix.pdf"))
+    heatmap.2(as.matrix(sampleDists), key=F, trace="none",
+              col=colorpanel(100, "black", "white"),
+              #ColSideColors=mycols[file.names], 
+              #RowSideColors=mycols[file.names],
+              #cexRow = 0.8,
+              #cexCol = 0.8,
+              #margins=c(12,10),
+              srtCol=45,
+              main="Sample Distance Matrix")
+    garbage <- dev.off()
+  }, warning = function(w) {
+    # Do nothing
+  }, error = function(e) {
+    print("Failed to assay read log data: invalid number of breaks")
+    print("Checkpoint 6")
+  }, finally = {
+    # Do nothing
+  })
+ 
   ### checkpoint
   print("Checkpoint 7")
   

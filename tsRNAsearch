@@ -147,6 +147,8 @@ for fname in $(cat $1); do
 	case $cond1 in *.fq.gz) cond1base=$(echo "${cond1/.fq.gz/$substr}");; esac # If fq.gz suffix in filename, remove
 	case $cond1 in *.fastq) cond1base=$(echo "${cond1/.fastq/$substr}");; esac # If fastq suffix in filename, remove
 	case $cond1 in *.fq) cond1base=$(echo "${cond1/.fq/$substr}");; esac # If fq suffix in filename, remove
+	case $cond1 in *.fa) cond1base=$(echo "${cond1/.fa/$substr}");; esac # If fq suffix in filename, remove
+	case $cond1 in *.fa.gz) cond1base=$(echo "${cond1/.fa.gz/$substr}");; esac # If fq suffix in filename, remove
 	echo "Finding file for $fname ($cond1base)..."
 	find $outDir/ -type f -name "$cond1base*tsRNA.depth" -exec cp {} $outDir/Data/Intermediate-files/$2_file$count.tsRNA.depth \; & # Gather tsRNAs
 	find $outDir/ -type f -name "$cond1base*ncRNA.depth" -exec cp {} $outDir/Data/Intermediate-files/$2_file$count.ncRNA.depth \; & # Gather ncRNAs
@@ -307,6 +309,8 @@ for f in $inDir/*; do
 	case $file_base in *.fq.gz) filename=$(echo "${file_base/.fq.gz/$substr}");; esac # If fq.gz suffix in filename, remove
 	case $file_base in *.fastq) filename=$(echo "${file_base/.fastq/$substr}");; esac # If fastq suffix in filename, remove
 	case $file_base in *.fq) filename=$(echo "${file_base/.fq/$substr}");; esac # If fq suffix in filename, remove
+	case $file_base in *.fa) filename=$(echo "${file_base/.fa/$substr}");; esac # If fa suffix in filename, remove
+	case $file_base in *.fa.gz) filename=$(echo "${file_base/.fa.gz/$substr}");; esac # If fa.gz suffix in filename, remove
 	analysis="Beginning analysis of $filename using tsRNAsearch"
 	string_padder "${analysis}"
 	bin/tsRNAsearch_single.sh \
@@ -548,6 +552,12 @@ cp $outDir/Data/Intermediate-files/*.pdf \
 cp $outDir/Data/Intermediate-files/DataTransformations/*.pdf \
 	$outDir/Plots/
 cp $outDir/Plots/*RNAs.high-distribution-score.pdf $outDir/Data/Distribution_results/
+
+### Create empty DESeq2 files if there were no results
+touch -a $outDir/Data/Intermediate-files/DE_Results/DESeq2/DEGs_names-only_short-names.txt
+touch -a $outDir/Data/Intermediate-files/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output.csv
+touch -a $outDir/Data/Intermediate-files/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output-downregulated.csv
+touch -a $outDir/Data/Intermediate-files/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output-upregulated.csv
 
 ### Get unique set of differentially expressed features, features with high distribution scores, and high cleavage scores...
 echo -e "#This is a collection of features that are differentially expressed, have large differences in distribution between the conditions, or are likely cleaved. Ordered alphanumerically." > $outDir/Data/All-Features-Identified.txt
