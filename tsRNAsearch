@@ -899,6 +899,11 @@ sed -e 's/^/<br \/>/' $outDir/Data/Predicted-tsRNA-types.tsv \
 #	> $outDir/Data/Predicted-tsRNA-types_HTML.txt
 tsRNAtype=$(cat $outDir/Data/Predicted-tsRNA-types_HTML.txt)
 
+### Move count files into Data dir
+mkdir $outDir/Data/CountFiles
+cp $outDir/Data/Intermediate-files/*all-features.count $outDir/Data/
+cp $outDir/Data/Intermediate-files/*all-features.RPM.Count $outDir/Data/
+
 ### If -R == yes, remove intermediate files
 if [[ $remove == "yes" ]]; then 
 	string_padder "Removing unnecessary files..."

@@ -121,6 +121,9 @@ There are 625 tRNA genes in the human genome. Each tRNA species has multiple gen
 * CD-HIT was used to extract representative sequences from all ncRNA sequences. The ncRNA STAR database was built using these representative sequences.
 * The STAR output (SAM file) is processed in such a way that all reads mapping to multiple database sequences from the same ncRNA species (e.g. read maps to multiple Proline-CCC genes) are collapsed into a single SAM entry. This single SAM entry is thereby considered a single-mapping read and is not removed by downstream processing steps.
 
+### Running tsRNAsearch using FASTA as input instead of FASTQ
+To use the pipeline with FASTA data, you need to skip preprocessing by using the '-S yes' parameter. 
+
 ### Adding additional species
 You can add any species you want with relatively little effort. Click [here](https://github.com/GiantSpaceRobot/tsRNAsearch_add-new-species) for more information.
 

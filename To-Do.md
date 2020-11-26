@@ -24,3 +24,5 @@
 * Add MultiQC (quick)
 * Combined score plots fail to generate when n=1
 * Is SupCTA in results? Not in JCI epilepsy results, possibly removed due to low coverage?
+* Combined-score score plot isn't generated!
+* DESeq2 padj score defaults to 100 when there are no DE features?

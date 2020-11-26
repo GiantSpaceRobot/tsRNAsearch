@@ -380,6 +380,8 @@ mkdir -p $outDir/FCount-count-output
 mkdir -p $outDir/FCount-to-RPM
 mkdir -p $outDir/Data_and_Plots
 mkdir -p $outDir/Data_and_Plots/Encoded
+mkdir -p $outDir/pre-processing
+
 
 singleFile_base=${singleFile##*/}    # Remove pathname
 #singleFile_basename="$( cut -d '.' -f 1 <<< "$singleFile_base" )" # Get filename before first occurence of .
@@ -388,6 +390,10 @@ case $singleFile_base in *.fastq.gz) singleFile_basename=$(echo "${singleFile_ba
 case $singleFile_base in *.fq.gz) singleFile_basename=$(echo "${singleFile_base/.fq.gz/$substr}");; esac # If fq.gz suffix in filename, remove
 case $singleFile_base in *.fastq) singleFile_basename=$(echo "${singleFile_base/.fastq/$substr}");; esac # If fastq suffix in filename, remove
 case $singleFile_base in *.fq) singleFile_basename=$(echo "${singleFile_base/.fq/$substr}");; esac # If fq suffix in filename, remove
+case $singleFile_base in *.fa) singleFile_basename=$(echo "${singleFile_base/.fa/$substr}");; esac # If fa suffix in filename, remove
+case $singleFile_base in *.fa.gz) singleFile_basename=$(echo "${singleFile_base/.fa.gz/$substr}");; esac # If fa.gz suffix in filename, remove
+
+
 if [[ $singleFile == *".gz"* ]]; then
 	suffix="fq.gz"
 	STARparam="--readFilesCommand zcat"
@@ -412,7 +418,6 @@ gs -sDEVICE=pdfwrite -o $outDir/Data_and_Plots/${singleFile_basename}_ncRNA_Resu
 ### Skip pre-processing or not:
 if [ $skip = "no" ]; then
 	# Make directories for pre-processing
-	mkdir -p $outDir/pre-processing
 	string_padder "Pre-processing reads using trim_galore..."
 	bin/trim_galore \
 		--stringency 10 \
@@ -423,7 +428,11 @@ if [ $skip = "no" ]; then
 	readsForAlignment=$outDir/pre-processing/$trimmedFile
 else
 	# Skip pre-processing by using the provided RNA-seq file
-	readsForAlignment=$singleFile
+	# Replace '@' symbol if it is in FASTA
+	gzip -d -c $singleFile > $outDir/pre-processing/Gunzipped_FASTA.fa
+	sed -i 's/>@/>/g' $outDir/pre-processing/Gunzipped_FASTA.fa
+	gzip $outDir/pre-processing/Gunzipped_FASTA.fa
+	readsForAlignment=$outDir/pre-processing/Gunzipped_FASTA.fa.gz
 fi
 
 ### Align reads to ncRNA database using STAR
