@@ -31,6 +31,12 @@ if(R.version.string < 3.5){
 		BiocManager::install("git2r", update = FALSE)
 		library(git2r)
 	}
+	# For devtools
+	if(!require(devtools)){
+		print("Installing devtools...")
+		BiocManager::install("devtools", update = FALSE)
+		library(devtools)
+	}
 	# For ggplot2
 	if(!require(ggplot2)){
 		print("Installing ggplot2...")
@@ -52,6 +58,7 @@ if(R.version.string < 3.5){
 	# For EnhancedVolcano
 	if(!require(EnhancedVolcano)){
 		print("Installing EnhancedVolcano...")
+		#install_github§
 		BiocManager::install("EnhancedVolcano", update = FALSE)
 		library(EnhancedVolcano)
 	}
@@ -102,12 +109,6 @@ if(R.version.string < 3.5){
 		print("Installing knitr...")
 		BiocManager::install("knitr", update = FALSE)
 		library(knitr)
-	}
-	# For devtools
-	if(!require(devtools)){
-		print("Installing devtools...")
-		BiocManager::install("devtools", update = FALSE)
-		library(devtools)
 	}
 	#print("Installing devtools...")
 	#install.packages("devtools")
