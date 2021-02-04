@@ -127,6 +127,14 @@ To use the pipeline with FASTA data, you need to skip preprocessing by using the
 ### Adding additional species
 You can add any species you want with relatively little effort. Click [here](https://github.com/GiantSpaceRobot/tsRNAsearch_add-new-species) for more information.
 
+### More info
+You can test if the R packages are installed correctly in the conda environment using:
+```
+# You must be in the conda env to run this
+Rscript tsRNAsearch/bin/TestPackages.R
+```
+This will produce errors if all packages are not found. You may need to manually install the problem packages if so.
+
 ## Contributors
 * Paul Donovan, PhD
 * Natalie McHale
