@@ -8,6 +8,8 @@ params.species = "human"  // Default species. This updates using main.nf paramet
 
 process GENERATE_NCRNA_DEPTH_FILES {
 
+    tag "$bamfile.simpleName"
+
     input:
     file bamfile
     file mapped_read_counts

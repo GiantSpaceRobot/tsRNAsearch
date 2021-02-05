@@ -12,7 +12,7 @@ nextflow.enable.dsl = 2
 params.input_file = null 
 params.species = 'human'
 params.skip = "no"
-params.all_plots = "no"
+params.all_plots = true  // should be false
 params.remove = "no"
 params.layout = ""
 params.input_dir = null
@@ -109,6 +109,12 @@ include { FEATURE_COUNT_TRNA } from './modules/count_features_trna'
 include { SUM_COUNTS } from './modules/sum_counts'
 include { GENERATE_TRNA_DEPTH_FILES } from './modules/generate_trna_depth_files'
 include { GENERATE_NCRNA_DEPTH_FILES } from './modules/generate_ncrna_depth_files'
+include { ANALYSE_DEPTHFILE } from './modules/analyse_depthfile'
+include { PLOT_TRNA_ALIGNMENT_LENGTH } from './modules/plot_trna_alignment_length'
+include { PLOT_NCRNA_ALL_PLOTS } from './modules/plot_ncrna_all_plots'
+include { PLOT_TRNA_ALL_PLOTS } from './modules/plot_trna_all_plots'
+include { PLOT_TRNA_SINGLE_SAMPLE_ANALYSIS } from './modules/plot_trna_single_sample_analysis'
+include { PLOT_TRNA_ALL_DEPTH_PLOTS } from './modules/plot_trna_all_depth_plots'
 
 //include { TSRNA_INDIVIDUAL_COUNT } from './modules/tsrna_counter'
 //include { TSRNA_DESEQ } from './modules/tsrna_deseq2'
@@ -138,8 +144,16 @@ workflow {
         SUM_COUNTS(FEATURE_COUNT_TRNA.out.counts.collect(), FEATURE_COUNT_NCRNA.out.counts.collect(), BAM_COLLAPSE.out.tRNA_almost_mapped_count.collect())
         GENERATE_TRNA_DEPTH_FILES(BAM_SPLIT.out.bam_tRNA, SUM_COUNTS.out)
         GENERATE_NCRNA_DEPTH_FILES(BAM_SPLIT.out.bam_ncRNA, SUM_COUNTS.out) 
+        ANALYSE_DEPTHFILE(GENERATE_TRNA_DEPTH_FILES.out.depth_files.mix(GENERATE_NCRNA_DEPTH_FILES.out.depth_files))
+        // Plot things
+        PLOT_TRNA_ALIGNMENT_LENGTH(BAM_SPLIT.out.bam_tRNA)
+        if (params.all_plots){   
+            PLOT_NCRNA_ALL_PLOTS(GENERATE_NCRNA_DEPTH_FILES.out.depth_files, PREPARE_NCRNA_GTF.out.ncRNA_gtf)
+            //PLOT_TRNA_SINGLE_SAMPLE_ANALYSIS(GENERATE_TRNA_DEPTH_FILES.out.depth_files, PREPARE_TRNA_GTF.out.tRNA_gtf)
+            //PLOT_TRNA_ALL_DEPTH_PLOTS(GENERATE_TRNA_DEPTH_FILES.out.depth_files, PREPARE_TRNA_GTF.out.tRNA_gtf)
+            PLOT_TRNA_ALL_PLOTS(GENERATE_TRNA_DEPTH_FILES.out.depth_files, PREPARE_TRNA_GTF.out.tRNA_gtf)
 
-
+        }
 
         //TSRNA_INDIVIDUAL_COUNT(SAM_SPLIT_AND_SAM2BAM.out.bam_tRNA, PREPARE_TRNA_GTF.out.tRNA_gtf)
         //PREPARE_TRNA_GTF.out.tRNA_gtf.view()
