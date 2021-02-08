@@ -1,6 +1,6 @@
 #!/bin/bash
 
-### Normalise depth file by reads per million (RPM)
+### Normalise count file by reads per million (RPM)
 
 # Create new name for output
 newname=$(echo $1 | awk -F '_trimmed' '{print $1}')
@@ -11,7 +11,7 @@ mapped=$(grep "$newname" $2 | awk '{print $2}')
 echo Mapped reads: $mapped
 
 # Convert depth to RPM
-Depth-to-Depth_RPM.py \
+Count-to-RPM.py \
 	$1 \
 	$mapped \
 	$3

@@ -76,7 +76,7 @@ do
 	COUNTER=$[$COUNTER + 1]
 	#echo Initialising job number $numjobs
 	#echo There are ${#background[@]} jobs now
-    while (( $numjobs == $cores )); do
+    while (( $numjobs > $cores )); do
     	echo There are $numjobs jobs now. Waiting for jobs to finish...
 		numjobs=($(jobs | wc -l))
 		sleep 2 #Enter next loop iteration
@@ -89,10 +89,10 @@ echo -e "SAM collapse results:\n\t$readsCollapsedSpecies reads collapsed at the 
 ### Concatenate results
 echo "Gathering reads that were mapped to similar tRNAs..."
 echo -e "tRNA.group\tread.start\tread.end.approx\tread.name" \
-	> tRNAs-almost-mapped.txt
+	> ${newname}_tRNAs-almost-mapped.txt
 cat tempDir/*tRNAs-almost-mapped* | sort \
-	>> tRNAs-almost-mapped.txt
-grep -v "tRNA.group" tRNAs-almost-mapped.txt \
+	>> ${newname}_tRNAs-almost-mapped.txt
+grep -v "tRNA.group" ${newname}_tRNAs-almost-mapped.txt \
 	| awk '{print $1}' \
 	| uniq -c \
 	| awk '{print $2"\t"$1}' \

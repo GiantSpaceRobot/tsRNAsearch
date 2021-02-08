@@ -1,10 +1,10 @@
 #!/usr/bin/env nextflow
 
 /*=============================================================
-Geenrate mean and standard deviation TSV files from depth files
+Generate mean and standard deviation TSV files from depth files
 =============================================================*/
 
-process ANALYSE_DEPTHFILE {
+process GENERATE_DEPTHFILE_STATS {
 
     tag "$depthfile.simpleName"
 
@@ -24,6 +24,6 @@ process ANALYSE_DEPTHFILE {
         "$depthfile.simpleName".tsv \\
         "$depthfile.simpleName"_mean-std_sorted.tsv
     Generate-depthfile-stats.sh \\
-        "$depthfile.simpleName"_mean-std_sorted.tsv \\
+        "$depthfile.simpleName"_mean-std_sorted.tsv
     """
 }

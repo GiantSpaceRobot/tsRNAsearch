@@ -12,7 +12,7 @@ nextflow.enable.dsl = 2
 params.input_file = null 
 params.species = 'human'
 params.skip = "no"
-params.all_plots = true  // should be false
+params.all_plots = false  // should be false
 params.remove = "no"
 params.layout = ""
 params.input_dir = null
@@ -108,13 +108,20 @@ include { FEATURE_COUNT_NCRNA } from './modules/count_features_ncrna'
 include { FEATURE_COUNT_TRNA } from './modules/count_features_trna'
 include { SUM_COUNTS } from './modules/sum_counts'
 include { GENERATE_TRNA_DEPTH_FILES } from './modules/generate_trna_depth_files'
+include { GENERATE_MULTIMAPPER_TRNA_DEPTH_FILES } from './modules/generate_multimapper_trna_depth_files'
 include { GENERATE_NCRNA_DEPTH_FILES } from './modules/generate_ncrna_depth_files'
-include { ANALYSE_DEPTHFILE } from './modules/analyse_depthfile'
+include { GENERATE_DEPTHFILE_STATS } from './modules/generate_depthfile_stats'
 include { PLOT_TRNA_ALIGNMENT_LENGTH } from './modules/plot_trna_alignment_length'
 include { PLOT_NCRNA_ALL_PLOTS } from './modules/plot_ncrna_all_plots'
 include { PLOT_TRNA_ALL_PLOTS } from './modules/plot_trna_all_plots'
-include { PLOT_TRNA_SINGLE_SAMPLE_ANALYSIS } from './modules/plot_trna_single_sample_analysis'
+//include { PLOT_TRNA_SINGLE_SAMPLE_ANALYSIS } from './modules/plot_trna_single_sample_analysis'
 include { PLOT_TRNA_ALL_DEPTH_PLOTS } from './modules/plot_trna_all_depth_plots'
+include { RAW_COUNTS_TO_PROPORTIONS } from './modules/raw_counts_to_proportions'
+include { RAW_COUNTS_TO_NORM_COUNTS } from './modules/raw_counts_to_norm_counts'
+include { RAW_COUNTS_TO_COLLAPSED_COUNTS } from './modules/raw_counts_to_collapsed_counts'
+include { PREDICT_TSRNA_TYPE } from './modules/predict_tsrna_type'
+include { ORGANISE_RESULTS } from './modules/organise_results'
+include { GENERATE_RESULTS_PDF } from './modules/generate_results_pdf'
 
 //include { TSRNA_INDIVIDUAL_COUNT } from './modules/tsrna_counter'
 //include { TSRNA_DESEQ } from './modules/tsrna_deseq2'
@@ -123,7 +130,7 @@ include { PLOT_TRNA_ALL_DEPTH_PLOTS } from './modules/plot_trna_all_depth_plots'
 workflow {
     main:
         // Define channels
-        ncRNA_gtf = Channel.fromPath("$projectDir/DBs/${params.species}_ncRNAs_relative_cdhit.gtf")
+        //ncRNA_gtf = Channel.fromPath("$projectDir/DBs/${params.species}_ncRNAs_relative_cdhit.gtf")
         fastq_channel = Channel.fromPath( ["$params.input_dir/*.fastq.gz", "$params.input_dir/*.fq.gz"] ) //, "$params.input_file"] )
         //fastq_channel.view()
         //exit 1
@@ -142,18 +149,27 @@ workflow {
         FEATURE_COUNT_TRNA(BAM_SPLIT.out.bam_tRNA, PREPARE_TRNA_GTF.out.tRNA_gtf)
         FEATURE_COUNT_NCRNA(BAM_SPLIT.out.bam_ncRNA, PREPARE_NCRNA_GTF.out.ncRNA_gtf)
         SUM_COUNTS(FEATURE_COUNT_TRNA.out.counts.collect(), FEATURE_COUNT_NCRNA.out.counts.collect(), BAM_COLLAPSE.out.tRNA_almost_mapped_count.collect())
-        GENERATE_TRNA_DEPTH_FILES(BAM_SPLIT.out.bam_tRNA, SUM_COUNTS.out)
-        GENERATE_NCRNA_DEPTH_FILES(BAM_SPLIT.out.bam_ncRNA, SUM_COUNTS.out) 
-        ANALYSE_DEPTHFILE(GENERATE_TRNA_DEPTH_FILES.out.depth_files.mix(GENERATE_NCRNA_DEPTH_FILES.out.depth_files))
+        GENERATE_TRNA_DEPTH_FILES(BAM_SPLIT.out.bam_tRNA, SUM_COUNTS.out.sum_counts)
+        GENERATE_MULTIMAPPER_TRNA_DEPTH_FILES(BAM_COLLAPSE.out.tRNA_almost_mapped_txt, SUM_COUNTS.out.sum_counts)
+        GENERATE_NCRNA_DEPTH_FILES(BAM_SPLIT.out.bam_ncRNA, SUM_COUNTS.out.sum_counts) 
+        GENERATE_DEPTHFILE_STATS(GENERATE_TRNA_DEPTH_FILES.out.depth_files.mix(GENERATE_NCRNA_DEPTH_FILES.out.depth_files))
+        RAW_COUNTS_TO_PROPORTIONS(FEATURE_COUNT_TRNA.out.counts, BAM_COLLAPSE.out.tRNA_almost_mapped_count, SUM_COUNTS.out.sum_counts)
+        RAW_COUNTS_TO_NORM_COUNTS(SUM_COUNTS.out.all_counts.flatten(), SUM_COUNTS.out.sum_counts)
+        RAW_COUNTS_TO_COLLAPSED_COUNTS(SUM_COUNTS.out.all_counts.flatten().mix(RAW_COUNTS_TO_NORM_COUNTS.out.rpm_count))
+        PREDICT_TSRNA_TYPE(GENERATE_TRNA_DEPTH_FILES.out.collect(), GENERATE_MULTIMAPPER_TRNA_DEPTH_FILES.out.collect())
+
         // Plot things
         PLOT_TRNA_ALIGNMENT_LENGTH(BAM_SPLIT.out.bam_tRNA)
-        if (params.all_plots){   
-            PLOT_NCRNA_ALL_PLOTS(GENERATE_NCRNA_DEPTH_FILES.out.depth_files, PREPARE_NCRNA_GTF.out.ncRNA_gtf)
-            //PLOT_TRNA_SINGLE_SAMPLE_ANALYSIS(GENERATE_TRNA_DEPTH_FILES.out.depth_files, PREPARE_TRNA_GTF.out.tRNA_gtf)
-            //PLOT_TRNA_ALL_DEPTH_PLOTS(GENERATE_TRNA_DEPTH_FILES.out.depth_files, PREPARE_TRNA_GTF.out.tRNA_gtf)
-            PLOT_TRNA_ALL_PLOTS(GENERATE_TRNA_DEPTH_FILES.out.depth_files, PREPARE_TRNA_GTF.out.tRNA_gtf)
+        PLOT_TRNA_ALL_PLOTS(GENERATE_TRNA_DEPTH_FILES.out.depth_files, PREPARE_TRNA_GTF.out.tRNA_gtf)
 
+        if (params.all_plots){   
+            //PLOT_NCRNA_ALL_PLOTS(GENERATE_NCRNA_DEPTH_FILES.out.depth_files, PREPARE_NCRNA_GTF.out.ncRNA_gtf)
         }
+
+        GENERATE_RESULTS_PDF(PLOT_TRNA_ALIGNMENT_LENGTH.out.pdf.collect(), PLOT_TRNA_ALL_PLOTS.out.pdfs.collect(), SUM_COUNTS.out.sum_counts)
+        // Organise results directory
+        // This is not waiting until all processes are finished. I need to explicitly give it output of processes
+        //ORGANISE_RESULTS("$launchDir/$params.output_dir", SUM_COUNTS.out.sum_counts, PLOT_TRNA_ALL_PLOTS.out.pdfs)
 
         //TSRNA_INDIVIDUAL_COUNT(SAM_SPLIT_AND_SAM2BAM.out.bam_tRNA, PREPARE_TRNA_GTF.out.tRNA_gtf)
         //PREPARE_TRNA_GTF.out.tRNA_gtf.view()

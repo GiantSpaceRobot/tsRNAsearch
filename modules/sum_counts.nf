@@ -13,6 +13,7 @@ process SUM_COUNTS {
 
     output:
     path("*Mapped.txt"), emit: sum_counts
+    path("*all-counts.count"), emit: all_counts
    
     shell:
     '''
