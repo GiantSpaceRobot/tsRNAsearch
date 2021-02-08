@@ -103,6 +103,7 @@ include { MAKE_STAR_DB } from './modules/star_genome-generate'
 include { TRIM_READS } from './modules/trim_galore'
 include { STAR_ALIGN } from './modules/star_align'
 include { BAM_COLLAPSE } from './modules/bam_collapse'
+include { ADD_EMPTY_COUNTS } from './modules/add_empty_counts'
 include { BAM_SPLIT } from './modules/bam_split'
 include { FEATURE_COUNT_NCRNA } from './modules/count_features_ncrna'
 include { FEATURE_COUNT_TRNA } from './modules/count_features_trna'
@@ -122,6 +123,7 @@ include { RAW_COUNTS_TO_COLLAPSED_COUNTS } from './modules/raw_counts_to_collaps
 include { PREDICT_TSRNA_TYPE } from './modules/predict_tsrna_type'
 include { ORGANISE_RESULTS } from './modules/organise_results'
 include { GENERATE_RESULTS_PDF } from './modules/generate_results_pdf'
+include { DESEQ2 } from './modules/deseq2'
 
 //include { TSRNA_INDIVIDUAL_COUNT } from './modules/tsrna_counter'
 //include { TSRNA_DESEQ } from './modules/tsrna_deseq2'
@@ -145,10 +147,11 @@ workflow {
         STAR_ALIGN(TRIM_READS.out.trimmed_reads, MAKE_STAR_DB.out.star_index)
         //PREPARE_NCRNA_GTF.out.ncRNA_gtf.view()
         BAM_COLLAPSE(STAR_ALIGN.out.bam)
+        ADD_EMPTY_COUNTS(BAM_COLLAPSE.out.tRNA_almost_mapped_count, "$projectDir/additional-files/${params.species}_empty_tRNA.count")
         BAM_SPLIT(BAM_COLLAPSE.out.collapsedbam)
         FEATURE_COUNT_TRNA(BAM_SPLIT.out.bam_tRNA, PREPARE_TRNA_GTF.out.tRNA_gtf)
         FEATURE_COUNT_NCRNA(BAM_SPLIT.out.bam_ncRNA, PREPARE_NCRNA_GTF.out.ncRNA_gtf)
-        SUM_COUNTS(FEATURE_COUNT_TRNA.out.counts.collect(), FEATURE_COUNT_NCRNA.out.counts.collect(), BAM_COLLAPSE.out.tRNA_almost_mapped_count.collect())
+        SUM_COUNTS(FEATURE_COUNT_TRNA.out.counts.collect(), FEATURE_COUNT_NCRNA.out.counts.collect(), ADD_EMPTY_COUNTS.out.filled_multi_counts.collect())
         GENERATE_TRNA_DEPTH_FILES(BAM_SPLIT.out.bam_tRNA, SUM_COUNTS.out.sum_counts)
         GENERATE_MULTIMAPPER_TRNA_DEPTH_FILES(BAM_COLLAPSE.out.tRNA_almost_mapped_txt, SUM_COUNTS.out.sum_counts)
         GENERATE_NCRNA_DEPTH_FILES(BAM_SPLIT.out.bam_ncRNA, SUM_COUNTS.out.sum_counts) 
@@ -161,12 +164,14 @@ workflow {
         // Plot things
         PLOT_TRNA_ALIGNMENT_LENGTH(BAM_SPLIT.out.bam_tRNA)
         PLOT_TRNA_ALL_PLOTS(GENERATE_TRNA_DEPTH_FILES.out.depth_files, PREPARE_TRNA_GTF.out.tRNA_gtf)
-
         if (params.all_plots){   
             //PLOT_NCRNA_ALL_PLOTS(GENERATE_NCRNA_DEPTH_FILES.out.depth_files, PREPARE_NCRNA_GTF.out.ncRNA_gtf)
         }
-
         GENERATE_RESULTS_PDF(PLOT_TRNA_ALIGNMENT_LENGTH.out.pdf.collect(), PLOT_TRNA_ALL_PLOTS.out.pdfs.collect(), SUM_COUNTS.out.sum_counts)
+        // END OF INDIVIDUAL FILE ANALYSIS
+
+        // START OF GROUP COMPARISON
+        DESEQ2(RAW_COUNTS_TO_COLLAPSED_COUNTS.out.collapsed_count.collect(), "$launchDir/$params.layout", PREPARE_NCRNA_GTF.out.ncRNA_gtf)
         // Organise results directory
         // This is not waiting until all processes are finished. I need to explicitly give it output of processes
         //ORGANISE_RESULTS("$launchDir/$params.output_dir", SUM_COUNTS.out.sum_counts, PLOT_TRNA_ALL_PLOTS.out.pdfs)
