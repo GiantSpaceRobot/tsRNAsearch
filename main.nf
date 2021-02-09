@@ -124,9 +124,13 @@ include { PREDICT_TSRNA_TYPE } from './modules/predict_tsrna_type'
 include { ORGANISE_RESULTS } from './modules/organise_results'
 include { GENERATE_RESULTS_PDF } from './modules/generate_results_pdf'
 include { DESEQ2 } from './modules/deseq2'
-
-//include { TSRNA_INDIVIDUAL_COUNT } from './modules/tsrna_counter'
-//include { TSRNA_DESEQ } from './modules/tsrna_deseq2'
+include { COMBINE_DEPTHFILES } from './modules/combine_depthfiles'
+include { DATA_TRANSFORMATIONS } from './modules/data_transformations'
+include { DISTRIBUTION_SCORE } from './modules/distribution_score'
+include { SLOPE_SCORE } from './modules/slope_score'
+include { CLEAVAGE_SCORE } from './modules/cleavage_score'
+include { FISHERS_METHOD } from './modules/fishers_method'
+include { RESULTS_TABLE } from './modules/results_table'
 
 
 workflow {
@@ -167,11 +171,28 @@ workflow {
         if (params.all_plots){   
             //PLOT_NCRNA_ALL_PLOTS(GENERATE_NCRNA_DEPTH_FILES.out.depth_files, PREPARE_NCRNA_GTF.out.ncRNA_gtf)
         }
-        GENERATE_RESULTS_PDF(PLOT_TRNA_ALIGNMENT_LENGTH.out.pdf.collect(), PLOT_TRNA_ALL_PLOTS.out.pdfs.collect(), SUM_COUNTS.out.sum_counts)
+        GENERATE_RESULTS_PDF(PLOT_TRNA_ALIGNMENT_LENGTH.out.pdf.collect(), \
+            PLOT_TRNA_ALL_PLOTS.out.pdfs.collect(), \
+            SUM_COUNTS.out.sum_counts)
         // END OF INDIVIDUAL FILE ANALYSIS
 
         // START OF GROUP COMPARISON
         DESEQ2(RAW_COUNTS_TO_COLLAPSED_COUNTS.out.collapsed_count.collect(), "$launchDir/$params.layout", PREPARE_NCRNA_GTF.out.ncRNA_gtf)
+
+        //COMBINE_DEPTHFILES(GENERATE_TRNA_DEPTH_FILES.out.depth_files.collect(), \
+        //    GENERATE_NCRNA_DEPTH_FILES.out.depth_files.collect(), \
+         //   GENERATE_MULTIMAPPER_TRNA_DEPTH_FILES.out.depth_files.collect(), \
+         //   SUM_COUNTS.out.sum_counts)
+        DATA_TRANSFORMATIONS("$launchDir/$params.layout", \
+            GENERATE_TRNA_DEPTH_FILES.out.depth_files.collect(), \
+            GENERATE_NCRNA_DEPTH_FILES.out.depth_files.collect(), \
+            GENERATE_MULTIMAPPER_TRNA_DEPTH_FILES.out.depth_files.collect(), \
+            SUM_COUNTS.out.sum_counts)
+        DISTRIBUTION_SCORE(DATA_TRANSFORMATIONS.out.ncrna_stddev, DATA_TRANSFORMATIONS.out.trna_stddev, PREPARE_NCRNA_GTF.out.ncRNA_gtf)
+        SLOPE_SCORE(DATA_TRANSFORMATIONS.out.depth_means, "$launchDir/$params.layout", PREPARE_NCRNA_GTF.out.ncRNA_gtf)
+        CLEAVAGE_SCORE(DATA_TRANSFORMATIONS.out.depth_means, "$launchDir/$params.layout", PREPARE_NCRNA_GTF.out.ncRNA_gtf)
+        FISHERS_METHOD(DATA_TRANSFORMATIONS.out.depthfiles, "$launchDir/$params.layout", PREPARE_NCRNA_GTF.out.ncRNA_gtf)
+        RESULTS_TABLE(FISHERS_METHOD.out.pvalues, DISTRIBUTION_SCORE.out.combined_features, CLEAVAGE_SCORE.out.combined_features, DESEQ2.out.csvs, SLOPE_SCORE.out.combined_features, "$launchDir/$params.layout")
         // Organise results directory
         // This is not waiting until all processes are finished. I need to explicitly give it output of processes
         //ORGANISE_RESULTS("$launchDir/$params.output_dir", SUM_COUNTS.out.sum_counts, PLOT_TRNA_ALL_PLOTS.out.pdfs)

@@ -90,6 +90,11 @@ GTF <- GTF[!duplicated(GTF$NewNames),]  # Remove duplicates based on NewNames
 ### Function to carry out DESeq2 analysis on provided files
 DESeq2.function <- function(path.to.files){
   
+  ### Output groups
+  print("-----DESeq2 analysis underway-----")
+  print(paste0("Control group:", Condition1))
+  print(paste0("Treatment group:", Condition2))
+
   ### Create checkpoints (for simple degbugging) 
   print("Checkpoint 1")
 

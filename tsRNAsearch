@@ -499,6 +499,8 @@ Rscript bin/CleavageScore.R \
 	$ncRNA_GTF &
 wait
 
+
+### HAVEN'T DONE THIS YET
 ### Copy results to results directories
 # Slope
 cp $outDir/Data/Intermediate-files/${condition1}_vs_${condition2}_All-ncRNA-Features_Slope.high-slope-score.txt \
@@ -559,6 +561,9 @@ touch -a $outDir/Data/Intermediate-files/DE_Results/DESeq2/${condition1}_vs_${co
 touch -a $outDir/Data/Intermediate-files/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output-downregulated.csv
 touch -a $outDir/Data/Intermediate-files/DE_Results/DESeq2/${condition1}_vs_${condition2}_DESeq2-output-upregulated.csv
 
+
+
+### DIDN'T ADD THIS YET
 ### Get unique set of differentially expressed features, features with high distribution scores, and high cleavage scores...
 echo -e "#This is a collection of features that are differentially expressed, have large differences in distribution between the conditions, or are likely cleaved. Ordered alphanumerically." > $outDir/Data/All-Features-Identified.txt
 cat \

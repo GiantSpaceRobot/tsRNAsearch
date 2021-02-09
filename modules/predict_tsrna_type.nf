@@ -6,7 +6,7 @@
 
 process PREDICT_TSRNA_TYPE {
 
-    tag "$tsrna_depthfile.simpleName"
+    //tag "$tsrna_depthfile.simpleName"
 
     input:
     path tsrna_depthfile
