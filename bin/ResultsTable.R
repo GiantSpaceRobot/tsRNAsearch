@@ -89,8 +89,8 @@ if(nrow(final.df) > 20){
   top.results <- final.df
 }
 
-write.table(x = final.df, file = paste0(args[9], ".summarised.all-results.txt"), quote = F, sep = "\t", row.names = F)
-write.table(x = top.results, file = paste0(args[9], ".summarised.top-results.txt"), quote = F, sep = "\t", row.names = F)
+write.table(x = final.df, file = paste0(args[9], "_summarised_all-results.tsv"), quote = F, sep = "\t", row.names = F)
+write.table(x = top.results, file = paste0(args[9], "_summarised_top-results.tsv"), quote = F, sep = "\t", row.names = F)
 rownames(top.results) <- top.results$feature # Replace rownames with feature names
 top.results <- top.results %>% select(-feature) # Remove feature names (column 1)
 
@@ -106,4 +106,4 @@ print(xtable(top.results,
                        "f")), # Cleavage score
       math.style.exponents = TRUE, 
       type="html", 
-      file = paste0(args[9], ".summarised.top-results.html")) # Write top results to HTML for HTML report generation
+      file = paste0(args[9], "_summarised_top-results.html")) # Write top results to HTML for HTML report generation

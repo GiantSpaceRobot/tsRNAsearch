@@ -16,8 +16,8 @@ process RESULTS_TABLE {
     path layout
 
     output:
-    path("*.tsv"), emit: tsv
-
+    path("*results.tsv"), emit: tsv
+    path("*results.html"), emit: html
 
     script:
     """
@@ -33,6 +33,5 @@ process RESULTS_TABLE {
         \${condition1}_vs_\${condition2}_tRNAs_high-slope-score.tsv \\
         \${condition1}_vs_\${condition2}_ncRNAs_high-slope-score.tsv \\
         \${condition1}_vs_\${condition2}
-    touch my.tsv 
     """
 }

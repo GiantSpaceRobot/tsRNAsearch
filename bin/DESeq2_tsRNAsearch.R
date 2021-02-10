@@ -380,7 +380,7 @@ DESeq2.function <- function(path.to.files){
   #  pdf.width <- nrow(tsRNAs.df.subset)*0.2 + 3
   #}
   pdf.width <- 7
-  pdf(file = paste0(path.to.files, args[2], "_tsRNAs.high-DE-negLog10_padj.pdf"), width = pdf.width, height = 5)
+  pdf(file = paste0(path.to.files, args[2], "_tsRNAs_high-DE-negLog10_padj.pdf"), width = pdf.width, height = 5)
   try(print(ggplot(data = tsRNAs.df.subset, mapping = aes(features, negLog10, color=negLog10)) +
     geom_point() +
     ggtitle("DE Analysis - tRNAs") +
@@ -402,7 +402,7 @@ DESeq2.function <- function(path.to.files){
   #  pdf.width <- nrow(ncRNAs.df.subset)*0.2 + 3
   #}
   pdf.width <- 7
-  pdf(file = paste0(path.to.files, args[2], "_ncRNAs.high-DE-negLog10_padj.pdf"), width = pdf.width, height = 5)
+  pdf(file = paste0(path.to.files, args[2], "_ncRNAs_high-DE-negLog10_padj.pdf"), width = pdf.width, height = 5)
   try(print(ggplot(data = ncRNAs.df.subset, mapping = aes(features, negLog10, color=negLog10)) +
     geom_point() +
     ggtitle("DE Analysis - ncRNAs") +

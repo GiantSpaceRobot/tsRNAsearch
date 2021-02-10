@@ -1,11 +1,11 @@
 #!/usr/bin/env nextflow
 
 /*=================
-Collapse raw counts
+Collapse counts
 =================*/
 
 
-process RAW_COUNTS_TO_COLLAPSED_COUNTS {
+process COUNTS_TO_COLLAPSED_COUNTS {
 
     tag "$countfile.simpleName"
 

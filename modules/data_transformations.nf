@@ -19,6 +19,8 @@ process DATA_TRANSFORMATIONS {
     path("Everything*depth"), emit: depthfiles
     path("*Everything_tRNAs.stddev"), emit: trna_stddev
     path("*Everything_ncRNAs.stddev"), emit: ncrna_stddev
+    path("*ncRNA.depth"), emit: ncrna_depth
+
 
     script:
     """
