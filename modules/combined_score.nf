@@ -16,6 +16,7 @@ process COMBINED_SCORE {
     path("*absolute-score-results.tsv"), emit: abs_res_tsv
     path("*relative-score-results.tsv"), emit: rel_res_tsv
     path("*.txt"), emit: top_features
+    path("*score*"), emit: all_txt_output
 
     script:
     """

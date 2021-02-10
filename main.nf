@@ -122,7 +122,6 @@ include { RAW_COUNTS_TO_NORM_COUNTS } from './modules/raw_counts_to_norm_counts'
 include { COUNTS_TO_COLLAPSED_COUNTS } from './modules/counts_to_collapsed_counts'
 include { PREDICT_TSRNA_TYPE } from './modules/predict_tsrna_type'
 include { PREDICT_TSRNA_TYPE_GROUPS } from './modules/predict_tsrna_type_groups'
-include { ORGANISE_RESULTS } from './modules/organise_results'
 include { GENERATE_RESULTS_PDF } from './modules/generate_results_pdf'
 include { GENERATE_RESULTS_PDF_GROUPS } from './modules/generate_results_pdf_groups'
 include { DESEQ2 } from './modules/deseq2'
@@ -142,6 +141,8 @@ include { VENN_DIAGRAM } from './modules/venn_diagram'
 include { GENERATE_COUNT_DATAFRAME } from './modules/generate_count_dataframe'
 include { STACKED_BARPLOTS } from './modules/stacked_barplots'
 include { BARPLOTS } from './modules/barplots'
+include { ORGANISE_RESULTS } from './modules/organise_results'
+include { PUBLISH_FILES } from './modules/publish_files'
 
 
 workflow {
@@ -215,14 +216,8 @@ workflow {
         BARPLOTS(GENERATE_COUNT_DATAFRAME.out, "$launchDir/$params.layout", PREPARE_NCRNA_GTF.out.ncRNA_gtf)
         PREDICT_TSRNA_TYPE_GROUPS(DATA_TRANSFORMATIONS.out.depth_means, "$launchDir/$params.layout")
         GENERATE_RESULTS_PDF_GROUPS(DESEQ2.out.pdfs, STACKED_BARPLOTS.out, BARPLOTS.out, VENN_DIAGRAM.out.pdf, COMBINED_SCORE.out.pdfs, PLOT_TRNAS.out, PLOT_NCRNAS.out, "$launchDir/$params.layout")
-        // Organise results directory
-        // This is not waiting until all processes are finished. I need to explicitly give it output of processes
-        //ORGANISE_RESULTS("$launchDir/$params.output_dir", SUM_COUNTS.out.sum_counts, PLOT_TRNA_ALL_PLOTS.out.pdfs)
-
-        //TSRNA_INDIVIDUAL_COUNT(SAM_SPLIT_AND_SAM2BAM.out.bam_tRNA, PREPARE_TRNA_GTF.out.tRNA_gtf)
-        //PREPARE_TRNA_GTF.out.tRNA_gtf.view()
-        //TSRNA_DESEQ("$launchDir/${params.layout}", TSRNA_INDIVIDUAL_COUNT.out.tsRNA_individual_counts.collect())
-
+        ORGANISE_RESULTS("$launchDir/$params.output_dir", SUM_COUNTS.out.sum_counts, GENERATE_RESULTS_PDF_GROUPS.out.pdf)
+        PUBLISH_FILES("$launchDir/$params.output_dir", DESEQ2.out.pdfs, STACKED_BARPLOTS.out, BARPLOTS.out, VENN_DIAGRAM.out.pdf, COMBINED_SCORE.out.pdfs, PLOT_TRNAS.out, PLOT_NCRNAS.out, "$launchDir/$params.layout", DESEQ2.out.csvs, VENN_DIAGRAM.out.tsvs, COMBINED_SCORE.out.all_txt_output)
 
 
 }
