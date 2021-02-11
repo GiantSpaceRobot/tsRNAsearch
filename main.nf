@@ -14,7 +14,7 @@ params.species = 'human'
 params.skip = "no"
 params.all_plots = false  // should be false
 params.remove = "no"
-params.layout = ""
+params.layout = null
 params.input_dir = null
 params.output_dir = "Results"
 params.min_read_length = 16
@@ -54,7 +54,7 @@ def helpMessage() {
 
 
 // Pipeline version
-version="Version:  tsrna-de 0.1"
+version="Version:  tsRNAsearch 0.4"
 
 
 // Print message for user
@@ -82,9 +82,6 @@ if (params.version) {
 // Input parameter error catching
 if(!params.input_file && !params.input_dir){
     exit 1, "Error: No input provided. Provide either --input_file or --input_dir to pipeline"
-}
-if(params.input_dir && !params.layout){
-    exit 1, "Error: No --layout file provided. See README for an example"
 }
 if( params.input_file && params.input_dir){
     exit 1, "Error: Conflicting inputs. Cannot supply both single FASTQ file and FASTQ input directory"
@@ -142,26 +139,19 @@ include { GENERATE_COUNT_DATAFRAME } from './modules/generate_count_dataframe'
 include { STACKED_BARPLOTS } from './modules/stacked_barplots'
 include { BARPLOTS } from './modules/barplots'
 include { ORGANISE_RESULTS } from './modules/organise_results'
+include { ORGANISE_RESULTS_GROUPS } from './modules/organise_results_groups'
 include { PUBLISH_FILES } from './modules/publish_files'
 
 
 workflow {
     main:
         // Define channels
-        //ncRNA_gtf = Channel.fromPath("$projectDir/DBs/${params.species}_ncRNAs_relative_cdhit.gtf")
         fastq_channel = Channel.fromPath( ["$params.input_dir/*.fastq.gz", "$params.input_dir/*.fq.gz"] ) //, "$params.input_file"] )
-        //fastq_channel.view()
-        //exit 1
         PREPARE_TRNA_GTF(params.species)
         PREPARE_NCRNA_GTF(params.species)
-        //PREPARE_TRNA_GTF.out.tRNA_gtf.view()
-        //FASTQC(fastq_channel)
-        //MULTIQC(FASTQC.out.collect())
         TRIM_READS(fastq_channel, "$params.min_read_length")
-        //TRIM_READS.out.trimmed_reads.view()
         MAKE_STAR_DB("$projectDir/DBs/${params.species}_tRNAs-and-ncRNAs_relative_cdhit.fa")  // Run process to generate DB
         STAR_ALIGN(TRIM_READS.out.trimmed_reads, MAKE_STAR_DB.out.star_index)
-        //PREPARE_NCRNA_GTF.out.ncRNA_gtf.view()
         BAM_COLLAPSE(STAR_ALIGN.out.bam)
         ADD_EMPTY_COUNTS(BAM_COLLAPSE.out.tRNA_almost_mapped_count, "$projectDir/additional-files/${params.species}_empty_tRNA.count")
         BAM_SPLIT(BAM_COLLAPSE.out.collapsedbam)
@@ -176,6 +166,7 @@ workflow {
         RAW_COUNTS_TO_NORM_COUNTS(SUM_COUNTS.out.all_counts.flatten(), SUM_COUNTS.out.sum_counts)
         COUNTS_TO_COLLAPSED_COUNTS(SUM_COUNTS.out.all_counts.flatten().mix(RAW_COUNTS_TO_NORM_COUNTS.out.rpm_count))
         PREDICT_TSRNA_TYPE(GENERATE_TRNA_DEPTH_FILES.out.collect(), GENERATE_MULTIMAPPER_TRNA_DEPTH_FILES.out.collect())
+        //MULTIQC(FASTQC.out.collect())
 
         // Plot things
         PLOT_TRNA_ALIGNMENT_LENGTH(BAM_SPLIT.out.bam_tRNA)
@@ -183,42 +174,41 @@ workflow {
         GENERATE_RESULTS_PDF(PLOT_TRNA_ALIGNMENT_LENGTH.out.pdf.collect(), \
             PLOT_TRNA_ALL_PLOTS.out.pdfs.collect(), \
             SUM_COUNTS.out.sum_counts)
+        if (params.all_plots){   
+            PLOT_NCRNA_ALL_PLOTS(GENERATE_NCRNA_DEPTH_FILES.out.depth_files, PREPARE_NCRNA_GTF.out.ncRNA_gtf)
+        }
         // END OF INDIVIDUAL FILE ANALYSIS
 
         // START OF GROUP COMPARISON
-        DESEQ2(COUNTS_TO_COLLAPSED_COUNTS.out.collapsed_count.collect(), "$launchDir/$params.layout", PREPARE_NCRNA_GTF.out.ncRNA_gtf)
-
-        //COMBINE_DEPTHFILES(GENERATE_TRNA_DEPTH_FILES.out.depth_files.collect(), \
-        //    GENERATE_NCRNA_DEPTH_FILES.out.depth_files.collect(), \
-         //   GENERATE_MULTIMAPPER_TRNA_DEPTH_FILES.out.depth_files.collect(), \
-         //   SUM_COUNTS.out.sum_counts)
-        DATA_TRANSFORMATIONS("$launchDir/$params.layout", \
-            GENERATE_TRNA_DEPTH_FILES.out.depth_files.collect(), \
-            GENERATE_NCRNA_DEPTH_FILES.out.depth_files.collect(), \
-            GENERATE_MULTIMAPPER_TRNA_DEPTH_FILES.out.depth_files.collect(), \
-            SUM_COUNTS.out.sum_counts)
-        DISTRIBUTION_SCORE(DATA_TRANSFORMATIONS.out.ncrna_stddev, DATA_TRANSFORMATIONS.out.trna_stddev, PREPARE_NCRNA_GTF.out.ncRNA_gtf)
-        SLOPE_SCORE(DATA_TRANSFORMATIONS.out.depth_means, "$launchDir/$params.layout", PREPARE_NCRNA_GTF.out.ncRNA_gtf)
-        CLEAVAGE_SCORE(DATA_TRANSFORMATIONS.out.depth_means, "$launchDir/$params.layout", PREPARE_NCRNA_GTF.out.ncRNA_gtf)
-        FISHERS_METHOD(DATA_TRANSFORMATIONS.out.depthfiles, "$launchDir/$params.layout", PREPARE_NCRNA_GTF.out.ncRNA_gtf)
-        RESULTS_TABLE(FISHERS_METHOD.out.pvalues, DISTRIBUTION_SCORE.out.combined_features, CLEAVAGE_SCORE.out.combined_features, DESEQ2.out.csvs, SLOPE_SCORE.out.combined_features, "$launchDir/$params.layout")
-        COMBINED_SCORE(RESULTS_TABLE.out.tsv, "$launchDir/$params.layout")
-        PLOT_TSRNA_LENGTHS(PLOT_TRNA_ALIGNMENT_LENGTH.out.txt.collect(), "$launchDir/$params.layout")
-        if (params.all_plots){   
-            //PLOT_NCRNA_ALL_PLOTS(GENERATE_NCRNA_DEPTH_FILES.out.depth_files, PREPARE_NCRNA_GTF.out.ncRNA_gtf)
-            //PLOT_ALL_NCRNAS(DATA_TRANSFORMATIONS.out.ncrna_depth, "$launchDir/$params.layout", PREPARE_NCRNA_GTF.out.ncRNA_gtf)
+        if (params.layout){
+            DESEQ2(COUNTS_TO_COLLAPSED_COUNTS.out.collapsed_count.collect(), "$launchDir/$params.layout", PREPARE_NCRNA_GTF.out.ncRNA_gtf)
+            DATA_TRANSFORMATIONS("$launchDir/$params.layout", \
+                GENERATE_TRNA_DEPTH_FILES.out.depth_files.collect(), \
+                GENERATE_NCRNA_DEPTH_FILES.out.depth_files.collect(), \
+                GENERATE_MULTIMAPPER_TRNA_DEPTH_FILES.out.depth_files.collect(), \
+                SUM_COUNTS.out.sum_counts)
+            DISTRIBUTION_SCORE(DATA_TRANSFORMATIONS.out.ncrna_stddev, DATA_TRANSFORMATIONS.out.trna_stddev, PREPARE_NCRNA_GTF.out.ncRNA_gtf)
+            SLOPE_SCORE(DATA_TRANSFORMATIONS.out.depth_means, "$launchDir/$params.layout", PREPARE_NCRNA_GTF.out.ncRNA_gtf)
+            CLEAVAGE_SCORE(DATA_TRANSFORMATIONS.out.depth_means, "$launchDir/$params.layout", PREPARE_NCRNA_GTF.out.ncRNA_gtf)
+            FISHERS_METHOD(DATA_TRANSFORMATIONS.out.depthfiles, "$launchDir/$params.layout", PREPARE_NCRNA_GTF.out.ncRNA_gtf)
+            RESULTS_TABLE(FISHERS_METHOD.out.pvalues, DISTRIBUTION_SCORE.out.combined_features, CLEAVAGE_SCORE.out.combined_features, DESEQ2.out.csvs, SLOPE_SCORE.out.combined_features, "$launchDir/$params.layout")
+            COMBINED_SCORE(RESULTS_TABLE.out.tsv, "$launchDir/$params.layout")
+            PLOT_TSRNA_LENGTHS(PLOT_TRNA_ALIGNMENT_LENGTH.out.txt.collect(), "$launchDir/$params.layout")
+            if (params.all_plots){   
+                PLOT_ALL_NCRNAS(DATA_TRANSFORMATIONS.out.ncrna_depth, "$launchDir/$params.layout", PREPARE_NCRNA_GTF.out.ncRNA_gtf)
+            }
+            PLOT_TRNAS(DATA_TRANSFORMATIONS.out.depthfiles, COMBINED_SCORE.out.top_features, "$launchDir/$params.layout")
+            PLOT_NCRNAS(DATA_TRANSFORMATIONS.out.ncrna_depth, COMBINED_SCORE.out.top_features, "$launchDir/$params.layout", PREPARE_NCRNA_GTF.out.ncRNA_gtf)
+            VENN_DIAGRAM(FISHERS_METHOD.out.top_features, DISTRIBUTION_SCORE.out.top_features, CLEAVAGE_SCORE.out.top_features, DESEQ2.out.txt, SLOPE_SCORE.out.top_features, "$launchDir/$params.layout")
+            GENERATE_COUNT_DATAFRAME(COUNTS_TO_COLLAPSED_COUNTS.out.collect())
+            STACKED_BARPLOTS(RAW_COUNTS_TO_PROPORTIONS.out.collect())
+            BARPLOTS(GENERATE_COUNT_DATAFRAME.out, "$launchDir/$params.layout", PREPARE_NCRNA_GTF.out.ncRNA_gtf)
+            PREDICT_TSRNA_TYPE_GROUPS(DATA_TRANSFORMATIONS.out.depth_means, "$launchDir/$params.layout")
+            GENERATE_RESULTS_PDF_GROUPS(DESEQ2.out.pdfs, STACKED_BARPLOTS.out, BARPLOTS.out, VENN_DIAGRAM.out.pdf, COMBINED_SCORE.out.pdfs, PLOT_TRNAS.out, PLOT_NCRNAS.out, "$launchDir/$params.layout")
+            ORGANISE_RESULTS_GROUPS("$launchDir/$params.output_dir", SUM_COUNTS.out.sum_counts, GENERATE_RESULTS_PDF_GROUPS.out.pdf)
+            PUBLISH_FILES("$launchDir/$params.output_dir", DESEQ2.out.pdfs, STACKED_BARPLOTS.out, BARPLOTS.out, VENN_DIAGRAM.out.pdf, COMBINED_SCORE.out.pdfs, PLOT_TRNAS.out, PLOT_NCRNAS.out, "$launchDir/$params.layout", DESEQ2.out.csvs, VENN_DIAGRAM.out.tsvs, COMBINED_SCORE.out.all_txt_output)
+        } else {
+            ORGANISE_RESULTS("$launchDir/$params.output_dir", SUM_COUNTS.out.sum_counts, GENERATE_RESULTS_PDF.out.pdf, RAW_COUNTS_TO_PROPORTIONS.out.collect())
         }
-        PLOT_TRNAS(DATA_TRANSFORMATIONS.out.depthfiles, COMBINED_SCORE.out.top_features, "$launchDir/$params.layout")
-        PLOT_NCRNAS(DATA_TRANSFORMATIONS.out.ncrna_depth, COMBINED_SCORE.out.top_features, "$launchDir/$params.layout", PREPARE_NCRNA_GTF.out.ncRNA_gtf)
-        VENN_DIAGRAM(FISHERS_METHOD.out.top_features, DISTRIBUTION_SCORE.out.top_features, CLEAVAGE_SCORE.out.top_features, DESEQ2.out.txt, SLOPE_SCORE.out.top_features, "$launchDir/$params.layout")
-        GENERATE_COUNT_DATAFRAME(COUNTS_TO_COLLAPSED_COUNTS.out.collect())
-        STACKED_BARPLOTS(RAW_COUNTS_TO_PROPORTIONS.out.collect())
-        BARPLOTS(GENERATE_COUNT_DATAFRAME.out, "$launchDir/$params.layout", PREPARE_NCRNA_GTF.out.ncRNA_gtf)
-        PREDICT_TSRNA_TYPE_GROUPS(DATA_TRANSFORMATIONS.out.depth_means, "$launchDir/$params.layout")
-        GENERATE_RESULTS_PDF_GROUPS(DESEQ2.out.pdfs, STACKED_BARPLOTS.out, BARPLOTS.out, VENN_DIAGRAM.out.pdf, COMBINED_SCORE.out.pdfs, PLOT_TRNAS.out, PLOT_NCRNAS.out, "$launchDir/$params.layout")
-        ORGANISE_RESULTS("$launchDir/$params.output_dir", SUM_COUNTS.out.sum_counts, GENERATE_RESULTS_PDF_GROUPS.out.pdf)
-        PUBLISH_FILES("$launchDir/$params.output_dir", DESEQ2.out.pdfs, STACKED_BARPLOTS.out, BARPLOTS.out, VENN_DIAGRAM.out.pdf, COMBINED_SCORE.out.pdfs, PLOT_TRNAS.out, PLOT_NCRNAS.out, "$launchDir/$params.layout", DESEQ2.out.csvs, VENN_DIAGRAM.out.tsvs, COMBINED_SCORE.out.all_txt_output)
-
-
 }
 

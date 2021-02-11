@@ -4,16 +4,16 @@
 Move all results files for each sample into a directory of its own
 ===============*/
 
-process ORGANISE_RESULTS {
+process ORGANISE_RESULTS_GROUPS {
 
     input:
     path output_dir
     path mapped_read_counts
     path pdfs
-    path proportions
 
     output:
     path("*finished"), emit: signal
+
 
     script:
     """
