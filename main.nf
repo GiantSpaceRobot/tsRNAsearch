@@ -9,11 +9,10 @@ nextflow.enable.dsl = 2
 
 
 // Set default parameters 
-params.input_file = null 
 params.species = 'human'
-params.skip = "no"
-params.all_plots = false  // should be false
-params.remove = "no"
+//params.skip = "no"
+params.all_plots = false
+//params.remove = "no"
 params.layout = null
 params.input_dir = null
 params.output_dir = "Results"
@@ -31,20 +30,26 @@ def helpMessage() {
     ===========
 
     Usage: Single file analysis:
-    nextflow run main.nf --species mouse --input_file ExampleData/CytC_IP1.fastq.gz --output_dir Results
+    nextflow run main.nf --species mouse --input_dir tsRNAsearch/ExampleData --output_dir Results
+
+    Usage: Multi file analysis:
+    nextflow run main.nf --species mouse --input_dir tsRNAsearch/ExampleData --output_dir Results
 
     Usage: Group comparison analysis:
-    nextflow run main.nf --species mouse --input_dir ExampleData --output_dir Results --layout Layout.csv
+    nextflow run main.nf --species mouse --input_dir tsRNAsearch/ExampleData --output_dir Results --layout tsRNAsearch/additional-files/Example_Layout.csv
 
     Single file analysis mandatory arguments:
     Output directory: ${params.output_dir}
-    Input file: ${params.input_file}
+    Input directory with file (/path/to/file): ${params.input_dir}
+
+    Multi file analysis (no group comparison) mandatory arguments:
+    Output directory: ${params.output_dir}
+    Input directory with file (/path/to/file): ${params.input_dir}
 
     Group comparison analysis mandatory arguments:
     Output directory: ${params.output_dir}
     Input directory of files (/path/to/files): ${params.input_dir}
     
-
     Other arguments:
     Species (human/mouse/rat): ${params.species}
     Minimum read length: ${params.min_read_length}
