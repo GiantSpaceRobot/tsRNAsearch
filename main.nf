@@ -4,9 +4,7 @@
  *# Email: pauldonovandonegal@gmail.com
 */
 
-
 nextflow.enable.dsl = 2
-
 
 // Set default parameters 
 params.species = 'human'
@@ -19,7 +17,6 @@ params.output_dir = "Results"
 params.min_read_length = 16
 params.version = false
 params.help = false
-
 
 // Print message for user
 def helpMessage() {
@@ -57,10 +54,8 @@ def helpMessage() {
     """
 }
 
-
 // Pipeline version
 version="Version:  tsRNAsearch 0.4"
-
 
 // Print message for user
 def versionMessage() {
@@ -76,13 +71,11 @@ if (params.help) {
     exit 0
 }
 
-
 // Show version and quit
 if (params.version) {
     versionMessage()
     exit 0
 }
-
 
 // Input parameter error catching
 if(!params.input_file && !params.input_dir){
@@ -146,7 +139,6 @@ include { BARPLOTS } from './modules/barplots'
 include { ORGANISE_RESULTS } from './modules/organise_results'
 include { ORGANISE_RESULTS_GROUPS } from './modules/organise_results_groups'
 include { PUBLISH_FILES } from './modules/publish_files'
-
 
 workflow {
     main:
@@ -216,4 +208,3 @@ workflow {
             ORGANISE_RESULTS("$launchDir/$params.output_dir", SUM_COUNTS.out.sum_counts, GENERATE_RESULTS_PDF.out.pdf, RAW_COUNTS_TO_PROPORTIONS.out.collect())
         }
 }
-

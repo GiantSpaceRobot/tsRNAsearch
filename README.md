@@ -15,13 +15,11 @@ git clone https://github.com/GiantSpaceRobot/tsRNAsearch.git
 conda enc create -f tsRNAsearch/environment.yml
 conda activate tsrnasearch_env
 Rscript tsRNAsearch/bin/InstallPackages.R
-#Please indicate the species you wish to analyse using the -s parameter.
-#Options are human/mouse/rat/all.
-#bash bin/setup_conda_2.sh -s all
 ```
 
 ### Running tsRNAsearch
-We have supplied data to test that the pipeline is functioning correctly:
+We have supplied data to ensure that the pipeline is functioning correctly.
+To run the following, make sure you are outside the tsRNAsearch directory.
 
 Usage: Single file analysis:
 ```
