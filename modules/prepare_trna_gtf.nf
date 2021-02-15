@@ -17,6 +17,6 @@ process PREPARE_TRNA_GTF {
    
     script:
     """
-    cp "$projectDir/DBs/${species}_tRNAs_relative_cdhit.gtf" .
+    cp "$projectDir/DBs/${species}_tRNAs_relative.gtf" .
     """
 }

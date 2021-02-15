@@ -10,10 +10,19 @@ echo Sample name: ${newname}
 
 ### Split SAM by gene name (genes beginning in 'ENS' are ncRNAs, the rest are tRNAs)
 echo "Split SAM by gene name (genes beginning in 'ENS' are ncRNAs, the rest are tRNAs)"
-grep ^@ ${newname}.sam | grep -v 'chr.*trna' > SamHeader.sam &
-grep ENS ${newname}.sam | grep -v 'chr.*trna' | grep -v ^@ > ncRNAs.sam &
-grep 'chr.*trna' ${newname}.sam > tsRNAs_aligned.sam &
+grep ^@ ${newname}.sam | grep -v 'lookalike' | grep -v 'chr.*trna' > SamHeader.sam &
+grep ENS ${newname}.sam | grep -v 'lookalike' | grep -v 'chr.*trna' | grep -v ^@ > ncRNAs.sam &
+grep 'chr' ${newname}.sam > tsRNAs_aligned.sam &
 wait
+
+### Get sequences of top tRNA derived reads
+grep -v ^@ tsRNAs_aligned.sam \
+	| awk '{print $10"\t"$3}' \
+	| sort \
+	| uniq -c \
+	| sort -nr \
+	> ${newname}_tRNA-derived-reads.tsv
+
 cat SamHeader.sam ncRNAs.sam \
 	> ncRNAs_aligned.sam
 ### Generate BAM from tRNA SAM
@@ -28,9 +37,9 @@ samtools view -bS ncRNAs_aligned.sam \
 	| samtools sort \
 	> ${newname}_accepted_hits_ncRNAs.bam
 #samtools index accepted_hits_ncRNAs.bam &
-echo "Remove intermediate files"
-rm \
-	SamHeader.sam \
-	ncRNAs.sam \
-	tsRNAs_aligned.sam \
-	ncRNAs_aligned.sam &
+#echo "Remove intermediate files"
+#rm \
+#	SamHeader.sam \
+#	ncRNAs.sam \
+#	tsRNAs_aligned.sam \
+#	ncRNAs_aligned.sam &

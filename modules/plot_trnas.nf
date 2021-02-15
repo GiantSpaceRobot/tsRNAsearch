@@ -21,9 +21,18 @@ process PLOT_TRNAS {
         Everything_\${condition1}_concatenated_mean_stdev_tsRNA.depth \\
         Everything_\${condition2}_concatenated_mean_stdev_tsRNA.depth \\
         High-combined-score-features_feature-names.txt \\
+        \${condition1}_vs_\${condition2}_Features_All-tsRNAs.pdf \\
+        0 \\
+        "yes" &
+    Depthfile_Plotter_DEGs.R \\
+        Everything_\${condition1}_concatenated_mean_stdev_tsRNA.depth \\
+        Everything_\${condition2}_concatenated_mean_stdev_tsRNA.depth \\
+        High-combined-score-features_feature-names.txt \\
         \${condition1}_vs_\${condition2}_Features_Top-tsRNAs.pdf \\
         0 \\
-        "no"
+        "no" &
+    wait
+    mv \${condition1}_vs_\${condition2}_Features_All-tsRNAs.pdf TranscriptionPlots_All-tsRNAs.pdf
     mv \${condition1}_vs_\${condition2}_Features_Top-tsRNAs.pdf TranscriptionPlots_Top-tsRNAs.pdf
     """
 }

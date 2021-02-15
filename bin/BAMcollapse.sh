@@ -30,9 +30,11 @@ if (( $cores > $chunks )); then
 	# make sure cores is not set higher than no. of files after split
 	cores=$chunks
 fi
+echo "Using $cores cores"
 fileLen=$(< "${newname}.sam" wc -l)
 division1=$((fileLen/chunks))
 division=$((division1 + 1))
+echo "Splitting SAM file into $division chunks"
 myFile="tempFile"
 mkdir -p tempDir
 
@@ -48,6 +50,7 @@ fileToCollapse=tempDir/mySAM.sam
 split -l $division $fileToCollapse tempDir/splitFile_
 
 ### Gather first and last read from every split file and add to separate file. Remove these reads from the split files.
+echo "Gather first and last read from every split file and add to separate file."
 for i in tempDir/splitFile_*; do
 	base=$(basename $i)
 	first=$(awk 'NR==1' $i | awk '{print $1}') 
@@ -55,17 +58,18 @@ for i in tempDir/splitFile_*; do
 	last=$(awk 'END{print}' $i | awk '{print $1}') 
 	echo $last >> tempDir/${myFile}_HeadsAndTails.txt
 done
-
 sort tempDir/${myFile}_HeadsAndTails.txt | uniq > tempDir/${myFile}_HeadsAndTails_uniq.txt #remove duplicates
 sed -i 's/$/\t/' tempDir/${myFile}_HeadsAndTails_uniq.txt # Add tab to end of every line to match pattern exactly
 grep -f tempDir/${myFile}_HeadsAndTails_uniq.txt $fileToCollapse > tempDir/edit_heads-and-tails #grep all patterns from the heads/tails file
-
 for i in tempDir/splitFile_*; do
 	base=$(basename $i)
-	grep -v -f  tempDir/${myFile}_HeadsAndTails_uniq.txt $i > tempDir/edit_${base}
+	grep -v -f tempDir/${myFile}_HeadsAndTails_uniq.txt $i > tempDir/edit_${base}
 done
-
+linesInHeadTailFile=$(wc -l tempDir/edit_${base})
+echo "There are $linesInHeadTailFile lines in the head & tail file
+"
 ### Run SAMcollapse2.py. This loop will only run $cores processes at once
+rm -f collapsed-reads.txt # Overwrite this file if it exists
 COUNTER=0
 for i in tempDir/edit_*; 
 do
@@ -108,5 +112,4 @@ cat tempDir/myHeader.txt ${fileToCollapse}*_edit_* | samtools sort > ${newname}_
 
 rm -rf tempDir/
 echo "Finished collapsing SAM file"
-
 

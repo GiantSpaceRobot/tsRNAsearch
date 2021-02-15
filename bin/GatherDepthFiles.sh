@@ -67,7 +67,7 @@ wait
 
 ### Create files with all RPM values for every coordinate of every feature in each condition
 cat \
-	Multimappers_{2}_concatenated_mean_stdev_tsRNA.depth \
+	Multimappers_${2}_concatenated_mean_stdev_tsRNA.depth \
 	${2}_concatenated_mean_stdev_tsRNA.depth \
 	| sort -k1,1 -k2,2n \
 	> Everything_${2}_concatenated_mean_stdev_tsRNA.depth

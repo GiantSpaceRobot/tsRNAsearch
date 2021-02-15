@@ -27,6 +27,6 @@ process PLOT_NCRNAS {
         0 \\
         "no" \\
         $gtf
-    mv \${condition1}_vs_\${condition2}_Features_Top-ncRNAs.pdf  TranscriptionPlots_Top-ncRNAs.pdf
+    mv \${condition1}_vs_\${condition2}_Features_Top-ncRNAs.pdf TranscriptionPlots_Top-ncRNAs.pdf
     """
 }

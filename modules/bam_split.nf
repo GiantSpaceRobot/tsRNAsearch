@@ -12,7 +12,7 @@ process BAM_SPLIT {
     output:
     path("*ncRNAs.bam"), emit: bam_ncRNA
     path("*tRNAs.bam"), emit: bam_tRNA
-    //path("*.bam"), emit: bams
+    path("*tsv"), emit: tsv
 
     script:
     """

@@ -27,13 +27,13 @@ def helpMessage() {
     ===========
 
     Usage: Single file analysis:
-    nextflow run main.nf --species mouse --input_dir tsRNAsearch/ExampleData --output_dir Results
+    nextflow run tsRNAsearch --species mouse --input_dir tsRNAsearch/ExampleData --output_dir Results
 
     Usage: Multi file analysis:
-    nextflow run main.nf --species mouse --input_dir tsRNAsearch/ExampleData --output_dir Results
+    nextflow run tsRNAsearch --species mouse --input_dir tsRNAsearch/ExampleData --output_dir Results
 
     Usage: Group comparison analysis:
-    nextflow run main.nf --species mouse --input_dir tsRNAsearch/ExampleData --output_dir Results --layout tsRNAsearch/additional-files/Example_Layout.csv
+    nextflow run tsRNAsearch --species mouse --input_dir tsRNAsearch/ExampleData --output_dir Results --layout tsRNAsearch/additional-files/Example_Layout.csv
 
     Single file analysis mandatory arguments:
     Output directory: ${params.output_dir}
@@ -78,11 +78,8 @@ if (params.version) {
 }
 
 // Input parameter error catching
-if(!params.input_file && !params.input_dir){
-    exit 1, "Error: No input provided. Provide either --input_file or --input_dir to pipeline"
-}
-if( params.input_file && params.input_dir){
-    exit 1, "Error: Conflicting inputs. Cannot supply both single FASTQ file and FASTQ input directory"
+if(!params.input_dir){
+    exit 1, "Error: No input provided. Provide --input_dir to pipeline"
 }
 //if [[ "$outDir" == */ ]]; then # If outDir has a trailing slash, remove
 //	outDir=$(echo "${outDir::-1}")
@@ -147,7 +144,7 @@ workflow {
         PREPARE_TRNA_GTF(params.species)
         PREPARE_NCRNA_GTF(params.species)
         TRIM_READS(fastq_channel, "$params.min_read_length")
-        MAKE_STAR_DB("$projectDir/DBs/${params.species}_tRNAs-and-ncRNAs_relative_cdhit.fa")  // Run process to generate DB
+        MAKE_STAR_DB("$projectDir/DBs/${params.species}_tRNAs-and-ncRNAs-and-lookalikes.fa")  // Run process to generate DB
         STAR_ALIGN(TRIM_READS.out.trimmed_reads, MAKE_STAR_DB.out.star_index)
         BAM_COLLAPSE(STAR_ALIGN.out.bam)
         ADD_EMPTY_COUNTS(BAM_COLLAPSE.out.tRNA_almost_mapped_count, "$projectDir/additional-files/${params.species}_empty_tRNA.count")
