@@ -43,5 +43,8 @@ process PUBLISH_FILES {
     cp Combined*.tsv ${output_dir}/\${condition1}_vs_\${condition2}/Data/
     cp *.pdf ${output_dir}/\${condition1}_vs_\${condition2}/Plots/
 
+    cd ${output_dir}/
+    for f in \$(find -type l); do cp --remove-destination \$(readlink \$f) \$f; done;
+
     """
 }

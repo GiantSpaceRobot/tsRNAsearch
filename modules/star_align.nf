@@ -9,6 +9,7 @@ params.min_read_length = 16
 process STAR_ALIGN {
 
     //tag "$reads_file.simpleName"
+    cpus 20 // Max cpus usable by all processes or 20 cpus are used in each process regardless or other running processes? I think the former but not sure
 
     input:
     path reads

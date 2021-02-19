@@ -212,7 +212,9 @@ if (file.size(args[3]) == 0) { # Check if features file contains any lines
           ylab('Coverage (reads per million)') +
           scale_fill_manual(values=c("red", "blue")) +
           scale_color_manual(values=c("red", "blue")) +
-          labs(fill="Conditions", title = geneName)
+          labs(fill="Conditions", title = geneName) + 
+          geom_vline(xintercept = 50, linetype="dotted", color = "gray27", size = 1) +
+          geom_vline(xintercept = nrow(new.subset1) - 50, linetype="dotted", color = "gray27", size = 1)
         plot_list[[feature]] = p
       }
   }

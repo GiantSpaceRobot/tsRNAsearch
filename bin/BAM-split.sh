@@ -10,7 +10,7 @@ echo Sample name: ${newname}
 
 ### Split SAM by gene name (genes beginning in 'ENS' are ncRNAs, the rest are tRNAs)
 echo "Split SAM by gene name (genes beginning in 'ENS' are ncRNAs, the rest are tRNAs)"
-grep ^@ ${newname}.sam | grep -v 'lookalike' | grep -v 'chr.*trna' > SamHeader.sam &
+grep ^@ ${newname}.sam | grep -v 'lookalike' | grep -v 'chr.*trna' | grep -v 'mt_' > SamHeader.sam &
 grep ENS ${newname}.sam | grep -v 'lookalike' | grep -v 'chr.*trna' | grep -v ^@ > ncRNAs.sam &
 grep 'chr' ${newname}.sam > tsRNAs_aligned.sam &
 wait

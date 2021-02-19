@@ -19,6 +19,7 @@ process PLOT_NCRNAS {
     """
     condition1=\$( awk -F ',' '{print \$2}' ${layout} | uniq | head -n 1 ) # Get the first condition name
     condition2=\$( awk -F ',' '{print \$2}' ${layout} | uniq | tail -n 1 ) # Get the second condition name
+    grep ^ENS High-combined-score-features_feature-names.txt > Top-ncRNAs.txt
     Depthfile_Plotter_DEGs.R \\
         \${condition1}_concatenated_mean_stdev_ncRNA.depth \\
         \${condition2}_concatenated_mean_stdev_ncRNA.depth \\
