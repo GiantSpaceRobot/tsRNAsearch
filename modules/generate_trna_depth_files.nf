@@ -12,7 +12,8 @@ process GENERATE_TRNA_DEPTH_FILES {
 
     input:
     file bamfile
-    file mapped_read_counts
+    file trna_gtf
+    file ncrna_gtf
 
     output:
     path '*sorted.depth', emit: depth_files
@@ -30,10 +31,11 @@ process GENERATE_TRNA_DEPTH_FILES {
         -d 100000000 \\
         -aa $bamfile \\
         > "$bamfile.simpleName"_raw.depth
-    NormaliseDepthFile.sh \\
+    NormaliseDepthFile_TPM.sh \\
         "$bamfile.simpleName"_raw.depth \\
-        "$mapped_read_counts" \\
-        "$bamfile.simpleName"_normalised.depth
+        "$bamfile.simpleName"_normalised.depth \\
+        ${trna_gtf} \\
+        ${ncrna_gtf}
     Bedgraph_collapse-tRNAs.py \\
         "$bamfile.simpleName"_normalised.depth \\
         "$bamfile.simpleName"_collapsed.depth

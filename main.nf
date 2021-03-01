@@ -55,7 +55,7 @@ def helpMessage() {
 }
 
 // Pipeline version
-version="Version:  tsRNAsearch 0.4"
+version="Version:  tsRNAsearch 0.41"
 
 // Print message for user
 def versionMessage() {
@@ -152,13 +152,13 @@ workflow {
         FEATURE_COUNT_TRNA(BAM_SPLIT.out.bam_tRNA, PREPARE_TRNA_GTF.out.tRNA_gtf)
         FEATURE_COUNT_NCRNA(BAM_SPLIT.out.bam_ncRNA, PREPARE_NCRNA_GTF.out.ncRNA_gtf)
         SUM_COUNTS(FEATURE_COUNT_TRNA.out.counts.collect(), FEATURE_COUNT_NCRNA.out.counts.collect(), ADD_EMPTY_COUNTS.out.filled_multi_counts.collect())
-        GENERATE_TRNA_DEPTH_FILES(BAM_SPLIT.out.bam_tRNA, SUM_COUNTS.out.sum_counts)
+        GENERATE_TRNA_DEPTH_FILES(BAM_SPLIT.out.bam_tRNA, PREPARE_TRNA_GTF.out.tRNA_gtf, PREPARE_NCRNA_GTF.out.ncRNA_gtf)
         GENERATE_MULTIMAPPER_TRNA_DEPTH_FILES(BAM_COLLAPSE.out.tRNA_almost_mapped_txt, SUM_COUNTS.out.sum_counts)
         GENERATE_NCRNA_DEPTH_FILES(BAM_SPLIT.out.bam_ncRNA, SUM_COUNTS.out.sum_counts) 
         GENERATE_DEPTHFILE_STATS(GENERATE_TRNA_DEPTH_FILES.out.depth_files.mix(GENERATE_NCRNA_DEPTH_FILES.out.depth_files))
         RAW_COUNTS_TO_PROPORTIONS(FEATURE_COUNT_TRNA.out.counts, BAM_COLLAPSE.out.tRNA_almost_mapped_count, SUM_COUNTS.out.sum_counts)
-        RAW_COUNTS_TO_NORM_COUNTS(SUM_COUNTS.out.all_counts.flatten(), SUM_COUNTS.out.sum_counts)
-        COUNTS_TO_COLLAPSED_COUNTS(SUM_COUNTS.out.all_counts.flatten().mix(RAW_COUNTS_TO_NORM_COUNTS.out.rpm_count))
+        RAW_COUNTS_TO_NORM_COUNTS(SUM_COUNTS.out.all_counts.flatten(), PREPARE_TRNA_GTF.out.tRNA_gtf, PREPARE_NCRNA_GTF.out.ncRNA_gtf)
+        COUNTS_TO_COLLAPSED_COUNTS(SUM_COUNTS.out.all_counts.flatten().mix(RAW_COUNTS_TO_NORM_COUNTS.out.tpm_count))
         PREDICT_TSRNA_TYPE(GENERATE_TRNA_DEPTH_FILES.out.collect(), GENERATE_MULTIMAPPER_TRNA_DEPTH_FILES.out.collect())
         //MULTIQC(FASTQC.out.collect())
 

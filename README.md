@@ -12,7 +12,7 @@ NOTE: please use conda 4.6 or greater
 
 ```
 git clone https://github.com/GiantSpaceRobot/tsRNAsearch.git
-conda enc create -f tsRNAsearch/environment.yml
+conda env create -f tsRNAsearch/environment.yml
 conda activate tsrnasearch_env
 Rscript tsRNAsearch/bin/InstallPackages.R
 ```

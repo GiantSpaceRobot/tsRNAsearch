@@ -121,7 +121,7 @@ if (file.size(args[3]) == 0) { # Check if features file contains any lines
             geom_line(aes(linetype=Conditions)) + # Different linetypes
             #geom_line(size=0.8) +
             xlab('Nucleotide position') +
-            ylab('Coverage (reads per million)') +
+            ylab('Coverage (TPM)') +
             scale_fill_manual(values=c("red", "blue")) +
             scale_color_manual(values=c("red", "blue")) +
             labs(fill="Conditions", title = geneName)
@@ -195,7 +195,7 @@ if (file.size(args[3]) == 0) { # Check if features file contains any lines
           geom_line(aes(linetype=Conditions)) + # Different linetypes
           #geom_line(size=0.8) +
           xlab('Nucleotide position') +
-          ylab('Coverage (reads per million)') +
+          ylab('Coverage (TPM)') +
           scale_fill_manual(values=c("red", "blue")) +
           scale_color_manual(values=c("red", "blue")) +
           labs(fill="Conditions", title = geneName)

@@ -13,18 +13,19 @@ process RAW_COUNTS_TO_NORM_COUNTS {
 
     input:
     path countfile
-    file mapped_read_counts
-    //file gtf
-
+    file trna_gtf
+    file ncrna_gtf
+    
     output:
-    path("*_rpm.count"), emit: rpm_count
-    path("*_raw-rpm.tsv"), emit: tsv
+    path("*_tpm.count"), emit: tpm_count
+    path("*_raw-tpm.tsv"), emit: tsv
 
     script:
     """
-    Count-to-RPM.sh \\
+    Count-to-TPM.sh \\
         ${countfile} \\
-        ${mapped_read_counts} \\
-        ${countfile.simpleName}
+        ${countfile.simpleName} \\
+        ${trna_gtf} \\
+        ${ncrna_gtf}
     """
 }
