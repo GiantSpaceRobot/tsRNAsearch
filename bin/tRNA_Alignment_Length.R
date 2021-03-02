@@ -11,6 +11,8 @@ library(ggplot2)
 library(dplyr)
 library(stringr)
 
+#setwd("/home/paul/Documents/Pipelines/work/4d/287b8181d217ec2232d474ef7f9eac/")
+
 args = commandArgs(trailingOnly=TRUE)
 
 ### Check if the correct number of command line arguments were provide. If not, return an error.
@@ -33,7 +35,9 @@ get.lengths <- function(split.line){
 }
 
 length.DF <- data.frame() # Create empty DF
-con <- read.table(args[1], fill = T, row.names = NULL)
+con <- read.delim(args[1], sep = "\t", fill = T, row.names = NULL)
+#con <- read.delim("SRR1273998_trimmed_accepted_hits_tRNAs_no-header.sam", sep = "\t", fill = T, row.names = NULL)
+#my.test <- con[189445:189450,]
 length.DF <- data.frame(t(apply(con, 1, get.lengths))) # Apply function to SAM dataframe
 
 ### Clean up dataframe 
