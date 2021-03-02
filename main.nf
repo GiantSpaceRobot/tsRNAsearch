@@ -81,10 +81,27 @@ if (params.version) {
 if(!params.input_dir){
     exit 1, "Error: No input provided. Provide --input_dir to pipeline"
 }
-//if [[ "$outDir" == */ ]]; then # If outDir has a trailing slash, remove
-//	outDir=$(echo "${outDir::-1}")
-//fi
 
+// If input_dir is absolute path, do nothing. Otherwise, add launch dir working dir to path
+if(params.input_dir.startsWith("/")){
+    inputdir = "$params.input_dir"
+} else {
+    inputdir = "$launchDir/$params.input_dir"
+}
+
+// If output_dir is absolute path, do nothing. Otherwise, add launch dir working dir to path
+if(params.output_dir.startsWith("/")){
+    outputdir = "$params.output_dir"
+} else {
+    outputdir = "$launchDir/$params.output_dir"
+}
+
+// If layout is absolute path, do nothing. Otherwise, add launch dir working dir to path
+if(params.layout.startsWith("/")){
+    layoutfile = "$params.layout"
+} else {
+    layoutfile = "$launchDir/$params.layout"
+}
 
 // Load modules (these inherit the params above if the default params are also declared in the modules)
 include { PREPARE_TRNA_GTF } from './modules/prepare_trna_gtf'
@@ -175,33 +192,33 @@ workflow {
 
         // START OF GROUP COMPARISON
         if (params.layout){
-            DESEQ2(COUNTS_TO_COLLAPSED_COUNTS.out.collapsed_count.collect(), "$launchDir/$params.layout", PREPARE_NCRNA_GTF.out.ncRNA_gtf)
-            DATA_TRANSFORMATIONS("$launchDir/$params.layout", \
+            DESEQ2(COUNTS_TO_COLLAPSED_COUNTS.out.collapsed_count.collect(), "$params.layout", PREPARE_NCRNA_GTF.out.ncRNA_gtf)
+            DATA_TRANSFORMATIONS("$params.layout", \
                 GENERATE_TRNA_DEPTH_FILES.out.depth_files.collect(), \
                 GENERATE_NCRNA_DEPTH_FILES.out.depth_files.collect(), \
                 GENERATE_MULTIMAPPER_TRNA_DEPTH_FILES.out.depth_files.collect(), \
                 SUM_COUNTS.out.sum_counts)
             DISTRIBUTION_SCORE(DATA_TRANSFORMATIONS.out.ncrna_stddev, DATA_TRANSFORMATIONS.out.trna_stddev, PREPARE_NCRNA_GTF.out.ncRNA_gtf)
-            SLOPE_SCORE(DATA_TRANSFORMATIONS.out.depth_means, "$launchDir/$params.layout", PREPARE_NCRNA_GTF.out.ncRNA_gtf)
-            CLEAVAGE_SCORE(DATA_TRANSFORMATIONS.out.depth_means, "$launchDir/$params.layout", PREPARE_NCRNA_GTF.out.ncRNA_gtf)
-            FISHERS_METHOD(DATA_TRANSFORMATIONS.out.depthfiles, "$launchDir/$params.layout", PREPARE_NCRNA_GTF.out.ncRNA_gtf)
-            RESULTS_TABLE(FISHERS_METHOD.out.pvalues, DISTRIBUTION_SCORE.out.combined_features, CLEAVAGE_SCORE.out.combined_features, DESEQ2.out.csvs, SLOPE_SCORE.out.combined_features, "$launchDir/$params.layout")
-            COMBINED_SCORE(RESULTS_TABLE.out.tsv, "$launchDir/$params.layout")
-            PLOT_TSRNA_LENGTHS(PLOT_TRNA_ALIGNMENT_LENGTH.out.txt.collect(), "$launchDir/$params.layout")
+            SLOPE_SCORE(DATA_TRANSFORMATIONS.out.depth_means, "$params.layout", PREPARE_NCRNA_GTF.out.ncRNA_gtf)
+            CLEAVAGE_SCORE(DATA_TRANSFORMATIONS.out.depth_means, "$params.layout", PREPARE_NCRNA_GTF.out.ncRNA_gtf)
+            FISHERS_METHOD(DATA_TRANSFORMATIONS.out.depthfiles, "$params.layout", PREPARE_NCRNA_GTF.out.ncRNA_gtf)
+            RESULTS_TABLE(FISHERS_METHOD.out.pvalues, DISTRIBUTION_SCORE.out.combined_features, CLEAVAGE_SCORE.out.combined_features, DESEQ2.out.csvs, SLOPE_SCORE.out.combined_features, "$params.layout")
+            COMBINED_SCORE(RESULTS_TABLE.out.tsv, "$params.layout")
+            PLOT_TSRNA_LENGTHS(PLOT_TRNA_ALIGNMENT_LENGTH.out.txt.collect(), "$params.layout")
             if (params.all_plots){   
-                PLOT_ALL_NCRNAS(DATA_TRANSFORMATIONS.out.ncrna_depth, "$launchDir/$params.layout", PREPARE_NCRNA_GTF.out.ncRNA_gtf)
+                PLOT_ALL_NCRNAS(DATA_TRANSFORMATIONS.out.ncrna_depth, "$params.layout", PREPARE_NCRNA_GTF.out.ncRNA_gtf)
             }
-            PLOT_TRNAS(DATA_TRANSFORMATIONS.out.depthfiles, COMBINED_SCORE.out.top_features, "$launchDir/$params.layout")
-            PLOT_NCRNAS(DATA_TRANSFORMATIONS.out.ncrna_depth, COMBINED_SCORE.out.top_features, "$launchDir/$params.layout", PREPARE_NCRNA_GTF.out.ncRNA_gtf)
-            VENN_DIAGRAM(FISHERS_METHOD.out.top_features, DISTRIBUTION_SCORE.out.top_features, CLEAVAGE_SCORE.out.top_features, DESEQ2.out.txt, SLOPE_SCORE.out.top_features, "$launchDir/$params.layout")
+            PLOT_TRNAS(DATA_TRANSFORMATIONS.out.depthfiles, COMBINED_SCORE.out.top_features, "$params.layout")
+            PLOT_NCRNAS(DATA_TRANSFORMATIONS.out.ncrna_depth, COMBINED_SCORE.out.top_features, "$params.layout", PREPARE_NCRNA_GTF.out.ncRNA_gtf)
+            VENN_DIAGRAM(FISHERS_METHOD.out.top_features, DISTRIBUTION_SCORE.out.top_features, CLEAVAGE_SCORE.out.top_features, DESEQ2.out.txt, SLOPE_SCORE.out.top_features, "$params.layout")
             GENERATE_COUNT_DATAFRAME(COUNTS_TO_COLLAPSED_COUNTS.out.collect())
             STACKED_BARPLOTS(RAW_COUNTS_TO_PROPORTIONS.out.collect())
-            BARPLOTS(GENERATE_COUNT_DATAFRAME.out, "$launchDir/$params.layout", PREPARE_NCRNA_GTF.out.ncRNA_gtf)
-            PREDICT_TSRNA_TYPE_GROUPS(DATA_TRANSFORMATIONS.out.depth_means, "$launchDir/$params.layout")
-            GENERATE_RESULTS_PDF_GROUPS(DESEQ2.out.pdfs, STACKED_BARPLOTS.out, BARPLOTS.out, VENN_DIAGRAM.out.pdf, COMBINED_SCORE.out.pdfs, PLOT_TRNAS.out, PLOT_NCRNAS.out, "$launchDir/$params.layout")
-            ORGANISE_RESULTS_GROUPS("$launchDir/$params.output_dir", SUM_COUNTS.out.sum_counts, GENERATE_RESULTS_PDF_GROUPS.out.pdf)
-            PUBLISH_FILES("$launchDir/$params.output_dir", DESEQ2.out.pdfs, STACKED_BARPLOTS.out, BARPLOTS.out, VENN_DIAGRAM.out.pdf, COMBINED_SCORE.out.pdfs, PLOT_TRNAS.out, PLOT_NCRNAS.out, "$launchDir/$params.layout", DESEQ2.out.csvs, VENN_DIAGRAM.out.tsvs, COMBINED_SCORE.out.all_txt_output)
+            BARPLOTS(GENERATE_COUNT_DATAFRAME.out, "$params.layout", PREPARE_NCRNA_GTF.out.ncRNA_gtf)
+            PREDICT_TSRNA_TYPE_GROUPS(DATA_TRANSFORMATIONS.out.depth_means, "$params.layout")
+            GENERATE_RESULTS_PDF_GROUPS(DESEQ2.out.pdfs, STACKED_BARPLOTS.out, BARPLOTS.out, VENN_DIAGRAM.out.pdf, COMBINED_SCORE.out.pdfs, PLOT_TRNAS.out, PLOT_NCRNAS.out, "$params.layout")
+            ORGANISE_RESULTS_GROUPS("$params.output_dir", SUM_COUNTS.out.sum_counts, GENERATE_RESULTS_PDF_GROUPS.out.pdf)
+            PUBLISH_FILES("$params.output_dir", DESEQ2.out.pdfs, STACKED_BARPLOTS.out, BARPLOTS.out, VENN_DIAGRAM.out.pdf, COMBINED_SCORE.out.pdfs, PLOT_TRNAS.out, PLOT_NCRNAS.out, "$params.layout", DESEQ2.out.csvs, VENN_DIAGRAM.out.tsvs, COMBINED_SCORE.out.all_txt_output)
         } else {
-            ORGANISE_RESULTS("$launchDir/$params.output_dir", SUM_COUNTS.out.sum_counts, GENERATE_RESULTS_PDF.out.pdf, RAW_COUNTS_TO_PROPORTIONS.out.collect())
+            ORGANISE_RESULTS("$params.output_dir", SUM_COUNTS.out.sum_counts, GENERATE_RESULTS_PDF.out.pdf, RAW_COUNTS_TO_PROPORTIONS.out.collect())
         }
 }
