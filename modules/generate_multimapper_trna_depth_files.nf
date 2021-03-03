@@ -12,7 +12,8 @@ process GENERATE_MULTIMAPPER_TRNA_DEPTH_FILES {
 
     input:
     file txtfile
-    file mapped_read_counts
+    file trna_gtf
+    file ncrna_gtf
 
     output:
     path '*sorted.depth', emit: depth_files
@@ -23,10 +24,11 @@ process GENERATE_MULTIMAPPER_TRNA_DEPTH_FILES {
         ${txtfile} \\
         "$projectDir"/additional-files/"$params.species"_tRNA-lengths.txt \\
         "${txtfile.simpleName}".depth
-    NormaliseDepthFile.sh \\
+    NormaliseDepthFile_TPM.sh \\
         "$txtfile.simpleName".depth \\
-        "$mapped_read_counts" \\
-        "$txtfile.simpleName"_normalised.depth
+        "$txtfile.simpleName"_normalised.depth \\
+        ${trna_gtf} \\
+        ${ncrna_gtf}
     sort -k1,1 -k2,2n "$txtfile.simpleName"_normalised.depth \\
         > "$txtfile.simpleName"_sorted.depth
     """

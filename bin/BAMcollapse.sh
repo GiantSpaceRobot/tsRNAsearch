@@ -110,6 +110,7 @@ cat tempDir/myHeader.txt ${fileToCollapse}*_edit_* | samtools sort > ${newname}_
 #samtools view -bS *Collapsed.sam > "$reads.simpleName"_Collapsed.bam
 #samtools sort Collapsed.sam > Collapsed.bam
 
+rm ${newname}.sam
 rm -rf tempDir/
 echo "Finished collapsing SAM file"
 
