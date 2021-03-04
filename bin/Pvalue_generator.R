@@ -12,7 +12,7 @@ library(stringr)
 library(dplyr)
 
 args = commandArgs(trailingOnly=TRUE)
-
+#setwd("/home/paul/Documents/Pipelines/work/59/e22974e83888c2f97d0994c188d573")
 ### Check if the correct number of command line arguments were provide. If not, return an error.
 if (length(args)==0) {
   stop("Error: Not enough command line arguments provided. Input file and output file names required.")
@@ -22,6 +22,10 @@ if (length(args)==0) {
 input1 <- read.table(args[1])
 input2 <- read.table(args[2])
 GTF <- read.table(args[3], sep = "\t")
+#input1 <- read.table("Everything_Control.depth")
+#input2 <- read.table("Everything_HepC_noCancer.depth")
+#GTF <- read.table("human_ncRNAs_relative_cdhit.gtf", sep = "\t")
+
 
 col.num1 <- ncol(input1) # Get no. of columns 
 input1 <- input1[,-((col.num1 - 1):col.num1), drop = FALSE] #Drop last 2 columns (mean and std)
@@ -62,9 +66,29 @@ for(subset1 in df1) {
       raw.p.vals <- data.frame("p.value" = matrix(1, nrow = nrow(rpm1), ncol = 1))  # Create column of pval = 1
       raw.p.vals$feature <- feature
     } else {  ### t.test
-      ### Compare condition1 and 2 dataframes using t.test with mapply. Convert to DF. Transpose. Convert to DF.  
-      mapply.df <- data.frame(t(data.frame(mapply(t.test, data.frame(t(rpm1)), data.frame(t(rpm2)), paired = F, SIMPLIFY = T))))
-      pvals <- mapply.df$p.value
+      # ### Run t-test on every column of test.df1 vs test.df2
+      mapply.df <- tryCatch({
+        data.frame(t(data.frame(mapply(t.test, data.frame(t(rpm1)), data.frame(t(rpm2)), paired = F, SIMPLIFY = T))))
+      }, error = function(e) {
+        return("Error")
+      })
+      if (mapply.df == "Error"){
+        pvals <- vector()
+        test.df1 <- data.frame(t(rpm1))
+        test.df2 <- data.frame(t(rpm2))
+        for(i in 1:nrow(rpm1)){
+          ### Try to carry out t-test
+          t.test.output <-
+            tryCatch({
+              t.test(test.df1[,i], test.df2[,i], paired = F)
+            }, error = function(e) {
+              return("Error")
+            })
+        }
+      } else {
+          ### if mapply t-test step worked, gather pvals
+          pvals <- mapply.df$p.value
+      }
       raw.p.vals <- data.frame("p.value" = matrix(unlist(pvals), nrow=length(pvals), byrow=T))
       raw.p.vals$feature <- feature
     }
