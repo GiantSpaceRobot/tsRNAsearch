@@ -84,6 +84,12 @@ for(subset1 in df1) {
             }, error = function(e) {
               return("Error")
             })
+          if (t.test.output == "Error"){
+            pval <- 1
+          } else {
+            pval <- t.test.output$p.value
+          }
+          pvals <- c(pvals, pval)
         }
       } else {
           ### if mapply t-test step worked, gather pvals

@@ -48,5 +48,6 @@ process STAR_ALIGN {
         > ${reads}_Stats.log
     echo ' reads; of these:' >> ${reads}_Stats.log
     samtools view -bS ${reads}_Aligned.out.sam > ${reads}_Aligned.out.bam
+    rm ${reads}_Aligned.out.sam
     """
 }
