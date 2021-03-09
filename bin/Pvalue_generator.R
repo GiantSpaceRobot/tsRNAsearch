@@ -12,7 +12,7 @@ library(stringr)
 library(dplyr)
 
 args = commandArgs(trailingOnly=TRUE)
-#setwd("/home/paul/Documents/Pipelines/work/59/e22974e83888c2f97d0994c188d573")
+#setwd("/home/paul/Documents/Pipelines/work/a0/8d5b58645325f8cf5581297c65ff99/")
 ### Check if the correct number of command line arguments were provide. If not, return an error.
 if (length(args)==0) {
   stop("Error: Not enough command line arguments provided. Input file and output file names required.")
@@ -23,7 +23,7 @@ input1 <- read.table(args[1])
 input2 <- read.table(args[2])
 GTF <- read.table(args[3], sep = "\t")
 #input1 <- read.table("Everything_Control.depth")
-#input2 <- read.table("Everything_HepC_noCancer.depth")
+#input2 <- read.table("Everything_HepC_Cancer.depth")
 #GTF <- read.table("human_ncRNAs_relative_cdhit.gtf", sep = "\t")
 
 
@@ -99,7 +99,7 @@ for(subset1 in df1) {
       raw.p.vals$feature <- feature
     }
   numeric.raw.p.vals <- raw.p.vals[complete.cases(raw.p.vals), ] # Remove all Na/NaN/Inf
-  if (nrow(numeric.raw.p.vals) == 0) {  # If entire DF was Na/NaN/Inf, use Fisher's method p.value of 1
+  if (nrow(numeric.raw.p.vals) < 2) {  # If entire DF was Na/NaN/Inf, use Fisher's method p.value of 1
     new.row <- cbind(feature, "Fishers.method.pvalue" = 1)
   } else {  # If t.test p.values are available, calculate Fisher's method
     #all.test <- allmetap(numeric.raw.p.vals$p.value, method = "all") # Test all p-value combination methods from metap package

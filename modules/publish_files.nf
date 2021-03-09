@@ -44,7 +44,8 @@ process PUBLISH_FILES {
     cp *.pdf ${output_dir}/\${condition1}_vs_\${condition2}/Plots/
 
     cd ${output_dir}/
-    for f in \$(find -type l); do cp --remove-destination \$(readlink \$f) \$f; done;
-
+    for f in \$(find -type l); do 
+        cp --remove-destination \$(readlink \$f) \$f || echo Problem with $f
+    done
     """
 }
