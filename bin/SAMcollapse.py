@@ -52,6 +52,8 @@ for k,v in myDict.iteritems():
         if v[0].split("\t")[2].startswith("chr"): # If genuine tRNA (nuclear or mitochondrial)
             if "-mt_" in v[0].split("\t")[2]: # These tRNAs are mitochondrial
                 tRNAgroup = (v[0].split("\t")[2].split("-")[1]) # e.g. 'mt_Tg' from a mitochondrial glycine tRNA
+            elif "-MT_" in v[0].split("\t")[2]: # These tRNAs are mitochondrial
+                tRNAgroup = (v[0].split("\t")[2].split("-")[1]) # e.g. 'mt_Tg' from a mitochondrial glycine tRNA
             else: # These tRNAs are nuclear tRNA
                 tRNAgroup = (v[0].split("\t")[2].split("-")[1])[:3] # e.g. 'Pro' from a Proline tRNA
         else:
