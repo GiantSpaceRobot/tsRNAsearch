@@ -45,7 +45,7 @@ process PUBLISH_FILES {
 
     cd ${output_dir}/
     for f in \$(find -type l); do 
-        cp --remove-destination \$(readlink \$f) \$f || echo Problem with $f
+        cp --remove-destination \$(readlink \$f) \$f || echo Problem with \$f
     done
     """
 }
