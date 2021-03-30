@@ -7,6 +7,8 @@ Collapse raw counts
 
 process DATA_TRANSFORMATIONS {
 
+    publishDir "$params.output_dir/", mode: 'copy', overwrite: false
+
     input:
     path layout
     path trna_depthfile
