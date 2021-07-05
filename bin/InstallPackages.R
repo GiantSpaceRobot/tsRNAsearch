@@ -158,7 +158,9 @@ if(R.version.string < 3.5){
 		devtools::install_version("XML", version="3.98-1.12")
 		devtools::install_version("latticeExtra", version="0.6-28")
 		devtools::install_version("Hmisc", version="4.1-1")
-		BiocManager::install("DESeq2", update=FALSE, dependencies=TRUE)
+		install.packages("remotes")
+		install_github("mikelove/DESeq2", ref="573fd03", dependencies=TRUE)
+		#BiocManager::install("DESeq2", update=FALSE, dependencies=TRUE)
 		#install.packages("", repos=NULL)
 	}
 }
