@@ -16,6 +16,11 @@ conda env create -f tsRNAsearch/environment.yml
 conda activate tsrnasearch_env
 Rscript tsRNAsearch/bin/InstallPackages.R
 ```
+Install nextflow (you may prefer to move nextflow to your PATH)
+```
+wget -qO- https://get.nextflow.io | bash
+chmod +x nextflow
+```
 
 ### Running tsRNAsearch
 We have supplied data to ensure that the pipeline is functioning correctly.
