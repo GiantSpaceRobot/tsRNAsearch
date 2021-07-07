@@ -50,6 +50,7 @@ dependencies:
   - r-survival=2.41_3
   - samtools=1.9
   - star=2.5.2b
+  - subread=2.0.1=hed695b0_0
   - trim-galore=0.4.1
   - pip:
     - multiqc==0.4
