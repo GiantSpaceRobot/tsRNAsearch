@@ -55,7 +55,7 @@ def helpMessage() {
 }
 
 // Pipeline version
-version="Version:  tsRNAsearch 0.41"
+version="Version:  tsRNAsearch 1.01"
 
 // Print message for user
 def versionMessage() {
