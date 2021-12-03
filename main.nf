@@ -97,10 +97,12 @@ if(params.output_dir.startsWith("/")){
 }
 
 // If layout is absolute path, do nothing. Otherwise, add launch dir working dir to path
-if(params.layout.startsWith("/")){
-    layoutfile = "$params.layout"
-} else {
-    layoutfile = "$launchDir/$params.layout"
+if(params.layout){
+    if(params.layout.startsWith("/")){
+        layoutfile = "$params.layout"
+    } else {
+        layoutfile = "$launchDir/$params.layout"
+    }
 }
 
 // Load modules (these inherit the params above if the default params are also declared in the modules)
