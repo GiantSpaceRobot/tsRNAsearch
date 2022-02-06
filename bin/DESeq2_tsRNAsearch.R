@@ -10,12 +10,12 @@
 ##
 ## Copyright: MIT license
 ##
-## Email: pauldonovan@rcsi.com
+## Email: pauldonovandonegal@gmail.com
 
 args = commandArgs(trailingOnly=TRUE)
 
 experiment <- args[4]
-exp.file <- read.csv(experiment, header=FALSE)
+exp.file <- read.csv(experiment, header=FALSE, stringsAsFactors = TRUE)
 myPath <- args[1]
 
 ### Count the number of factor levels in the provided .csv file (this should be 2)
@@ -27,19 +27,15 @@ if (length(lvls)==2) {
   quit.message <- sprintf("Wrong number of factor levels: %s. There should be two factor levels", lvls.pasted)
   stop(quit.message)
 }
-### Create directory for the results files
-#if (file.exists(paste0(myPath, "DE_Results"))){
-#} else {
-#  dir.create(paste0(myPath, "DE_Results"))
-#}
+
 file.CSV <- read.csv(args[4], header=FALSE)
+
 lvls.df <- as.data.frame(table(file.CSV$V2))
 my.conditions <- unlist(strsplit(args[2], "_vs_"))
 Condition1 <- my.conditions[1]
 Condition2 <- my.conditions[2]
 ReplicateNumber1 <- lvls.df[grep(Condition1, lvls.df$Var1),][1,2]
 ReplicateNumber2 <- lvls.df[grep(Condition2, lvls.df$Var1),][1,2]
-#myPath <- args[1]
 message("A .csv file was provided, and the directory provided exists.")
 
 ### Check if the correct number of command line arguments were provide. If not, return an error.
@@ -100,7 +96,11 @@ DESeq2.function <- function(path.to.files){
 
   ### Read files
   path.to.files <- myPath
-  file.names <- dir(path.to.files, pattern ="all-counts_collapsed\\.count")
+  #file.names <- dir(path.to.files, pattern ="all-counts_collapsed\\.count")
+  # Bug fix. The above line was causing columns to get added to cDataAll 
+  # alphanumerically instead of the order declared in the layout file
+  file.names <- gsub("\\..*", "_trimmed_all-counts_collapsed.count", file.CSV$V1) 
+  
   cDataAll <- NULL
   for (i in 1:length(file.names)){
     full.path <- paste0(path.to.files, file.names[i])
@@ -182,6 +182,7 @@ DESeq2.function <- function(path.to.files){
   ### Differential Expression Analysis
   colData <- data.frame(condition=groups)
   rownames(colData) <- c(condition1reps, condition2reps)
+  
   #new.names <- (gsub(pattern = ".collapsed.all-features.count", replacement = "", x = file.names))
   #rownames(colData) <- new.names
   dds <- DESeqDataSetFromMatrix(cDataAll, colData, formula(~condition))
