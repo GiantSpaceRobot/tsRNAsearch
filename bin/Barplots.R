@@ -48,6 +48,7 @@ condition1reps <- paste0(Condition1, 1:ReplicateNumber1)
 condition2reps <- paste0(Condition2, 1:ReplicateNumber2)
 newcolnames <- c(condition1reps, condition2reps) # Create column names using the provided condition names
 colnames(cDataAll) <- (newcolnames)
+cDataAll[is.na(cDataAll)] <- 0
 
   ### Get reads per million (RPM)
 new.list <- list()
@@ -110,9 +111,14 @@ groups <- factor(x=c(rep(Condition1, ReplicateNumber1), rep(Condition2, Replicat
     my.feature <- colnames(my.column)
     my.column.condition1 <- my.column[1:ReplicateNumber1,]  # Get condition1 percentages
     my.column.condition2 <- as.numeric(na.omit(my.column[ReplicateNumber1+1:nrow(my.column),])) # Get condition2 percentages
+  if(length(my.column.condition1)<2 || length(my.column.condition2)<2){
+    my.t.test.pval <- 1
+    my.pval.list[[i]] <- my.t.test.pval
+  } else {
     my.t.test <- t.test(my.column.condition1, my.column.condition2)
     my.t.test.pval <- my.t.test$p.value
     my.pval.list[[i]] <- my.t.test.pval
+  }
   }
   #names(my.pval.list) <- colnames(flipped.percent.df)
   my.pval.df <- data.frame(matrix(unlist(my.pval.list), nrow=length(my.pval.list), byrow=T))
