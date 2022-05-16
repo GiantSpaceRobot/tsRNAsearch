@@ -31,6 +31,8 @@ my.input$cleavage.score[is.na(my.input$cleavage.score)] <- 0
 my.input$Fishers.method.pvalue[is.na(my.input$Fishers.method.pvalue)] <- 1
 
 my.input$Fishers.pval.negLog10 <- -log10(my.input$Fishers.method.pvalue) # Negative log10 of Fisher's method p-values
+my.input$Fishers.pval.negLog10 <- replace(x = my.input$Fishers.pval.negLog10, is.infinite(my.input$Fishers.pval.negLog10), 20) # Replace -log10 of (p-adj = 0) with 20 as it is Inf
+
 number.of.genes.under.DESeq2.padj.cutoff <- my.input %>% filter(DESeq2.padj < 0.05) %>% nrow() # Count number of rows with DESeq2 padj under 0.05
 ### If nothing passed DESeq2 padj threshold, reduce padj values to 0 so DESeq2 does not contribute to combined score
 if (number.of.genes.under.DESeq2.padj.cutoff < 1){
